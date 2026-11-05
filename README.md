@@ -11,11 +11,9 @@
 In Claude Code:
 
 ```
-/plugin marketplace add <owner>/codemap
+/plugin marketplace add hxxnn/codemap
 /plugin install codemap@codemap
 ```
-
-Replace `<owner>` with the GitHub account that hosts this repository.
 
 ## Use
 

@@ -11,11 +11,9 @@
 Claude Code에서:
 
 ```
-/plugin marketplace add <owner>/codemap
+/plugin marketplace add hxxnn/codemap
 /plugin install codemap@codemap
 ```
-
-`<owner>`는 이 저장소를 올린 GitHub 계정 이름으로 바꿔 주세요.
 
 ## 사용법
 
