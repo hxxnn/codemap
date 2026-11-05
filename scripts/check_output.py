@@ -42,6 +42,8 @@ def path_refs(text):
     for token in re.findall(r"`([^`\n]+)`", text):
         if re.search(r"[\s*<>{}]", token) or token.startswith("http"):
             continue
+        if token in SOURCE_EXTS:
+            continue
         if "/" in token or token.endswith(SOURCE_EXTS):
             refs.append(token)
     return refs

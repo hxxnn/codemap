@@ -85,3 +85,8 @@ def test_generated_and_vendored_dirs_may_be_mentioned(tmp_path):
     assert co.check_file(write(tmp_path, "a.md", body), fx) == []
     md2 = write(tmp_path, "b.md", BLOCK + "See `distro/ghost.py`.\n")
     assert any("distro/ghost.py" in p for p in co.check_file(md2, fx))
+
+
+def test_bare_extensions_are_not_treated_as_paths(tmp_path):
+    md = write(tmp_path, "a.md", BLOCK + "Only `.py` and `.ts` files were read.\n")
+    assert co.check_file(md, fixture(tmp_path)) == []
