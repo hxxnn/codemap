@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Presentation outline - todo-api</title>
+<title>todo-api Presentation Outline - todo-api</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -149,7 +149,7 @@
   <div class="cm-main">
     <header class="cm-head">
       <p class="cm-project">todo-api</p>
-      <h1>Presentation outline</h1>
+      <h1>todo-api Presentation Outline</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -157,37 +157,46 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>A seven-slide walkthrough of <code>todo-api</code>, built from the existing codemap documents. All five source artifacts were available.</p>
-<section class="cm-section"><h2>Slide 1: What it is</h2>
-<p><code>todo-api</code> is a tiny FastAPI service that creates and lists todos, kept in memory. It is written in Python with <code>fastapi</code> and <code>uvicorn</code>.</p>
-<p>Show: <code>design-doc.md</code> → "Overview"</p>
+<section class="cm-section"><h2>Slide 1: What is todo-api?</h2>
+<ul>
+<li>A tiny FastAPI service for managing todos</li>
+<li>Two endpoints: <code>POST /todos</code>, <code>GET /todos</code></li>
+<li>Run with <code>uvicorn app.main:app</code></li>
+</ul>
 </section>
-<section class="cm-section"><h2>Slide 2: The big picture</h2>
-<p>Clients call one HTTP service. Inside, the FastAPI app talks to a module-level list that holds all state.</p>
-<p>Show: <code>architecture.md</code> → "Containers" diagram</p>
+<section class="cm-section"><h2>Slide 2: Architecture</h2>
+<ul>
+<li>Client, then uvicorn, then the FastAPI app in <code>app/main.py</code></li>
+<li>Data lives in an in-memory list in <code>app/storage.py</code></li>
+<li>Diagram: Level 2 in <code>architecture.md</code></li>
+</ul>
 </section>
-<section class="cm-section"><h2>Slide 3: How it is organized</h2>
-<p>The code splits into three groups: API, Data and Utilities.</p>
-<p>Show: <code>mindmap.md</code> → "Mindmap" diagram</p>
+<section class="cm-section"><h2>Slide 3: Code layout</h2>
+<ul>
+<li>Five modules in <code>app/</code>: main, routes, models, storage, utils</li>
+<li>Diagram: <code>mindmap.md</code></li>
+</ul>
 </section>
-<section class="cm-section"><h2>Slide 4: How it runs</h2>
-<p><code>POST /todos</code> validates the title, takes a timestamp, and asks storage to add the todo. The model asks storage for the next id along the way.</p>
-<p>Show: <code>sequence-flow.md</code> → "Create a todo" diagram</p>
+<section class="cm-section"><h2>Slide 4: Creating a todo</h2>
+<ul>
+<li>Blank titles are rejected with 422</li>
+<li>Timestamp, id and storage happen in <code>app/utils.py</code>, <code>app/models.py</code>, <code>app/storage.py</code></li>
+<li>Diagram: scenario 1 in <code>sequence-flow.md</code></li>
+</ul>
 </section>
-<section class="cm-section"><h2>Slide 5: How the parts depend on each other</h2>
-<p>Imports are shallow except for one circular import between <code>app/storage.py</code> and <code>app/models.py</code>, which the code comments call deliberate.</p>
-<p>Show: <code>dependency-graph.md</code> → "Dependency graph" diagram and "Circular dependencies"</p>
+<section class="cm-section"><h2>Slide 5: Watch out for</h2>
+<ul>
+<li><code>app/models.py</code> and <code>app/storage.py</code> import each other (deliberate cycle), see <code>dependency-graph.md</code></li>
+<li>Data is lost on restart; ids are <code>len + 1</code></li>
+</ul>
 </section>
-<section class="cm-section"><h2>Slide 6: Key design choices</h2>
-<p><span class="cm-unverified">Storage is an in-memory list hidden behind a small module; its rationale is inferred. (inferred)</span> <span class="cm-unverified">The cycle between models and storage works only because each uses the other inside functions; the reason for it is inferred. (inferred)</span></p>
-<p>Show: <code>design-doc.md</code> → "Key design choices"</p>
-</section>
-<section class="cm-section"><h2>Slide 7: Where to start reading</h2>
-<p>Start with <code>README.md</code>, then <code>app/main.py</code>, <code>app/routes.py</code> and <code>app/storage.py</code>.</p>
-<p>Show: <code>design-doc.md</code> → "Reading order (onboarding guide)"</p>
+<section class="cm-section"><h2>Slide 6: Where to start reading</h2>
+<ul>
+<li><code>README.md</code>, <code>app/main.py</code>, <code>app/routes.py</code>, <code>app/storage.py</code>; full order in <code>design-doc.md</code></li>
+</ul>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All source files were read, and <code>app/__init__.py</code> is empty. There are no tests, config or deployment files, and FastAPI's internal request handling is not traced.</p>
+<p>This outline condenses the existing codemap files and did not re-read the code. Nothing was executed.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

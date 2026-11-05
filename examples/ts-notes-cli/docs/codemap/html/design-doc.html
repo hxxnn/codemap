@@ -157,35 +157,34 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>How <code>notes-cli</code> is built, and in what order to read it.</p>
 <section class="cm-section"><h2>Overview</h2>
-<p><code>notes-cli</code> is a command-line notes tool (<code>README.md</code>): <code>notes add "text"</code> stores a note and <code>notes list</code> prints the stored notes. It is written in TypeScript (strict mode, compiled with <code>tsc</code> to CommonJS per <code>package.json</code> and <code>tsconfig.json</code>) and runs on Node.js through the <code>notes</code> bin entry. It has no runtime dependencies; <code>typescript</code> is the only dev dependency.</p>
+<p><code>notes-cli</code> is a command-line notes tool, described in <code>README.md</code> as <code>notes add "text"</code> and <code>notes list</code>. It is written in TypeScript and compiled with <code>tsc</code> (<code>package.json</code>), and it runs on Node.js with <code>typescript</code> as its only dependency. Each note has an id, text and author, and the author is taken from the <code>USER</code> environment variable.</p>
 </section>
 <section class="cm-section"><h2>How it is structured</h2>
-<p>The code is five small files in <code>src/</code>: one entry file that dispatches commands, a notes store, a formatter, a user-name helper and a shared type. Diagrams are in <code>architecture.md</code> (system, containers, components), <code>dependency-graph.md</code> (imports; no cycles), <code>mindmap.md</code> (responsibilities) and <code>sequence-flow.md</code> (the <code>add</code>, <code>list</code> and error paths). The import direction is simple: <code>src/index.ts</code> → <code>src/notes-store.ts</code> → <code>src/format.ts</code> → <code>src/types.ts</code>, with <code>src/index.ts</code> also using <code>src/user-profile.ts</code>.</p>
+<p>The project is one process with five small source files under <code>src/</code>: an entry file, a store, a formatter, a user-profile helper and a type file. See <code>architecture.md</code> for the three zoom levels, <code>dependency-graph.md</code> for the imports (no cycles), <code>mindmap.md</code> for the grouping and <code>sequence-flow.md</code> for the <code>add</code>, <code>list</code> and error flows. In short, <code>src/index.ts</code> calls <code>src/notes-store.ts</code> and <code>src/user-profile.ts</code>, and the store calls <code>src/format.ts</code>.</p>
 </section>
 <section class="cm-section"><h2>Key design choices</h2>
 <ol>
-<li><strong>CLI parsing in a single entry file.</strong> <code>src/index.ts</code> reads <code>process.argv</code>, branches on <code>add</code> / <code>list</code> and prints usage with exit code 1 otherwise. Effect: no argument-parsing library and one place to look for commands.</li>
-<li><strong>In-memory storage behind a small module.</strong> <code>src/notes-store.ts</code> keeps a module-level <code>notes</code> array and exposes only <code>addNote</code> and <code>listNotes</code>. Effect: callers are isolated from storage, but notes vanish when the process ends, so <code>notes list</code> in a new run is empty. <span class="cm-unverified">Reason: not stated anywhere; probably a first version meant to be extended. (inferred)</span></li>
-<li><strong>Formatting separated from storage.</strong> <code>src/format.ts</code> turns a <code>Note</code> into <code>#id text (author)</code> and the store maps over it. Effect: display format can change without touching storage.</li>
-<li><strong>Author comes from the environment.</strong> <code>src/user-profile.ts</code> returns <code>process.env.USER</code> or <code>"anonymous"</code>, and <code>src/index.ts</code> passes it to <code>addNote</code>. Effect: each note records who added it with no login or config.</li>
-<li><strong>One shared type.</strong> <code>src/types.ts</code> defines <code>Note</code> (<code>id</code>, <code>text</code>, <code>author</code>), imported by the store and the formatter. Effect: the data shape is defined once.</li>
+<li><strong>Notes live in memory behind a small module.</strong> <code>src/notes-store.ts</code> keeps a module-level <code>notes</code> array and exposes only <code>addNote</code> and <code>listNotes</code>. Effect: nothing is persisted, so each run of the program starts empty and <code>notes list</code> in a new process prints nothing. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
+<li><strong>Command parsing happens in the entry file.</strong> <code>src/index.ts</code> reads <code>process.argv</code> directly and branches on <code>add</code> and <code>list</code>, with no CLI library. Effect: unknown commands print a usage line to standard error and exit with code 1. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
+<li><strong>Formatting is separate from storage.</strong> <code>src/format.ts</code> holds <code>formatNote</code>, and the store maps notes through it in <code>listNotes</code>. Effect: display format can change without touching storage logic. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
+<li><strong>One shared <code>Note</code> interface.</strong> <code>src/types.ts</code> defines it and both <code>src/notes-store.ts</code> and <code>src/format.ts</code> import it. Effect: the note shape has a single definition. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
+<li><strong>Author comes from the environment with a fallback.</strong> <code>src/user-profile.ts</code> returns <code>process.env.USER ?? "anonymous"</code>. Effect: no login or configuration is needed, and the name is <code>anonymous</code> when <code>USER</code> is unset. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
 </ol>
 </section>
 <section class="cm-section"><h2>Reading order (onboarding guide)</h2>
 <ol>
-<li><code>README.md</code> — the two commands the tool supports.</li>
-<li><code>package.json</code> — the <code>notes</code> bin entry (build output <code>dist/index.js</code>) and the <code>build</code> script.</li>
-<li><code>src/index.ts</code> — where execution starts; see how commands map to calls.</li>
-<li><code>src/notes-store.ts</code> — the core logic; note the in-memory array and id scheme (length + 1).</li>
-<li><code>src/types.ts</code> — the <code>Note</code> shape used everywhere.</li>
-<li><code>src/format.ts</code> — how a note becomes a printed line.</li>
-<li><code>src/user-profile.ts</code> — the <code>USER</code> fallback logic, the only environment access.</li>
+<li><code>README.md</code> — the two commands the tool offers.</li>
+<li><code>package.json</code> — the <code>notes</code> binary points to build output <code>dist/index.js</code>, and <code>npm run build</code> runs <code>tsc</code>.</li>
+<li><code>src/index.ts</code> — the entry point; see how <code>add</code> and <code>list</code> are dispatched and what happens on bad input.</li>
+<li><code>src/notes-store.ts</code> — the core logic; note the module-level array and how ids are assigned (<code>notes.length + 1</code>).</li>
+<li><code>src/format.ts</code> — the one-line output format <code>#id text (author)</code>.</li>
+<li><code>src/types.ts</code> — the <code>Note</code> interface used by the store and formatter.</li>
+<li><code>src/user-profile.ts</code> — the smallest file; where the author name comes from.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All source files, <code>package.json</code> and <code>README.md</code> were read completely. <code>tsconfig.json</code> was only checked for the output folder. There are no tests in the repository, and the build output (<code>dist/</code>) does not exist, so neither was examined. Design reasons marked unverified are guesses, not facts from the repository.</p>
+<p>The small repo was read completely except <code>tsconfig.json</code>, which was not opened. Nothing is vendored or generated, and no test files exist in the repo.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

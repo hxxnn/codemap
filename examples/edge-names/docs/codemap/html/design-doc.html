@@ -157,32 +157,33 @@
       </dl>
     </header>
 <main id="cm-main">
+<p>How <code>edge-names</code> is built and in what order to read it.</p>
 <section class="cm-section"><h2>Overview</h2>
-<p><code>edge-names</code> is a tiny Node.js (CommonJS) command-line program. Running <code>src/main.js</code> prints each item of a fixed list (<code>alpha</code>, <code>beta</code>, <code>gamma</code>) in upper case followed by <code>!</code>. According to <code>README.md</code>, it is a small project whose file names contain spaces and non-ASCII characters, so it works as a test case for tooling that must handle such names.</p>
+<p><code>edge-names</code> is a small CommonJS Node.js script. According to <code>README.md</code>, it is a tiny project whose file names contain spaces and non-ASCII characters. When run, it takes a built-in list of three strings, upper-cases each, adds <code>!</code>, and prints them. It has no dependencies and no framework.</p>
 </section>
 <section class="cm-section"><h2>How it is structured</h2>
-<p>Three files, one job each: an entry script, a data provider and a text helper. The entry script depends on both helpers and the helpers depend on nothing. See <code>architecture.md</code> for the three zoom levels, <code>dependency-graph.md</code> for the import edges (no cycles), <code>mindmap.md</code> for the overview and <code>sequence-flow.md</code> for the one runtime flow.</p>
+<p>The project is one container with three modules under <code>src/</code>: an entry file, a data source and a formatter. See <code>architecture.md</code> for the three zoom levels, <code>dependency-graph.md</code> for the imports (only <code>src/main.js</code> imports anything, with no cycles), <code>mindmap.md</code> for the overview and <code>sequence-flow.md</code> for the call order.</p>
 </section>
 <section class="cm-section"><h2>Key design choices</h2>
 <ol>
-<li><strong>Entry script wires everything.</strong> <code>src/main.js</code> imports both helpers and runs the loop. Effect: all control flow is in one place. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
-<li><strong>Data behind a function.</strong> <code>src/데이터 로더.js</code> keeps the array private and returns <code>items.slice()</code>, a copy. Effect: callers cannot mutate the stored list.</li>
-<li><strong>Formatting in a utility module.</strong> <code>src/my utils.js</code> exports <code>shout</code>, a pure function. Effect: it is easy to test on its own.</li>
-<li><strong>CommonJS modules.</strong> Files use <code>require</code> and <code>module.exports</code>; <code>package.json</code> has no <code>"type": "module"</code>. Effect: Node loads them as CommonJS.</li>
-<li><strong>File names with a space and Hangul.</strong> <code>src/my utils.js</code> and <code>src/데이터 로더.js</code> are required by exact name. <code>README.md</code> describes the project as one whose file names contain spaces and non-ASCII characters.</li>
+<li><strong>One entry file wires everything.</strong> <code>src/main.js</code> is the only file that imports the others, so the data and formatting modules stay independent of each other. Effect: no cycles and a one-way flow of dependencies.</li>
+<li><strong>Hard-coded data behind a function.</strong> <code>src/데이터 로더.js</code> keeps the items in a module-level array and exposes <code>loadItems()</code>, which returns a copy via <code>slice()</code>. Effect: callers cannot mutate the stored list. <span class="cm-unverified">Reason for the copy: inferred.</span></li>
+<li><strong>One small named export per module.</strong> Both helper modules export a single function through <code>module.exports = { ... }</code>, and <code>src/main.js</code> destructures it. Effect: each import states exactly what is used.</li>
+<li><strong>Entry point declared in the manifest.</strong> <code>package.json</code> sets <code>main</code> to <code>src/main.js</code>.</li>
+<li><strong>File names with spaces and non-ASCII characters.</strong> <code>src/my utils.js</code> and <code>src/데이터 로더.js</code> are required by exact name with the <code>.js</code> extension. Effect: the names must be quoted in shell commands. The README describes this as the purpose of the project.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Reading order (onboarding guide)</h2>
 <ol>
-<li><code>README.md</code>: one-line purpose of the project.</li>
-<li><code>package.json</code>: the <code>main</code> field points to <code>src/main.js</code>.</li>
-<li><code>src/main.js</code>: the whole flow; note the two <code>require</code> lines and the loop.</li>
-<li><code>src/데이터 로더.js</code>: where the items come from and why a copy is returned.</li>
-<li><code>src/my utils.js</code>: what <code>shout</code> does to each item.</li>
+<li><code>README.md</code> — the one-line purpose and why the file names look unusual.</li>
+<li><code>package.json</code> — find <code>main</code>, which names the entry point.</li>
+<li><code>src/main.js</code> — the whole flow in six lines: two requires and a loop.</li>
+<li><code>src/데이터 로더.js</code> — where the items come from; note the <code>slice()</code> copy.</li>
+<li><code>src/my utils.js</code> — the formatting rule (<code>toUpperCase()</code> plus <code>"!"</code>).</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>The repository was read completely; nothing was skipped.</p>
+<p>Nothing was skipped: every source file, <code>package.json</code> and <code>README.md</code> were read in full. The script was not executed, and there are no tests in the project.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

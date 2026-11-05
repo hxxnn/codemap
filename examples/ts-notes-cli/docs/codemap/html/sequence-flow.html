@@ -157,68 +157,67 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>Three runtime scenarios of the CLI, traced through <code>src/index.ts</code> and the modules it calls: <code>add</code> (the main operation), <code>list</code> (reads storage), and an unknown command (the error path).</p>
-<section class="cm-section"><h2>Scenario 1: <code>notes add &lt;text&gt;</code></h2>
-<p>The user runs <code>notes add "buy milk"</code>.</p>
+<p>Three runtime scenarios traced from <code>src/index.ts</code>: the <code>add</code> command, the <code>list</code> command, and the unknown-command error path.</p>
+<section class="cm-section"><h2>The add command</h2>
+<p>The user runs <code>notes add &lt;text&gt;</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  actor U as User
+  participant U as User
   participant I as src/index.ts
   participant P as src/user-profile.ts
   participant S as src/notes-store.ts
-  U-&gt;&gt;I: notes add buy milk
+  U-&gt;&gt;I: notes add text
   I-&gt;&gt;P: currentUser()
-  P--&gt;&gt;I: process.env.USER or "anonymous"
-  I-&gt;&gt;S: addNote(rest.join(" "), author)
-  S-&gt;&gt;S: push {id, text, author} to notes</pre>
+  P--&gt;&gt;I: USER or "anonymous"
+  I-&gt;&gt;S: addNote(text, author)
+  S--&gt;&gt;I: Note (id, text, author)</pre>
+<p>The process then ends silently: <code>src/index.ts</code> ignores the returned note and prints nothing.</p>
 <ol>
-<li><code>src/index.ts:top level</code> — takes <code>command</code> and <code>rest</code> from <code>process.argv.slice(2)</code>; <code>command === "add"</code>.</li>
-<li><code>src/user-profile.ts:currentUser</code> — returns <code>process.env.USER ?? "anonymous"</code>.</li>
-<li><code>src/notes-store.ts:addNote</code> — creates a note with <code>id = notes.length + 1</code> and pushes it; the returned note is ignored by the caller and nothing is printed.</li>
+<li><code>src/index.ts</code> splits <code>process.argv</code> into <code>command</code> and <code>rest</code> and joins <code>rest</code> into the note text.</li>
+<li><code>src/user-profile.ts:currentUser</code> returns <code>process.env.USER ?? "anonymous"</code>.</li>
+<li><code>src/notes-store.ts:addNote</code> builds <code>{ id: notes.length + 1, text, author }</code> and pushes it onto the module-level array.</li>
 </ol>
 </section>
-<section class="cm-section"><h2>Scenario 2: <code>notes list</code></h2>
+<section class="cm-section"><h2>The list command</h2>
 <p>The user runs <code>notes list</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  actor U as User
+  participant U as User
   participant I as src/index.ts
   participant S as src/notes-store.ts
   participant F as src/format.ts
   U-&gt;&gt;I: notes list
   I-&gt;&gt;S: listNotes()
-  loop each note in notes
+  loop each stored note
     S-&gt;&gt;F: formatNote(note)
-    F--&gt;&gt;S: formatted line
+    F--&gt;&gt;S: "#id text (author)"
   end
   S--&gt;&gt;I: string[]
-  I-&gt;&gt;U: console.log(line) per line</pre>
+  I--&gt;&gt;U: console.log per line</pre>
+<p>Because the array is created fresh in each process, a separate <code>notes list</code> run prints nothing.</p>
 <ol>
-<li><code>src/index.ts:top level</code> — <code>command === "list"</code>.</li>
-<li><code>src/notes-store.ts:listNotes</code> — maps every stored note through <code>formatNote</code>.</li>
-<li><code>src/format.ts:formatNote</code> — returns <code>`#${note.id} ${note.text} (${note.author})`</code>.</li>
-<li><code>src/index.ts:top level</code> — prints each returned line with <code>console.log</code>.</li>
+<li><code>src/index.ts</code> matches <code>command === "list"</code>.</li>
+<li><code>src/notes-store.ts:listNotes</code> maps the array through <code>formatNote</code>.</li>
+<li><code>src/format.ts:formatNote</code> returns <code>`#${note.id} ${note.text} (${note.author})`</code>.</li>
+<li><code>src/index.ts</code> prints each line with <code>console.log</code>.</li>
 </ol>
-<p>Because the array lives only in the running process, a fresh <code>notes list</code> invocation starts with an empty array and prints nothing.</p>
 </section>
-<section class="cm-section"><h2>Scenario 3: unknown or missing command</h2>
-<p>The user runs <code>notes</code> with no arguments or an unsupported word.</p>
+<section class="cm-section"><h2>Unknown command</h2>
+<p>The user runs <code>notes</code> with no command or an unrecognised one.</p>
 <pre class="mermaid">sequenceDiagram
-  actor U as User
+  participant U as User
   participant I as src/index.ts
-  U-&gt;&gt;I: notes (other)
-  alt command is "add"
-    I-&gt;&gt;I: add flow
-  else command is "list"
-    I-&gt;&gt;I: list flow
-  else anything else
-    I-&gt;&gt;U: console.error(usage line)
+  U-&gt;&gt;I: notes other
+  alt command is neither add nor list
+    I--&gt;&gt;U: stderr usage message
     I-&gt;&gt;I: process.exit(1)
   end</pre>
+<p>The program writes the usage line to standard error and exits with code 1.</p>
 <ol>
-<li><code>src/index.ts:top level</code> — neither branch matches, so the final <code>else</code> prints the usage line to stderr and exits with code 1.</li>
+<li><code>src/index.ts</code> falls through to the final <code>else</code> branch.</li>
+<li>It calls <code>console.error("usage: notes add &lt;text&gt; | notes list")</code> and then <code>process.exit(1)</code>.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All source files on these paths were read completely. <code>src/types.ts</code> only contributes the <code>Note</code> type and is not a participant. Build output (<code>dist/</code>) and Node internals were not examined.</p>
+<p>The small repo was read completely except <code>tsconfig.json</code> and <code>src/types.ts</code> (a type-only interface with no runtime calls). No call in these flows was untraced.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

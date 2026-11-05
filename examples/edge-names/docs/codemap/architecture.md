@@ -9,58 +9,56 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 
 # Architecture overview
 
-`edge-names` is a tiny Node.js (CommonJS) program that prints a fixed list of items in upper case; this page shows it at three zoom levels.
+`edge-names` is a tiny Node.js command-line script that loads three items, upper-cases them and prints them.
 
-## Level 1: System context
+## System context
 
 ```mermaid
 flowchart LR
-  n1["Terminal user"]:::external
-  n2["edge-names (src/main.js)"]
-  n3["Standard output (console)"]:::external
-  n1 -->|"runs node src/main.js"| n2
-  n2 -->|"console.log"| n3
+  u["Developer running node"]:::external
+  s["edge-names (package.json)"]
+  o["Terminal stdout"]:::external
+  u -->|"runs src/main.js"| s
+  s -->|"prints lines"| o
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
 ```
 
-The system is one command-line program that writes to standard output; no database, network or other external service is referenced in the code.
+The only things around the system are the person who runs `src/main.js` and the terminal that receives the output; no database or network call appears in the code.
 
-## Level 2: Containers
+## Containers
 
 ```mermaid
 flowchart LR
-  n1["Terminal user"]:::external
+  u["Developer"]:::external
   subgraph sys["edge-names"]
-    n2["CLI script (Node.js, src/)"]
+    cli["CLI script: Node.js (src/)"]
   end
-  n3["Standard output (console)"]:::external
-  n1 --> n2
-  n2 --> n3
+  o["Terminal stdout"]:::external
+  u --> cli
+  cli --> o
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
 ```
 
-There is a single deployable part: the Node.js script in `src/`, started through `src/main.js` (`main` in `package.json`).
+There is a single container: one Node.js script whose entry point is `src/main.js`, as declared by `main` in `package.json`.
 
-## Level 3: Components
+## Components
 
 ```mermaid
-flowchart TD
-  subgraph entry["Entry point"]
-    n1["main (src/main.js)"]
+flowchart LR
+  subgraph app["src/"]
+    main["Entry: src/main.js"]
+    utils["Formatter: src/my utils.js"]
+    loader["Data source: src/데이터 로더.js"]
   end
-  subgraph lib["Helpers"]
-    n2["shout (src/my utils.js)"]
-    n3["loadItems (src/데이터 로더.js)"]
-  end
-  n4["Standard output (console)"]:::external
-  n1 -->|"loadItems()"| n3
-  n1 -->|"shout(item)"| n2
-  n1 -->|"console.log"| n4
+  o["Terminal stdout"]:::external
+  main -->|"loadItems()"| loader
+  main -->|"shout()"| utils
+  main -->|"console.log"| o
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
 ```
 
-`src/main.js` asks `src/데이터 로더.js` for the items, formats each with `src/my utils.js`, and prints the result.
+`src/main.js` pulls the items from `src/데이터 로더.js`, formats each with `src/my utils.js` and prints the result.
 
 ## Not covered
 
-The repository was read completely (3 source files, `package.json`, `README.md`); nothing was skipped.
+Nothing was skipped: all three source files, `package.json` and `README.md` were read in full. There is no build output, vendored code or test folder.

@@ -7,60 +7,66 @@ sources: {app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Architecture overview
+# todo-api Architecture Overview
 
-`todo-api` is a tiny FastAPI service that keeps todos in memory, shown at three zoom levels.
+`todo-api` is a tiny FastAPI service that creates and lists todos. It keeps all data in a process-local Python list.
 
-## System context
+## Level 1: System context
 
 ```mermaid
-flowchart TD
-    n1["API client (HTTP)"]:::external
-    n2["todo-api (FastAPI service)"]
-    n1 -->|"POST /todos, GET /todos"| n2
+flowchart LR
+    client["API client"]:::external
+    api["todo-api (FastAPI app)"]
+    client -->|"HTTP"| api
     classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
 ```
 
-Callers send HTTP requests to the single `todo-api` service; no database or third-party API is referenced in the code.
+An HTTP client calls the single `todo-api` service; there is no database or other external system in the code.
 
-## Containers
+## Level 2: Containers
 
 ```mermaid
-flowchart TD
-    n1["API client (HTTP)"]:::external
-    subgraph n2["todo-api process (uvicorn app.main:app)"]
-        n3["FastAPI app (Python, app/)"]
-        n4["In-memory todo list (_TODOS in app/storage.py)"]
-    end
-    n1 -->|"HTTP"| n3
-    n3 -->|"function calls"| n4
+flowchart LR
+    client["API client"]:::external
+    server["uvicorn server"]:::external
+    app["FastAPI app: app/main.py"]
+    mem["In-memory list _TODOS: app/storage.py"]
+    client -->|"HTTP"| server
+    server -->|"ASGI"| app
+    app -->|"calls"| mem
     classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
 ```
 
-The service is one Python process (run command from `README.md`, dependencies from `pyproject.toml`) whose only state is a module-level list in `app/storage.py`.
+The README starts the service with `uvicorn app.main:app`; uvicorn hands requests to the FastAPI `app`, which reads and writes the `_TODOS` list in `app/storage.py`. Persistence ends when the process stops, because no file or database is used.
 
-## Components
+## Level 3: Components
 
 ```mermaid
 flowchart TD
-    subgraph web["HTTP layer"]
-        main["App setup (app/main.py)"]
-        routes["Routes (app/routes.py)"]
-    end
-    subgraph domain["Domain and data"]
-        models["Todo model (app/models.py)"]
-        storage["Storage (app/storage.py)"]
-    end
-    utils["Time helper (app/utils.py)"]
+    main["main: app/main.py"]
+    routes["routes: app/routes.py"]
+    models["models: app/models.py"]
+    storage["storage: app/storage.py"]
+    utils["utils: app/utils.py"]
+    models <-->|"import cycle"| storage
     main -->|"include_router"| routes
     routes -->|"add_todo, all_todos"| storage
     routes -->|"now_iso"| utils
-    storage -->|"Todo.create"| models
-    models -->|"next_id"| storage
+    linkStyle 0 stroke:#C62F3E,stroke-width:3px
+    classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823
+    class models,storage cycle
 ```
 
-`app/main.py` mounts the router from `app/routes.py`, which delegates to `app/storage.py`; storage and `app/models.py` call each other (a deliberate cycle, see `dependency-graph.md`).
+`app/main.py` builds the app and mounts the router from `app/routes.py`; the router calls `app/storage.py` and `app/utils.py`. `app/models.py` and `app/storage.py` import each other, a deliberate cycle noted in the code comments.
+
+| Component | Responsibility |
+|---|---|
+| `app/main.py` | Creates `FastAPI(title="todo-api")` and includes the router |
+| `app/routes.py` | `POST /todos` (validates a non-blank title) and `GET /todos` |
+| `app/models.py` | `Todo` dataclass with `to_dict()` and `create()` |
+| `app/storage.py` | `_TODOS` list, `next_id()`, `add_todo()`, `all_todos()` |
+| `app/utils.py` | `now_iso()` returns the current UTC time as ISO text |
 
 ## Not covered
 
-All source files were read (`app/__init__.py` is empty). Nothing was skipped; deployment, tests and CI do not exist in the repository.
+Every file in the repository was read, including the empty `app/__init__.py`. Nothing was executed, so runtime behavior was not tested.

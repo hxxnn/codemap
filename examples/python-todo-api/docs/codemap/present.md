@@ -3,42 +3,44 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: c940a044ff8cd39d09f2b8360bea94ffe130ceb79427ba4cac36246569394d0f, docs/codemap/dependency-graph.md: 40e7f7ff2816a8a0553c2e6197e20cc72d99cd5329a16975706b25e406188ce5, docs/codemap/mindmap.md: f2df21d103826f87a26c70e7c77135c26f38ada6760c8772ee083c027d8839f4, docs/codemap/sequence-flow.md: 72dc6439fcf2c9ad71f07485cfcb7fd6a853ce74e2956e58e7a814b3383b5e9f, docs/codemap/design-doc.md: 4faab1fc0cf13ef43d6571a26882771a0e2ace28b0a522ab5fda1781b5b6e0cc}
+sources: {docs/codemap/architecture.md: 61c8a137934bf8b4447aea934667b3bbc4522f3b3d5e774f063bc32b5a76da7c, docs/codemap/dependency-graph.md: 0f85b06098ee0b4b1648fcf1428f98cd9063569d79c679efc70e3a6d9ec8c130, docs/codemap/mindmap.md: d5a86612648e8176ef5496d87a9cc46dbea460e4aadb64fbf37b570dc1ec1100, docs/codemap/sequence-flow.md: d6f9852d22fcfb6d912ba803222e5e670c43014294d2cdeab521d2d0b7dd4f16}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Presentation outline
+# todo-api Presentation Outline
 
-A seven-slide walkthrough of `todo-api`, built from the existing codemap documents. All five source artifacts were available.
+## Slide 1: What is todo-api?
 
-## Slide 1: What it is
-`todo-api` is a tiny FastAPI service that creates and lists todos, kept in memory. It is written in Python with `fastapi` and `uvicorn`.
-Show: `design-doc.md` → "Overview"
+- A tiny FastAPI service for managing todos
+- Two endpoints: `POST /todos`, `GET /todos`
+- Run with `uvicorn app.main:app`
 
-## Slide 2: The big picture
-Clients call one HTTP service. Inside, the FastAPI app talks to a module-level list that holds all state.
-Show: `architecture.md` → "Containers" diagram
+## Slide 2: Architecture
 
-## Slide 3: How it is organized
-The code splits into three groups: API, Data and Utilities.
-Show: `mindmap.md` → "Mindmap" diagram
+- Client, then uvicorn, then the FastAPI app in `app/main.py`
+- Data lives in an in-memory list in `app/storage.py`
+- Diagram: Level 2 in `architecture.md`
 
-## Slide 4: How it runs
-`POST /todos` validates the title, takes a timestamp, and asks storage to add the todo. The model asks storage for the next id along the way.
-Show: `sequence-flow.md` → "Create a todo" diagram
+## Slide 3: Code layout
 
-## Slide 5: How the parts depend on each other
-Imports are shallow except for one circular import between `app/storage.py` and `app/models.py`, which the code comments call deliberate.
-Show: `dependency-graph.md` → "Dependency graph" diagram and "Circular dependencies"
+- Five modules in `app/`: main, routes, models, storage, utils
+- Diagram: `mindmap.md`
 
-## Slide 6: Key design choices
-Storage is an in-memory list hidden behind a small module; its rationale is inferred. <!-- codemap:unverified --> (inferred) The cycle between models and storage works only because each uses the other inside functions; the reason for it is inferred. <!-- codemap:unverified --> (inferred)
-Show: `design-doc.md` → "Key design choices"
+## Slide 4: Creating a todo
 
-## Slide 7: Where to start reading
-Start with `README.md`, then `app/main.py`, `app/routes.py` and `app/storage.py`.
-Show: `design-doc.md` → "Reading order (onboarding guide)"
+- Blank titles are rejected with 422
+- Timestamp, id and storage happen in `app/utils.py`, `app/models.py`, `app/storage.py`
+- Diagram: scenario 1 in `sequence-flow.md`
+
+## Slide 5: Watch out for
+
+- `app/models.py` and `app/storage.py` import each other (deliberate cycle), see `dependency-graph.md`
+- Data is lost on restart; ids are `len + 1`
+
+## Slide 6: Where to start reading
+
+- `README.md`, `app/main.py`, `app/routes.py`, `app/storage.py`; full order in `design-doc.md`
 
 ## Not covered
 
-All source files were read, and `app/__init__.py` is empty. There are no tests, config or deployment files, and FastAPI's internal request handling is not traced.
+This outline condenses the existing codemap files and did not re-read the code. Nothing was executed.

@@ -9,29 +9,31 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 
 # Mindmap
 
-The whole `edge-names` project at a glance, grouped by what each file does.
+The whole project at a glance, grouped by what each file does.
 
 ```mermaid
 mindmap
   root((edge-names))
-    a1["Entry point"]
-      a2["src/main.js: loops over items and prints them"]
+    a1["Entry"]
+      a2["src/main.js: prints each item"]
     a3["Data"]
-      a4["src/데이터 로더.js: provides the item list"]
+      a4["src/데이터 로더.js: returns the items"]
         a5["loadItems()"]
     a6["Formatting"]
-      a7["src/my utils.js: text helpers"]
+      a7["src/my utils.js: upper-case + !"]
         a8["shout()"]
 ```
 
-Three groups, one file each; the project has no deeper structure.
+Three groups, one file each; `src/main.js` ties the other two together.
 
 ## Groups
 
-- **Entry point**: `src/main.js` is the program start (`main` in `package.json`).
-- **Data**: `src/데이터 로더.js` returns a copy of a hard-coded array of three strings.
-- **Formatting**: `src/my utils.js` upper-cases text and appends `!`.
+- **Entry** — `src/main.js` loops over the items and logs them.
+- **Data** — `src/데이터 로더.js` holds the hard-coded list `alpha`, `beta`, `gamma` and returns a copy.
+- **Formatting** — `src/my utils.js` upper-cases a string and appends `!`.
+
+No minor items were left out.
 
 ## Not covered
 
-The repository was read completely; nothing was skipped.
+Nothing was skipped; every file in the project was read.

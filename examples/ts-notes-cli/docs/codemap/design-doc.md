@@ -3,40 +3,38 @@ codemap: 1
 skill: design-doc
 generated_at: 2026-11-05
 commit: null
-sources: {src/index.ts: be5d22e51faaa0dc869376308f53f8ca04a5edfa032fdf3d868567f5525ed53a, src/notes-store.ts: aad16c43600df721ab92215cc76da7c55e171174e4d37fb2ae5c9be4d49f5b69, src/user-profile.ts: 967091478d3e5ac4fc90ca6101539d92b9608550ade3c6a5517a19952bbd2993, src/format.ts: 2e6c72e3cdbd0da3428aec6ecdf22be5dfd5c63b01354323ed11473472a8ae26, src/types.ts: b0fbf687bc33cb22134e0f2fc8586140fa07017a3294fc7d8ce61dde9c83df62, package.json: cabefc4d84df127d8c363c8a9257c3815a258930510b4de924fadf0ff55edfee, README.md: ad3e9d59c7f90caab58f57655039b71b09108d4876e83a62570fdae41ee77e70, docs/codemap/architecture.md: 8eca049d68973a1b7ac39eea77daca509e6ad1a05905d4f623f10b2b8e704d62, docs/codemap/dependency-graph.md: 3bb71e17ad5fe3cee22674e271c37e0ca2bd64bd076b498936e5f90b7b310941, docs/codemap/mindmap.md: 5243108c84621bb6d8f58083c9c3a5fdd5a9700e2457183b3afe168527c5a036, docs/codemap/sequence-flow.md: d8efe8e09a4a7166ee56cfb7408f4758aadd1b0126d5e609fa2c84205477e3b3}
+sources: {README.md: ad3e9d59c7f90caab58f57655039b71b09108d4876e83a62570fdae41ee77e70, package.json: cabefc4d84df127d8c363c8a9257c3815a258930510b4de924fadf0ff55edfee, src/index.ts: be5d22e51faaa0dc869376308f53f8ca04a5edfa032fdf3d868567f5525ed53a, src/notes-store.ts: aad16c43600df721ab92215cc76da7c55e171174e4d37fb2ae5c9be4d49f5b69, src/format.ts: 2e6c72e3cdbd0da3428aec6ecdf22be5dfd5c63b01354323ed11473472a8ae26, src/user-profile.ts: 967091478d3e5ac4fc90ca6101539d92b9608550ade3c6a5517a19952bbd2993, src/types.ts: b0fbf687bc33cb22134e0f2fc8586140fa07017a3294fc7d8ce61dde9c83df62, docs/codemap/architecture.md: 65244941c9216c0d9ec17a4f16412cbca94d47d5a984ce52e2f44c954f2fdb1f, docs/codemap/dependency-graph.md: 83dfb3cc76426cf175db0d926f6b78c6592aa785e1c7c26e1ed8c7af296d4b3a, docs/codemap/mindmap.md: 4cd2ca6623fdc5bdfc4b7f3b9ead3eca670be36df5a042fe32af127d9e85c637, docs/codemap/sequence-flow.md: a6c50be6a75847a39133c7678a8617d4a14b6265c2716c1adfd72891b9f3108c}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
 # Design doc and onboarding guide
 
-How `notes-cli` is built, and in what order to read it.
-
 ## Overview
 
-`notes-cli` is a command-line notes tool (`README.md`): `notes add "text"` stores a note and `notes list` prints the stored notes. It is written in TypeScript (strict mode, compiled with `tsc` to CommonJS per `package.json` and `tsconfig.json`) and runs on Node.js through the `notes` bin entry. It has no runtime dependencies; `typescript` is the only dev dependency.
+`notes-cli` is a command-line notes tool, described in `README.md` as `notes add "text"` and `notes list`. It is written in TypeScript and compiled with `tsc` (`package.json`), and it runs on Node.js with `typescript` as its only dependency. Each note has an id, text and author, and the author is taken from the `USER` environment variable.
 
 ## How it is structured
 
-The code is five small files in `src/`: one entry file that dispatches commands, a notes store, a formatter, a user-name helper and a shared type. Diagrams are in `architecture.md` (system, containers, components), `dependency-graph.md` (imports; no cycles), `mindmap.md` (responsibilities) and `sequence-flow.md` (the `add`, `list` and error paths). The import direction is simple: `src/index.ts` → `src/notes-store.ts` → `src/format.ts` → `src/types.ts`, with `src/index.ts` also using `src/user-profile.ts`.
+The project is one process with five small source files under `src/`: an entry file, a store, a formatter, a user-profile helper and a type file. See `architecture.md` for the three zoom levels, `dependency-graph.md` for the imports (no cycles), `mindmap.md` for the grouping and `sequence-flow.md` for the `add`, `list` and error flows. In short, `src/index.ts` calls `src/notes-store.ts` and `src/user-profile.ts`, and the store calls `src/format.ts`.
 
 ## Key design choices
 
-1. **CLI parsing in a single entry file.** `src/index.ts` reads `process.argv`, branches on `add` / `list` and prints usage with exit code 1 otherwise. Effect: no argument-parsing library and one place to look for commands.
-2. **In-memory storage behind a small module.** `src/notes-store.ts` keeps a module-level `notes` array and exposes only `addNote` and `listNotes`. Effect: callers are isolated from storage, but notes vanish when the process ends, so `notes list` in a new run is empty. Reason: not stated anywhere; probably a first version meant to be extended. (inferred) <!-- codemap:unverified -->
-3. **Formatting separated from storage.** `src/format.ts` turns a `Note` into `#id text (author)` and the store maps over it. Effect: display format can change without touching storage.
-4. **Author comes from the environment.** `src/user-profile.ts` returns `process.env.USER` or `"anonymous"`, and `src/index.ts` passes it to `addNote`. Effect: each note records who added it with no login or config.
-5. **One shared type.** `src/types.ts` defines `Note` (`id`, `text`, `author`), imported by the store and the formatter. Effect: the data shape is defined once.
+1. **Notes live in memory behind a small module.** `src/notes-store.ts` keeps a module-level `notes` array and exposes only `addNote` and `listNotes`. Effect: nothing is persisted, so each run of the program starts empty and `notes list` in a new process prints nothing. Reason: not stated in the code. (inferred) <!-- codemap:unverified -->
+2. **Command parsing happens in the entry file.** `src/index.ts` reads `process.argv` directly and branches on `add` and `list`, with no CLI library. Effect: unknown commands print a usage line to standard error and exit with code 1. Reason: not stated in the code. (inferred) <!-- codemap:unverified -->
+3. **Formatting is separate from storage.** `src/format.ts` holds `formatNote`, and the store maps notes through it in `listNotes`. Effect: display format can change without touching storage logic. Reason: not stated in the code. (inferred) <!-- codemap:unverified -->
+4. **One shared `Note` interface.** `src/types.ts` defines it and both `src/notes-store.ts` and `src/format.ts` import it. Effect: the note shape has a single definition. Reason: not stated in the code. (inferred) <!-- codemap:unverified -->
+5. **Author comes from the environment with a fallback.** `src/user-profile.ts` returns `process.env.USER ?? "anonymous"`. Effect: no login or configuration is needed, and the name is `anonymous` when `USER` is unset. Reason: not stated in the code. (inferred) <!-- codemap:unverified -->
 
 ## Reading order (onboarding guide)
 
-1. `README.md` — the two commands the tool supports.
-2. `package.json` — the `notes` bin entry (build output `dist/index.js`) and the `build` script.
-3. `src/index.ts` — where execution starts; see how commands map to calls.
-4. `src/notes-store.ts` — the core logic; note the in-memory array and id scheme (length + 1).
-5. `src/types.ts` — the `Note` shape used everywhere.
-6. `src/format.ts` — how a note becomes a printed line.
-7. `src/user-profile.ts` — the `USER` fallback logic, the only environment access.
+1. `README.md` — the two commands the tool offers.
+2. `package.json` — the `notes` binary points to build output `dist/index.js`, and `npm run build` runs `tsc`.
+3. `src/index.ts` — the entry point; see how `add` and `list` are dispatched and what happens on bad input.
+4. `src/notes-store.ts` — the core logic; note the module-level array and how ids are assigned (`notes.length + 1`).
+5. `src/format.ts` — the one-line output format `#id text (author)`.
+6. `src/types.ts` — the `Note` interface used by the store and formatter.
+7. `src/user-profile.ts` — the smallest file; where the author name comes from.
 
 ## Not covered
 
-All source files, `package.json` and `README.md` were read completely. `tsconfig.json` was only checked for the output folder. There are no tests in the repository, and the build output (`dist/`) does not exist, so neither was examined. Design reasons marked unverified are guesses, not facts from the repository.
+The small repo was read completely except `tsconfig.json`, which was not opened. Nothing is vendored or generated, and no test files exist in the repo.

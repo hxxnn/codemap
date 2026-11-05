@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Sequence flows - todo-api</title>
+<title>todo-api Sequence Flows - todo-api</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -149,7 +149,7 @@
   <div class="cm-main">
     <header class="cm-head">
       <p class="cm-project">todo-api</p>
-      <h1>Sequence flows</h1>
+      <h1>todo-api Sequence Flows</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>5</dd></div>
@@ -157,68 +157,43 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>Three runtime scenarios traced through the code: creating a todo, rejecting an empty title, and listing todos.</p>
-<section class="cm-section"><h2>Create a todo</h2>
-<p>A client sends <code>POST /todos</code> with a non-empty <code>title</code>.</p>
+<section class="cm-section"><h2>Scenario 1: POST /todos (create a todo)</h2>
 <pre class="mermaid">sequenceDiagram
-    participant C as Client
+    participant C as API client
     participant R as app/routes.py
     participant U as app/utils.py
     participant S as app/storage.py
     participant M as app/models.py
     C-&gt;&gt;R: POST /todos (title)
-    R-&gt;&gt;U: now_iso()
-    U--&gt;&gt;R: ISO timestamp
-    R-&gt;&gt;S: add_todo(title.strip(), created_at)
-    S-&gt;&gt;M: Todo.create(title, created_at)
-    M-&gt;&gt;S: next_id()
-    S--&gt;&gt;M: len(_TODOS) + 1
-    M--&gt;&gt;S: Todo
-    S-&gt;&gt;S: _TODOS.append(todo)
-    S--&gt;&gt;R: Todo
-    R-&gt;&gt;R: todo.to_dict()
-    R--&gt;&gt;C: dict</pre>
-<ol>
-<li><code>app/routes.py:create_todo</code> checks the title, then calls <code>now_iso()</code> for the timestamp.</li>
-<li><code>app/utils.py:now_iso</code> returns the current UTC time as an ISO string.</li>
-<li><code>app/storage.py:add_todo</code> asks the model to build the todo.</li>
-<li><code>app/models.py:Todo.create</code> calls <code>app/storage.py:next_id</code> for the id.</li>
-<li><code>app/storage.py:add_todo</code> appends the todo to <code>_TODOS</code> and returns it.</li>
-<li><code>app/routes.py:create_todo</code> returns <code>todo.to_dict()</code> (<code>app/models.py:Todo.to_dict</code>).</li>
-</ol>
-</section>
-<section class="cm-section"><h2>Create a todo with an empty title</h2>
-<p>A client sends <code>POST /todos</code> with a blank <code>title</code>.</p>
-<pre class="mermaid">sequenceDiagram
-    participant C as Client
-    participant R as app/routes.py
-    C-&gt;&gt;R: POST /todos (title)
-    alt not title.strip()
-        R--&gt;&gt;C: HTTPException 422 "title required"
+    alt title is blank
+        R--&gt;&gt;C: 422 title required
+    else title present
+        R-&gt;&gt;U: now_iso()
+        U--&gt;&gt;R: UTC timestamp
+        R-&gt;&gt;S: add_todo(title, created_at)
+        S-&gt;&gt;M: Todo.create(title, created_at)
+        M-&gt;&gt;S: next_id()
+        S--&gt;&gt;M: len(_TODOS) + 1
+        M--&gt;&gt;S: Todo
+        S--&gt;&gt;R: Todo (appended to _TODOS)
+        R--&gt;&gt;C: todo.to_dict()
     end</pre>
-<ol>
-<li><code>app/routes.py:create_todo</code> strips the title and, if it is empty, raises <code>HTTPException(status_code=422, detail="title required")</code>. Storage is never called.</li>
-</ol>
+<p><code>create_todo</code> in <code>app/routes.py</code> rejects a blank title with HTTP 422. Otherwise it stamps the time, and <code>app/storage.py</code> asks <code>app/models.py</code> to build the <code>Todo</code> (which gets its id back from <code>app/storage.py</code>) before appending it to the list.</p>
+<p><span class="cm-unverified">The <code>title</code> argument is a plain <code>str</code> parameter, which FastAPI treats as a query parameter. (framework behavior, not run)</span></p>
 </section>
-<section class="cm-section"><h2>List todos</h2>
-<p>A client sends <code>GET /todos</code>.</p>
+<section class="cm-section"><h2>Scenario 2: GET /todos (list todos)</h2>
 <pre class="mermaid">sequenceDiagram
-    participant C as Client
+    participant C as API client
     participant R as app/routes.py
     participant S as app/storage.py
     C-&gt;&gt;R: GET /todos
     R-&gt;&gt;S: all_todos()
-    S--&gt;&gt;R: list copy of _TODOS
-    R-&gt;&gt;R: t.to_dict() for each todo
-    R--&gt;&gt;C: list of dicts</pre>
-<ol>
-<li><code>app/routes.py:list_todos</code> calls <code>app/storage.py:all_todos</code>, which returns a copy of the list.</li>
-<li><code>app/routes.py:list_todos</code> converts each todo with <code>app/models.py:Todo.to_dict</code> and returns the list.</li>
-</ol>
-<p>Request routing from <code>app/main.py</code> (<code>app.include_router(router)</code>) is done by FastAPI and is not drawn.</p>
+    S--&gt;&gt;R: copy of _TODOS
+    R--&gt;&gt;C: list of to_dict() results</pre>
+<p><code>list_todos</code> in <code>app/routes.py</code> copies the stored list through <code>all_todos()</code> and returns each todo as a dict.</p>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All source files were read; <code>app/__init__.py</code> is empty. FastAPI's internal request handling is not traced.</p>
+<p>All modules on both paths were read. Nothing was executed, so the HTTP-level behavior (status codes, parameter parsing) comes from reading the code only.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

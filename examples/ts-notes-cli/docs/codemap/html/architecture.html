@@ -157,54 +157,54 @@
       </dl>
     </header>
 <main id="cm-main">
-<p><code>notes-cli</code> is a small TypeScript command-line notes tool, shown here at three zoom levels.</p>
+<p><code>notes-cli</code> is a small TypeScript command-line notes tool (<code>package.json</code> declares the <code>notes</code> binary as build output <code>dist/index.js</code>), shown here at three zoom levels.</p>
 <section class="cm-section"><h2>Level 1: System context</h2>
 <pre class="mermaid">flowchart LR
-  n1["User (terminal)"]:::external
-  n2["notes-cli (package.json)"]
-  n3["Environment variable USER"]:::external
-  n1 --&gt;|"notes add / notes list"| n2
-  n2 --&gt;|"reads process.env.USER"| n3
+  u["Terminal user"]:::external
+  env["Environment variable USER"]:::external
+  sys["notes-cli (notes add / notes list)"]
+  u --&gt;|"runs commands"| sys
+  env --&gt;|"author name"| sys
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>A person runs the <code>notes</code> command; the tool reads the <code>USER</code> environment variable (<code>src/user-profile.ts</code>) and has no other external system.</p>
+<p>A person runs <code>notes add</code> or <code>notes list</code> in a terminal, and the tool reads the <code>USER</code> environment variable (<code>src/user-profile.ts</code>) to name the author.</p>
 </section>
 <section class="cm-section"><h2>Level 2: Containers</h2>
 <pre class="mermaid">flowchart LR
-  n1["User (terminal)"]:::external
-  n2["notes CLI process: Node.js / TypeScript (src/)"]
-  n3["In-memory array of notes (src/notes-store.ts)"]
-  n1 --&gt;|"argv"| n2
-  n2 --&gt;|"addNote / listNotes"| n3
+  u["Terminal user"]:::external
+  env["Environment variable USER"]:::external
+  subgraph sys["notes-cli"]
+    cli["CLI process (Node.js + TypeScript, src/)"]
+  end
+  u --&gt;|"argv: add / list"| cli
+  env --&gt;|"process.env.USER"| cli
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>There is one deployable unit, a Node.js CLI (<code>bin</code> entry <code>notes</code> → build output <code>dist/index.js</code>); its only store is a module-level array inside the same process, not a database.</p>
+<p>There is a single container: one Node.js process started from <code>src/index.ts</code>; notes live in a module-level array inside that process (<code>src/notes-store.ts</code>), so nothing is saved to disk or to a database and each run starts empty.</p>
 </section>
 <section class="cm-section"><h2>Level 3: Components</h2>
-<pre class="mermaid">flowchart TD
-  subgraph cli["CLI layer"]
-    idx["Entry and command dispatch (src/index.ts)"]
+<pre class="mermaid">flowchart LR
+  subgraph entry["Entry"]
+    idx["CLI entry (src/index.ts)"]
   end
-  subgraph logic["Logic layer"]
+  subgraph logic["Logic"]
     store["Notes store (src/notes-store.ts)"]
-    user["User profile (src/user-profile.ts)"]
     fmt["Formatter (src/format.ts)"]
+    prof["User profile (src/user-profile.ts)"]
   end
-  subgraph shared["Shared types"]
-    types["Note interface (src/types.ts)"]
+  subgraph shared["Shared"]
+    types["Note type (src/types.ts)"]
   end
+  env["Environment variable USER"]:::external
   idx --&gt;|"addNote, listNotes"| store
-  idx --&gt;|"currentUser"| user
+  idx --&gt;|"currentUser"| prof
   store --&gt;|"formatNote"| fmt
-  store --&gt;|"type Note"| types
-  fmt --&gt;|"type Note"| types</pre>
-<p><code>src/index.ts</code> parses the command and delegates; <code>src/notes-store.ts</code> owns the data and uses <code>src/format.ts</code> to turn notes into display lines, with <code>src/types.ts</code> defining the shared <code>Note</code> shape.</p>
-</section>
-<section class="cm-section"><h2>Notes</h2>
-<ul>
-<li>Because <code>notes</code> is a module-level array in <code>src/notes-store.ts</code> with no file or database code anywhere in the project, notes live only for the lifetime of one process. Two separate <code>notes</code> invocations do not share data.</li>
-</ul>
+  store --&gt;|"Note"| types
+  fmt --&gt;|"Note"| types
+  env --&gt;|"read"| prof
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p><code>src/index.ts</code> parses the command and delegates to the store and the user profile, while the store uses the formatter to turn notes into display lines and all three share the <code>Note</code> interface.</p>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All five files under <code>src/</code>, <code>package.json</code> and <code>README.md</code> were read completely. <code>tsconfig.json</code> was only skimmed for the output folder. Build output (<code>dist/</code>) does not exist in the repo and was not examined.</p>
+<p>The small repo was read completely, except <code>tsconfig.json</code>, which was not opened, so compiler settings are not described. Nothing is vendored, and the build output folder dist/ does not exist in the repo.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

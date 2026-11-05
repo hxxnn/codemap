@@ -9,34 +9,34 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 
 # Sequence flows
 
-The program has one runtime scenario, so a single flow is shown: running the script.
+The project has one runtime path, so one scenario is traced; there is no storage, network or error handling to add a second or third.
 
-## Run `node src/main.js`
+## Running the script
 
-The user starts the script from a terminal; it loads the items and prints each one shouted.
+The developer runs `node src/main.js`, the only entry point.
 
 ```mermaid
 sequenceDiagram
-  participant U as Terminal user
   participant M as src/main.js
   participant L as src/데이터 로더.js
-  participant S as src/my utils.js
-  participant O as stdout
-  U->>M: node src/main.js
+  participant U as src/my utils.js
+  participant C as stdout
   M->>L: loadItems()
-  L-->>M: copy of ["alpha","beta","gamma"]
+  L-->>M: copy of the items array
   loop for each item
-    M->>S: shout(item)
-    S-->>M: item upper-cased + "!"
-    M->>O: console.log(result)
+    M->>U: shout(item)
+    U-->>M: upper-cased text + "!"
+    M->>C: console.log(...)
   end
 ```
+
+The loader returns a copy of its three items, and the entry file formats and prints each one in turn.
 
 1. Module load: `src/main.js` requires `shout` and `loadItems` (`src/main.js:require`).
 2. `loadItems()` returns `items.slice()` (`src/데이터 로더.js:loadItems`).
 3. For each item, `shout(item)` returns `text.toUpperCase() + "!"` (`src/my utils.js:shout`).
-4. `console.log` prints `ALPHA!`, `BETA!`, `GAMMA!` (`src/main.js:console.log`).
+4. The result is printed with `console.log` (`src/main.js:console.log`).
 
 ## Not covered
 
-The repository was read completely. Only one scenario exists; there is no error handling or other branch in the code.
+Nothing was skipped; every function on the path was read. Output was derived from the code and the script was not executed.

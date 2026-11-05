@@ -9,7 +9,7 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 
 # Dependency graph
 
-Each arrow points from the file that `require`s to the file it requires, based on the `require(...)` statements in the three source files.
+Each arrow points from the file that `require`s to the file it requires; only imports found in the code are drawn.
 
 ```mermaid
 flowchart LR
@@ -20,17 +20,17 @@ flowchart LR
   n1 --> n3
 ```
 
-`src/main.js` is the only importer; the two helper files import nothing.
+`src/main.js` is the only file with imports; the other two files import nothing.
 
 ## Circular dependencies
 
-None found: `src/my utils.js` and `src/데이터 로더.js` contain no `require` statements, and there are no self-imports.
+None found. `src/my utils.js` and `src/데이터 로더.js` have no `require` statements, so no cycle is possible.
 
 ## Most depended-on files
 
-- `src/my utils.js`: 1 incoming edge (from `src/main.js`)
-- `src/데이터 로더.js`: 1 incoming edge (from `src/main.js`)
+- `src/my utils.js` — 1 incoming edge (from `src/main.js`)
+- `src/데이터 로더.js` — 1 incoming edge (from `src/main.js`)
 
 ## Not covered
 
-All source files were read completely; there are no dynamic imports. Nothing was skipped.
+Nothing was skipped; all source files were read. No dynamic imports were found.

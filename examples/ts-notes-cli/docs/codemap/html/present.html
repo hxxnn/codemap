@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Presentation outline - notes-cli</title>
+<title>Presentation outline: notes-cli - notes-cli</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -149,7 +149,7 @@
   <div class="cm-main">
     <header class="cm-head">
       <p class="cm-project">notes-cli</p>
-      <h1>Presentation outline</h1>
+      <h1>Presentation outline: notes-cli</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -157,37 +157,38 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>A seven-slide walkthrough of <code>notes-cli</code>, built only from the existing codemap artifacts (all five were available).</p>
+<p>A seven-slide walkthrough built from the five existing codemap artifacts; none were missing.</p>
 <section class="cm-section"><h2>Slide 1: What it is</h2>
-<p>A small TypeScript command-line notes tool with two commands, <code>notes add</code> and <code>notes list</code>, running on Node.js with no runtime dependencies.</p>
+<p><code>notes-cli</code> is a small command-line notes tool written in TypeScript on Node.js, with <code>notes add</code> and <code>notes list</code> commands.</p>
 <p>Show: <code>design-doc.md</code> → "Overview"</p>
 </section>
 <section class="cm-section"><h2>Slide 2: The big picture</h2>
-<p>One Node.js process talks to the user's terminal and keeps its notes in an in-memory array inside the same process; there is no database.</p>
+<p>The tool is a single Node.js process: a user runs a command and the process reads the <code>USER</code> environment variable to name the author.</p>
 <p>Show: <code>architecture.md</code> → "Level 2: Containers" diagram</p>
 </section>
 <section class="cm-section"><h2>Slide 3: How it is organized</h2>
-<p>Five small files, one responsibility each: CLI, storage, presentation, identity and types.</p>
-<p>Show: <code>mindmap.md</code> → "Mindmap" diagram</p>
+<p>Five small source files fall into five groups: CLI, Storage, Presentation, Identity and Types.</p>
+<p>Show: <code>mindmap.md</code> → the mindmap diagram</p>
 </section>
 <section class="cm-section"><h2>Slide 4: How it runs</h2>
-<p><code>notes add</code> reads the user name, then stores a note; <code>notes list</code> formats every stored note and prints it.</p>
-<p>Show: <code>sequence-flow.md</code> → "Scenario 1: <code>notes add &lt;text&gt;</code>" diagram</p>
+<p>For <code>notes add</code>, the entry file asks for the current user, then hands the text and author to the store.</p>
+<p>Show: <code>sequence-flow.md</code> → "The add command" diagram</p>
 </section>
 <section class="cm-section"><h2>Slide 5: How the parts depend on each other</h2>
-<p>Imports flow one way from <code>src/index.ts</code> down to <code>src/types.ts</code>, and there are no circular dependencies.</p>
-<p>Show: <code>dependency-graph.md</code> → "Dependency graph" diagram and "Circular dependencies"</p>
+<p>Imports flow one way from <code>src/index.ts</code> down to <code>src/types.ts</code>, and no circular dependencies were found.</p>
+<p>Show: <code>dependency-graph.md</code> → the flowchart and "Circular dependencies"</p>
 </section>
 <section class="cm-section"><h2>Slide 6: Key design choices</h2>
-<p>Commands are parsed in a single entry file, and storage sits behind a small module with only <code>addNote</code> and <code>listNotes</code>. Notes are lost when the process ends; <span class="cm-unverified">the reason for in-memory storage is a guess, not stated in the repository. (inferred)</span></p>
+<p>Notes are kept in a module-level array, so they are not saved between runs. <span class="cm-unverified">The reason for this is not stated in the code. (inferred)</span></p>
+<p>Command parsing is done by hand in the entry file, with a usage message and exit code 1 for unknown commands. <span class="cm-unverified">The reason is not stated in the code. (inferred)</span></p>
 <p>Show: <code>design-doc.md</code> → "Key design choices"</p>
 </section>
 <section class="cm-section"><h2>Slide 7: Where to start reading</h2>
-<p>Start with <code>README.md</code>, then <code>package.json</code>, then <code>src/index.ts</code>, then <code>src/notes-store.ts</code>.</p>
+<p>Start with <code>README.md</code>, then <code>package.json</code>, then <code>src/index.ts</code> and <code>src/notes-store.ts</code>.</p>
 <p>Show: <code>design-doc.md</code> → "Reading order (onboarding guide)"</p>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>Taken from the artifacts' own footers: all source files, <code>package.json</code> and <code>README.md</code> were read completely; <code>tsconfig.json</code> was only skimmed; there are no tests and no build output (<code>dist/</code>) in the repository.</p>
+<p>The small repo was read completely except <code>tsconfig.json</code>, which was not opened. Nothing is vendored or generated, and no test files exist in the repo.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>
