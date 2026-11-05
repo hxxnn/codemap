@@ -3,12 +3,12 @@
   "owner": {
     "name": "hxxnn"
   },
-  "description": "codemap: turn a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc.",
+  "description": "codemap: turn a codebase into architecture diagrams, dependency graphs, structure trees, sequence flows and an onboarding doc.",
   "plugins": [
     {
       "name": "codemap",
       "source": "./",
-      "description": "Maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc (Mermaid Markdown plus interactive HTML)."
+      "description": "Maps a codebase into architecture diagrams, dependency graphs, structure trees, sequence flows and an onboarding doc (Mermaid Markdown plus interactive HTML)."
     }
   ]
 }

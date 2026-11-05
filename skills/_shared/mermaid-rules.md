@@ -2,7 +2,7 @@
 
 ## Allowed diagram types
 - `flowchart TD` / `flowchart LR` — architecture levels (C4 is drawn as flowcharts with `subgraph`s) and dependency graphs
-- `mindmap` — project mindmap
+- `mindmap` — no longer produced by codemap (the structure overview is a tree list); kept here only for diagrams a user asks for
 - `sequenceDiagram` — runtime scenarios
 
 Do not use other diagram types (they render inconsistently across GitHub, Claude and the HTML template).

@@ -1,4 +1,4 @@
-/* codemap html assets v3 */
+/* codemap html assets v4 */
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
     --ink: #141a26; --text: #39435a; --muted: #5b677f; --rule: #dce0e8;
@@ -120,6 +120,23 @@
   .cm-presenting .cm-slide .cm-viewport { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 12px; }
   .cm-presenting .cm-slide .cm-viewport pre.mermaid { width: 100%; max-width: 100%; }
   .cm-presenting .cm-slide .cm-viewport pre.mermaid svg { display: block; margin: 0 auto; height: 46vh; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
+
+  /* structure tree (mindmap.md): a nested list that the page script turns into a collapsible tree */
+  ul.cm-tree, ul.cm-tree ul { list-style: none; margin: 0; padding: 0; }
+  ul.cm-tree ul { margin: 2px 0 2px 11px; padding-left: 22px; border-left: 1px solid var(--rule); }
+  ul.cm-tree li { margin: 0; padding: 3px 0; }
+  ul.cm-tree summary, ul.cm-tree .cm-leaf { padding: 5px 8px 5px 0; border-radius: 8px; line-height: 1.55; }
+  ul.cm-tree .cm-leaf { padding-left: 24px; }
+  ul.cm-tree summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; }
+  ul.cm-tree summary::-webkit-details-marker { display: none; }
+  ul.cm-tree summary::before { content: "▸"; flex: none; width: 16px; color: var(--muted); transition: transform .12s; }
+  ul.cm-tree details[open] > summary::before { transform: rotate(90deg); }
+  ul.cm-tree summary:hover, ul.cm-tree .cm-leaf:hover { background: var(--accent-soft); }
+  ul.cm-tree > li > details > summary, ul.cm-tree > li > .cm-leaf { font-size: 1.05em; }
+  ul.cm-tree strong { color: var(--ink); font-weight: 680; }
+  .cm-tree-tools { display: flex; gap: 8px; margin: 4px 0 14px; }
+  .cm-presenting .cm-slide ul.cm-tree { font-size: clamp(16px, 1.7vw, 24px); max-height: 52vh; overflow: auto; }
+  .cm-presenting .cm-tree-tools { display: none; }
 
   footer.cm-foot { max-width: 62rem; margin: 56px auto 0; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13.5px; }
 

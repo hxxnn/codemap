@@ -242,3 +242,12 @@ def test_html_must_have_the_asset_files_it_links_to(tmp_path):
     (html_dir / "assets" / "codemap.css").write_text("/* css */")
     (html_dir / "assets" / "codemap.js").write_text("/* js */")
     assert co.check_html(page) == []
+
+
+def test_mindmap_tree_needs_no_diagram_but_its_paths_are_still_checked(tmp_path):
+    fx = fixture(tmp_path)
+    tree = "- **proj**: demo\n  - **Core**: logic\n    - `src/real.py`: the code\n"
+    ok = write(tmp_path, "m.md", tree, skill="mindmap")
+    assert co.check_file(ok, fx) == []
+    bad = write(tmp_path, "n.md", tree + "    - `src/ghost.py`: made up\n", skill="mindmap")
+    assert any("src/ghost.py" in p for p in co.check_file(bad, fx))

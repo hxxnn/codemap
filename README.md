@@ -1,6 +1,6 @@
 # codemap
 
-> 어떤 코드베이스든 아키텍처 다이어그램, 의존성 그래프, 마인드맵, 실행 흐름, 온보딩 가이드로 바꿔 줍니다. **"이렇게 만들었다"를 다른 사람에게 설명**할 때 쓰세요.
+> 어떤 코드베이스든 아키텍처 다이어그램, 의존성 그래프, 구조 트리, 실행 흐름, 온보딩 가이드로 바꿔 줍니다. **"이렇게 만들었다"를 다른 사람에게 설명**할 때 쓰세요.
 
 [English README](README.en.md)
 
@@ -68,7 +68,7 @@ python3 codemap/scripts/install_into_project.py /path/to/your/project
 |---|---|---|
 | `/codemap architecture` | `architecture-overview` | `architecture.md` — 시스템 → 컨테이너 → 컴포넌트 순으로 확대하는 C4 방식 |
 | `/codemap deps` | `dependency-graph` | `dependency-graph.md` — 실제 import 기반 그래프, 순환 의존 표시 |
-| `/codemap mindmap` | `mindmap` | `mindmap.md` — 폴더와 기능을 하나의 마인드맵으로 |
+| `/codemap mindmap` | `mindmap` | `mindmap.md` — 기능·파일·함수를 접고 펼 수 있는 구조 트리로 |
 | `/codemap sequence` | `sequence-flow` | `sequence-flow.md` — 코드를 따라가며 그린 실행 흐름 2~3개 |
 | `/codemap doc` | `design-doc` | `design-doc.md` — 설계 개요, 핵심 선택, "이 순서로 읽으세요" 가이드 |
 | `/codemap present` | `present` | `present.md` — 다른 결과물로 만든 5~7장 발표 개요 |

@@ -1,6 +1,6 @@
 # codemap
 
-> Turn any codebase into architecture diagrams, dependency graphs, a mindmap, sequence flows and an onboarding guide — so you can **explain how it is built** to other people.
+> Turn any codebase into architecture diagrams, dependency graphs, a structure tree, sequence flows and an onboarding guide — so you can **explain how it is built** to other people.
 
 [한국어 README](README.md)
 
@@ -68,7 +68,7 @@ Then commit and push the project's `.claude/` folder. In a cloud session on that
 |---|---|---|
 | `/codemap architecture` | `architecture-overview` | `architecture.md` — system context → containers → components (C4-style zoom) |
 | `/codemap deps` | `dependency-graph` | `dependency-graph.md` — real import graph, circular dependencies flagged |
-| `/codemap mindmap` | `mindmap` | `mindmap.md` — folders and features as one mindmap |
+| `/codemap mindmap` | `mindmap` | `mindmap.md` — features, files and functions as a collapsible structure tree |
 | `/codemap sequence` | `sequence-flow` | `sequence-flow.md` — 2–3 runtime scenarios traced through the code |
 | `/codemap doc` | `design-doc` | `design-doc.md` — design overview, key choices, "read these files in this order" |
 | `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |

@@ -61,6 +61,18 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
     const total = await page.locator('.cm-section').count();
     expect((await page.locator('.cm-section[hidden]').count()) === total, 'filter hides every section when nothing matches');
     await page.fill('#cm-search', '');
+    // structure tree: collapse all / expand all
+    if ((await page.locator('ul.cm-tree').count()) > 0) {
+      await page.evaluate(() => document.querySelectorAll('.cm-section.collapsed').forEach((sec) => sec.classList.remove('collapsed')));
+      const total = await page.locator('ul.cm-tree details').count();
+      await page.getByRole('button', { name: /모두 접기|Collapse all/ }).first().click();
+      const closed = await page.locator('ul.cm-tree details:not([open])').count();
+      await page.getByRole('button', { name: /모두 펼치기|Expand all/ }).first().click();
+      const opened = await page.locator('ul.cm-tree details[open]').count();
+      result.tree = { nodes: total, closedAfterCollapse: closed, openAfterExpand: opened };
+      expect(total > 0 && closed === total, 'tree: collapse all closes every node');
+      expect(opened === total, 'tree: expand all opens every node');
+    }
     // print layout: no diagram may be wider than the page, and the legend must stay visible
     await page.emulateMedia({ media: 'print' });
     await page.setViewportSize({ width: 700, height: 900 }); // about the printable width of A4

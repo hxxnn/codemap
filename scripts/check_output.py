@@ -14,7 +14,7 @@ import tempfile
 from pathlib import Path
 
 REQUIRED_KEYS = ("codemap", "skill", "generated_at", "sources")
-NO_DIAGRAM_SKILLS = {"design-doc", "present"}
+NO_DIAGRAM_SKILLS = {"design-doc", "present", "mindmap"}  # mindmap is a tree list, not a diagram
 SOURCE_EXTS = (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".md", ".json", ".toml")
 UNVERIFIED = "<!-- codemap:unverified -->"
 # Generated/vendored folders legitimately do not exist in a fresh checkout.
