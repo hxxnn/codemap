@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sequence flows</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --text: #1d2327; --muted: #5b6770;
+    --border: #d9dde0; --accent: #2457c5; --accent-text: #ffffff; --mark: #fff2a8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171a; --surface: #1d2226; --text: #e6e9eb; --muted: #9aa5ad;
+      --border: #333b41; --accent: #7aa2ff; --accent-text: #0d1117; --mark: #5a4b00;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171a; --surface: #1d2226; --text: #e6e9eb; --muted: #9aa5ad;
+    --border: #333b41; --accent: #7aa2ff; --accent-text: #0d1117; --mark: #5a4b00;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans KR", sans-serif; }
+  header.cm-top { position: sticky; top: 0; z-index: 5; background: var(--surface);
+                  border-bottom: 1px solid var(--border); padding: 12px 16px; }
+  .cm-top-inner { max-width: 1040px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .cm-top h1 { font-size: 1.1rem; margin: 0; flex: 1 1 200px; }
+  .cm-top input[type=search] { flex: 1 1 220px; min-width: 0; padding: 8px 10px; font: inherit;
+    color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+  main { max-width: 1040px; margin: 0 auto; padding: 16px; }
+  .cm-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+                margin: 0 0 16px; padding: 4px 16px 12px; }
+  .cm-section > h2 { font-size: 1.15rem; margin: 12px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .cm-section[hidden] { display: none; }
+  .cm-section.collapsed > :not(h2) { display: none; }
+  button.cm-btn { font: inherit; font-size: .85rem; padding: 4px 10px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+  button.cm-btn:hover, button.cm-btn:focus-visible { border-color: var(--accent); outline: none; }
+  figure.cm-diagram { margin: 12px 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .cm-toolbar { display: flex; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .cm-viewport { overflow: auto; max-height: 70vh; padding: 12px; }
+  .cm-viewport pre.mermaid { margin: 0; transform-origin: top left; background: transparent; }
+  code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: .9em; }
+  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  mark { background: var(--mark); color: inherit; }
+  .cm-unverified { color: var(--muted); font-style: italic; }
+  footer { max-width: 1040px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<header class="cm-top">
+  <div class="cm-top-inner">
+    <h1>Sequence flows</h1>
+    <input type="search" id="cm-search" placeholder="Search / 검색" aria-label="Search">
+    <button class="cm-btn" id="cm-theme" type="button" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+<main id="cm-main">
+<p>Three scenarios traced through the code: <code>notes add</code>, <code>notes list</code>, and an unknown command. They were chosen as the write path, the read path and the only error path in <code>src/index.ts</code>.</p>
+<section class="cm-section"><h2>notes add</h2>
+<p>Trigger: the user runs <code>notes add &lt;text&gt;</code>.</p>
+<pre class="mermaid">sequenceDiagram
+  participant U as User
+  participant I as src/index.ts
+  participant P as src/user-profile.ts
+  participant S as src/notes-store.ts
+  U-&gt;&gt;I: notes add text
+  I-&gt;&gt;P: currentUser()
+  P--&gt;&gt;I: USER or "anonymous"
+  I-&gt;&gt;S: addNote(text, author)
+  S-&gt;&gt;S: push Note into notes array</pre>
+<p>The text is the remaining arguments joined by spaces, and the new note is appended to the in-memory array.</p>
+<ol>
+<li><code>src/index.ts:top level</code> reads <code>process.argv</code>, matches <code>command === "add"</code>, and joins the remaining args.</li>
+<li><code>src/user-profile.ts:currentUser</code> returns <code>process.env.USER ?? "anonymous"</code>.</li>
+<li><code>src/notes-store.ts:addNote</code> builds <code>{ id, text, author }</code> with <code>id = notes.length + 1</code> and pushes it.</li>
+</ol>
+<p>Nothing is printed on success, because <code>src/index.ts</code> ignores the returned <code>Note</code>.</p>
+</section>
+<section class="cm-section"><h2>notes list</h2>
+<p>Trigger: the user runs <code>notes list</code>.</p>
+<pre class="mermaid">sequenceDiagram
+  participant U as User
+  participant I as src/index.ts
+  participant S as src/notes-store.ts
+  participant F as src/format.ts
+  U-&gt;&gt;I: notes list
+  I-&gt;&gt;S: listNotes()
+  loop each note
+    S-&gt;&gt;F: formatNote(note)
+    F--&gt;&gt;S: "#id text (author)"
+  end
+  S--&gt;&gt;I: string array
+  I-&gt;&gt;U: console.log per line</pre>
+<p>Each stored note is formatted into one line and printed.</p>
+<ol>
+<li><code>src/index.ts:top level</code> matches <code>command === "list"</code>.</li>
+<li><code>src/notes-store.ts:listNotes</code> maps <code>formatNote</code> over the notes array.</li>
+<li><code>src/format.ts:formatNote</code> returns <code>#${id} ${text} (${author})</code>.</li>
+<li><code>src/index.ts:top level</code> prints each line with <code>console.log</code>.</li>
+</ol>
+<p>Because the array is in memory only, a fresh process always lists nothing.</p>
+</section>
+<section class="cm-section"><h2>Unknown command</h2>
+<p>Trigger: the user runs <code>notes</code> with no command or an unknown one.</p>
+<pre class="mermaid">sequenceDiagram
+  participant U as User
+  participant I as src/index.ts
+  U-&gt;&gt;I: notes other
+  I-&gt;&gt;U: console.error usage message
+  I-&gt;&gt;I: process.exit(1)</pre>
+<p>The usage line goes to stderr and the process exits with code 1.</p>
+<ol>
+<li><code>src/index.ts:top level</code> falls through to the <code>else</code> branch, prints <code>usage: notes add &lt;text&gt; | notes list</code>, and exits with status 1.</li>
+</ol>
+</section>
+<section class="cm-section"><h2>Not covered</h2>
+<p>Nothing was skipped; all source files on these paths were read. Node's own <code>process</code> and <code>console</code> internals are library boundaries and were not traced.</p>
+</section>
+</main>
+<footer>Generated by codemap</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var dark = function () {
+    var t = root.getAttribute("data-theme");
+    return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+  var scale = new WeakMap();
+
+  function wrapDiagrams() {
+    document.querySelectorAll("pre.mermaid").forEach(function (pre) {
+      var fig = document.createElement("figure");
+      fig.className = "cm-diagram";
+      var bar = document.createElement("div");
+      bar.className = "cm-toolbar";
+      var view = document.createElement("div");
+      view.className = "cm-viewport";
+      pre.parentNode.insertBefore(fig, pre);
+      fig.appendChild(bar); fig.appendChild(view); view.appendChild(pre);
+      scale.set(pre, 1);
+      [["＋", 0.15], ["－", -0.15], ["100%", 0]].forEach(function (b) {
+        var btn = document.createElement("button");
+        btn.type = "button"; btn.className = "cm-btn"; btn.textContent = b[0];
+        btn.setAttribute("aria-label", b[0] === "100%" ? "Reset zoom" : b[1] > 0 ? "Zoom in" : "Zoom out");
+        btn.addEventListener("click", function () {
+          var s = b[1] === 0 ? 1 : Math.min(3, Math.max(0.3, scale.get(pre) + b[1]));
+          scale.set(pre, s); pre.style.transform = "scale(" + s + ")";
+        });
+        bar.appendChild(btn);
+      });
+    });
+  }
+
+  function makeSectionsCollapsible() {
+    document.querySelectorAll(".cm-section > h2").forEach(function (h) {
+      var btn = document.createElement("button");
+      btn.type = "button"; btn.className = "cm-btn"; btn.textContent = "▾";
+      btn.setAttribute("aria-label", "Collapse section");
+      btn.addEventListener("click", function () {
+        var sec = h.parentNode, c = sec.classList.toggle("collapsed");
+        btn.textContent = c ? "▸" : "▾";
+      });
+      h.insertBefore(btn, h.firstChild);
+    });
+  }
+
+  function setupSearch() {
+    var input = document.getElementById("cm-search");
+    input.addEventListener("input", function () {
+      var q = input.value.trim().toLowerCase();
+      document.querySelectorAll(".cm-section").forEach(function (sec) {
+        sec.hidden = q !== "" && sec.textContent.toLowerCase().indexOf(q) === -1;
+      });
+    });
+  }
+
+  document.getElementById("cm-theme").addEventListener("click", function () {
+    root.setAttribute("data-theme", dark() ? "light" : "dark");
+  });
+
+  wrapDiagrams(); makeSectionsCollapsible(); setupSearch();
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, theme: dark() ? "dark" : "default", securityLevel: "strict" });
+    mermaid.run({ querySelector: "pre.mermaid" });
+  }
+})();
+</script>
+</body>
+</html>

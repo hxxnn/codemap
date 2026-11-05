@@ -1,6 +1,9 @@
 {
   "name": "codemap",
-  "owner": { "name": "codemap authors" },
+  "owner": {
+    "name": "codemap authors"
+  },
+  "description": "codemap: turn a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc.",
   "plugins": [
     {
       "name": "codemap",
