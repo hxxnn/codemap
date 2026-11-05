@@ -64,6 +64,7 @@ Claude Code에서:
 
 - [`examples/python-todo-api/docs/codemap/`](examples/python-todo-api/docs/codemap/)
 - [`examples/ts-notes-cli/docs/codemap/`](examples/ts-notes-cli/docs/codemap/)
+- [`examples/edge-names/docs/codemap/`](examples/edge-names/docs/codemap/) — 공백과 한글이 들어간 파일 이름
 
 ## 디자인 바꾸기
 

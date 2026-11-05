@@ -64,6 +64,7 @@ Generated from the small sample projects in this repository:
 
 - [`examples/python-todo-api/docs/codemap/`](examples/python-todo-api/docs/codemap/)
 - [`examples/ts-notes-cli/docs/codemap/`](examples/ts-notes-cli/docs/codemap/)
+- [`examples/edge-names/docs/codemap/`](examples/edge-names/docs/codemap/) — file names with spaces and non-ASCII characters
 
 ## Customize the look
 
