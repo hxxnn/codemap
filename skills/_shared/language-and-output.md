@@ -51,3 +51,13 @@ Every generated file ends with a short section naming `unread_scope` in the user
 
 ## Large repositories
 Do not try to read everything. Start from `entry_points`, follow imports along the main paths, skip generated/vendored/build folders, and record what was skipped in `unread_scope`.
+
+## HTML output (only when the user passes `--html` or asks for HTML)
+1. Read `html-template.html` (same folder as this file). Never edit the template itself; write a new file at `docs/codemap/html/<artifact-name>.html` containing the template with three placeholders replaced: `{{LANG}}` (language code of the output, e.g. `ko`, `en`), `{{TITLE}}` (the artifact's title), `{{CONTENT}}` (below). Keep everything else byte-for-byte, including the pinned Mermaid script tag. **Create the file directly with the Write tool** (the full template text with the placeholders filled in). Do not write or run helper scripts (Python, Node, shell) to assemble it: the user's environment may not allow running them.
+2. Build `{{CONTENT}}` from the artifact you just wrote, same text and same diagrams:
+   - each `##` section becomes `<section class="cm-section"><h2>…</h2>…</section>` (an `#` title is the page title, not a section)
+   - each Mermaid diagram becomes `<pre class="mermaid">…</pre>` with the diagram source **HTML-escaped** (`&` `<` `>`); the template script adds the zoom toolbar and renders it
+   - paragraphs `<p>`, lists `<ul>/<ol>`, tables `<table>`, inline code `<code>`
+   - a line carrying `<!-- codemap:unverified -->` keeps its visible label and is wrapped in `<span class="cm-unverified">`
+3. The HTML must say the same thing as the Markdown: no extra claims, no dropped sections, and no external resources other than the template's own script tag.
+4. Overwrite rule from "Where output goes" applies to HTML files too.
