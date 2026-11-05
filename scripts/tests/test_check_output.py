@@ -118,3 +118,9 @@ def test_source_hashes_must_be_sha256(tmp_path):
     bad = tmp_path / "bad.md"
     bad.write_text(FM.replace("sources: {{}}", "sources: {{src/real.py: null}}").format(skill="architecture-overview") + BLOCK)
     assert any("sha256" in p for p in co.check_file(bad, fx))
+
+
+def test_http_routes_are_not_file_paths(tmp_path):
+    fx = fixture(tmp_path)
+    md = write(tmp_path, "a.md", BLOCK + "Handles `POST /todos`-style routes at `/todos` and `/api/v1/items`.\n")
+    assert co.check_file(md, fx) == []
