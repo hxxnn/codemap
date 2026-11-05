@@ -19,6 +19,8 @@ The project summary from `/codemap` (languages, frameworks, entry_points, core_m
 2. **Containers** — the separately running or deployable parts inside the system (web app, API service, CLI, worker, database). One box per container, labelled with its technology and the folder it lives in.
 3. **Components** — the building blocks inside the *most central* container (the one holding the entry point and most logic): modules/packages and their responsibilities, with arrows for the main calls or imports. Use `subgraph` for layers.
 
+Draw all three levels as `flowchart LR` so arrows enter a group from its side; in a top-down chart an arrow that enters a group from above runs across the group's title. Put layers side by side (left to right), not stacked.
+
 Each level is a separate ```` ```mermaid ```` `flowchart` followed by a one-sentence caption.
 
 ## Evidence rules

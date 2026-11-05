@@ -19,7 +19,7 @@ The project summary from `/codemap` (Run the **Preflight** in `../_shared/langua
 2. **Open each file and read its import/require/use statements.** Edges come only from statements you actually read — never from file names, folder names or guesses. Ignore third-party packages; keep only imports that resolve to files inside the project. Handle the language's forms (`import x from "./y"`, `from app import models`, `require(...)`, `use crate::...`, Go package imports).
 3. Build the graph: one node per file (id `n1`, `n2`, … ; quoted label with the repo-relative path), one edge per import, pointing from importer to imported.
 4. **More than 30 nodes** → group files by folder with `subgraph` and draw edges between folders, listing the heaviest file-level edges in a table below.
-5. **Circular dependencies:** find the strongly connected components with more than one file, plus self-imports. Do not enumerate every possible cycle (that explodes on big graphs). For each component keep one shortest example cycle. Draw the edges inside a component with a distinct style (`linkStyle <index> stroke:#C62F3E,stroke-width:3px`) and report each component once.
+5. **Circular dependencies:** find the strongly connected components with more than one file, plus self-imports. Do not enumerate every possible cycle (that explodes on big graphs). For each component keep one shortest example cycle. Write those edges first in the flowchart (so they are `linkStyle 0`, `1`, …; see `mermaid-rules.md`) and draw them with a distinct style (`linkStyle <index> stroke:#C62F3E,stroke-width:3px`) and report each component once.
 
 ## Document layout
 1. `# Dependency graph` — one-sentence description
