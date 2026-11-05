@@ -69,6 +69,11 @@ def check_file(md_path, fixture_dir):
     for key in REQUIRED_KEYS:
         if key not in front:
             problems.append(f"{md_path}: front matter lacks '{key}'")
+    inner = front.get("sources", "{}").strip().strip("{}").strip()
+    for item in filter(None, (i.strip() for i in inner.split(","))):
+        path, _, digest = item.rpartition(":")
+        if not re.fullmatch(r"[0-9a-f]{64}", digest.strip()):
+            problems.append(f"{md_path}: sources entry '{path.strip()}' lacks a sha256 hash")
     if front.get("skill") not in NO_DIAGRAM_SKILLS and not mermaid_blocks(text):
         problems.append(f"{md_path}: no mermaid block")
     for line in _prose_lines(text):

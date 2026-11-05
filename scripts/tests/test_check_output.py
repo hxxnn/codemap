@@ -107,3 +107,14 @@ def test_sibling_artifact_names_may_be_referenced(tmp_path):
     assert co.check_file(md, fx) == []
     bad = write(tmp_path, "e.md", "See `notes.md`.\n", skill="design-doc")
     assert any("notes.md" in p for p in co.check_file(bad, fx))
+
+
+def test_source_hashes_must_be_sha256(tmp_path):
+    fx = fixture(tmp_path)
+    good_hash = "a" * 64
+    ok = tmp_path / "ok.md"
+    ok.write_text(FM.replace("sources: {{}}", "sources: {{src/real.py: " + good_hash + "}}").format(skill="architecture-overview") + BLOCK)
+    assert co.check_file(ok, fx) == []
+    bad = tmp_path / "bad.md"
+    bad.write_text(FM.replace("sources: {{}}", "sources: {{src/real.py: null}}").format(skill="architecture-overview") + BLOCK)
+    assert any("sha256" in p for p in co.check_file(bad, fx))

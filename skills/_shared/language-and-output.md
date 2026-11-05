@@ -29,7 +29,7 @@ commit: <git HEAD sha, or null when not a git repo>
 sources: {<relative/path>: <sha256 of that file when read>, ...}
 ---
 ```
-`sources` lists every file the artifact was derived from. Compute hashes with `sha256sum` (or `shasum -a 256`). `codemap-refresh` relies on this block, so keep it accurate. Artifacts derived from other artifacts (design-doc, present) list those artifact paths in `sources` too.
+`sources` lists every file the artifact was derived from. Compute hashes with `sha256sum` (or `shasum -a 256`). `codemap-refresh` relies on this block, so keep it accurate. Artifacts derived from other artifacts (design-doc, present) list those artifact paths in `sources` too, with the real sha256 of each artifact file as it exists on disk (run `sha256sum` on it). A `null`, empty or placeholder hash is never acceptable: if you cannot compute a hash, leave that file out of `sources` and say so in the document.
 
 ## Paths
 In prose always write the full repo-relative path in backticks (`src/index.ts`, never a bare `index.ts`). Sibling artifacts may be named by file name (`architecture.md`). Build or install folders that do not exist in the repo (`dist/`, `node_modules/`) are written without backticks and labelled as build output.
