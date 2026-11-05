@@ -12,7 +12,7 @@ Before starting, read (paths are relative to this skill's directory):
 - `../_shared/mermaid-rules.md` — diagram rules and the pre-save checklist
 
 ## Input
-The project summary from `/codemap` (languages, frameworks, entry_points, core_modules, external_systems, unread_scope). If you were invoked without one, build it first as described in `/codemap` step 4.
+The project summary from `/codemap` (languages, frameworks, entry_points, core_modules, external_systems, unread_scope). Run the **Preflight** in `../_shared/language-and-output.md` first: it stops when there is nothing to map and builds the project summary if you were invoked without one.
 
 ## The three levels
 1. **System context** — the system as one box, plus the people and external systems around it (users, databases, third-party APIs, other services). Only include external systems you saw referenced in code or config.

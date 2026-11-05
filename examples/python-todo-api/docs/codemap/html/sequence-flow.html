@@ -62,12 +62,12 @@
 <section class="cm-section"><h2>Create a todo (POST /todos)</h2>
 <p>Triggered when a client posts to <code>/todos</code> with a <code>title</code>; this is the main write operation and it touches storage and the model.</p>
 <pre class="mermaid">sequenceDiagram
-  participant C as "HTTP client"
-  participant F as "FastAPI (app/main.py)"
-  participant R as "app/routes.py"
-  participant U as "app/utils.py"
-  participant S as "app/storage.py"
-  participant M as "app/models.py"
+  participant C as HTTP client
+  participant F as FastAPI (app/main.py)
+  participant R as app/routes.py
+  participant U as app/utils.py
+  participant S as app/storage.py
+  participant M as app/models.py
   C-&gt;&gt;F: POST /todos
   F--&gt;&gt;R: dispatch (not traced)
   Note over F,R: framework routing, not traced
@@ -101,9 +101,9 @@
 <section class="cm-section"><h2>List todos (GET /todos)</h2>
 <p>Triggered when a client requests <code>/todos</code>; it only reads from storage.</p>
 <pre class="mermaid">sequenceDiagram
-  participant C as "HTTP client"
-  participant R as "app/routes.py"
-  participant S as "app/storage.py"
+  participant C as HTTP client
+  participant R as app/routes.py
+  participant S as app/storage.py
   C-&gt;&gt;R: GET /todos (via FastAPI, not traced)
   R-&gt;&gt;S: all_todos()
   S--&gt;&gt;R: list copy of _TODOS

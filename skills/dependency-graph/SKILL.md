@@ -12,7 +12,7 @@ Before starting, read (relative to this skill's directory):
 - `../_shared/mermaid-rules.md`
 
 ## Input
-The project summary from `/codemap` (build it as described there if you were invoked directly).
+The project summary from `/codemap` (Run the **Preflight** in `../_shared/language-and-output.md` first: it stops when there is nothing to map and builds the project summary if you were invoked without one.).
 
 ## Method
 1. List the source files of the core modules (skip generated, vendored and build folders; record them in `unread_scope`).

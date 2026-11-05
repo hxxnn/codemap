@@ -12,7 +12,7 @@ Before starting, read (relative to this skill's directory):
 - `../_shared/mermaid-rules.md`
 
 ## Input
-The project summary from `/codemap` (build it as described there if you were invoked directly). If the user named a scenario ("login", "POST /todos", "the add command"), use it as scenario 1.
+The project summary from `/codemap` (Run the **Preflight** in `../_shared/language-and-output.md` first: it stops when there is nothing to map and builds the project summary if you were invoked without one.). If the user named a scenario ("login", "POST /todos", "the add command"), use it as scenario 1.
 
 ## Choosing scenarios
 Without a named scenario, pick 2–3 from the entry points: the most central user-facing operation first (an HTTP route, a CLI command, a main loop step), then one that touches storage or an external system, then one error/edge path if the code has an obvious one. Tell the user which scenarios you picked and why, in one line each.

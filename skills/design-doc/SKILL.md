@@ -12,7 +12,7 @@ Before starting, read (relative to this skill's directory):
 - `../_shared/mermaid-rules.md`
 
 ## Input
-- The project summary from `/codemap` (build it as described there if you were invoked directly).
+- The project summary from `/codemap` (Run the **Preflight** in `../_shared/language-and-output.md` first: it stops when there is nothing to map and builds the project summary if you were invoked without one.).
 - Existing artifacts in `docs/codemap/` (`architecture.md`, `dependency-graph.md`, `mindmap.md`, `sequence-flow.md`). Read the ones that exist and reuse their findings instead of re-deriving them. If some are missing, tell the user which and ask whether to generate them first; if the user declines or cannot answer, work from the code directly and say so in the document.
 
 ## Sections (in this order)

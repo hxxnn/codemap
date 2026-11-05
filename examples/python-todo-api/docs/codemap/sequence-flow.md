@@ -16,12 +16,12 @@ Triggered when a client posts to `/todos` with a `title`; this is the main write
 
 ```mermaid
 sequenceDiagram
-  participant C as "HTTP client"
-  participant F as "FastAPI (app/main.py)"
-  participant R as "app/routes.py"
-  participant U as "app/utils.py"
-  participant S as "app/storage.py"
-  participant M as "app/models.py"
+  participant C as HTTP client
+  participant F as FastAPI (app/main.py)
+  participant R as app/routes.py
+  participant U as app/utils.py
+  participant S as app/storage.py
+  participant M as app/models.py
   C->>F: POST /todos
   F-->>R: dispatch (not traced)
   Note over F,R: framework routing, not traced
@@ -60,9 +60,9 @@ Triggered when a client requests `/todos`; it only reads from storage.
 
 ```mermaid
 sequenceDiagram
-  participant C as "HTTP client"
-  participant R as "app/routes.py"
-  participant S as "app/storage.py"
+  participant C as HTTP client
+  participant R as app/routes.py
+  participant S as app/storage.py
   C->>R: GET /todos (via FastAPI, not traced)
   R->>S: all_todos()
   S-->>R: list copy of _TODOS

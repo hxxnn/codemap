@@ -3,7 +3,7 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: ad44b98013f1df7780a691a4c18fc91f6769cb417e43326282166b05e3fc8313, docs/codemap/dependency-graph.md: b7c70a3167141b14ea591f3e957250d834392b054a7e498e361e856f2183def6, docs/codemap/mindmap.md: 8c7e1a314c8a6d850316783f913c07abcc450aac009300883c8a422e7fa23550, docs/codemap/sequence-flow.md: ccaa5237f6f2457f03fe5a39ba24af9fbf58926cef8e3aa904619e6f7ae79b66, docs/codemap/design-doc.md: fbba3bb8cea681687704fae44fa98accb8f1719cddecb751a06adf1919361d9c}
+sources: {docs/codemap/architecture.md: ad44b98013f1df7780a691a4c18fc91f6769cb417e43326282166b05e3fc8313, docs/codemap/dependency-graph.md: b7c70a3167141b14ea591f3e957250d834392b054a7e498e361e856f2183def6, docs/codemap/mindmap.md: 8c7e1a314c8a6d850316783f913c07abcc450aac009300883c8a422e7fa23550, docs/codemap/sequence-flow.md: 7abd52c457917a4890452a66f0aeba6999fe33519834ed2460393ba3f616ba18, docs/codemap/design-doc.md: 15212f1f451ac76f67b47ab1323e5bef0ccc368b71108c9ab6873c6fb4d7f836}
 ---
 
 # Presentation outline
