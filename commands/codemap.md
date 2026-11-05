@@ -1,6 +1,6 @@
 ---
 description: Map this codebase into architecture diagrams, a dependency graph, a mindmap, sequence flows and an onboarding doc (Mermaid Markdown, optional HTML).
-argument-hint: "[all|architecture|deps|mindmap|sequence|doc|present|refresh] [--html]"
+argument-hint: "[all|architecture|deps|mindmap|sequence|doc|present|refresh] [--no-html]"
 ---
 
 You are running the codemap workflow. Arguments: `$ARGUMENTS`
@@ -12,9 +12,9 @@ First read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/language-and-output.md` and `${
    - `all` → architecture, deps, mindmap, sequence, doc, present — in that order
    - `architecture` → skill `architecture-overview`; `deps` → `dependency-graph`; `mindmap` → `mindmap`; `sequence` → `sequence-flow`; `doc` → `design-doc`; `present` → `present`
    - `refresh` → skill `codemap-refresh` (skip step 3 and step 4)
-   - Flags such as `--html` are never the work argument: if the first argument is a flag, treat the work as `all`.
+   - Flags such as `--no-html` (or the legacy `--html`) are never the work argument: if the first argument is a flag, treat the work as `all`.
    - Anything else: show the usage line above and stop.
 3. **Existing output?** If `docs/codemap/` already exists and the chosen work would write files in it, ask the user before continuing and suggest `refresh` as the non-destructive option.
 4. **Build the project summary** as the Preflight describes and show it to the user in one short block.
-5. **Run each chosen skill** in order, passing the project summary and the `--html` flag if present. After each, state which file was written.
+5. **Run each chosen skill** in order, passing the project summary and the `--no-html` flag if present (HTML versions are written by default). After each, state which files were written.
 6. Finish with a short list of the files written and anything marked unverified.

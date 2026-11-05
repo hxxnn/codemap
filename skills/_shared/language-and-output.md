@@ -20,7 +20,7 @@ Write into the target project's `docs/codemap/`:
 | design-doc | `design-doc.md` |
 | present | `present.md` |
 
-HTML versions (only when the user passes `--html` or asks for HTML) go to `docs/codemap/html/<same-name>.html`.
+HTML versions go to `docs/codemap/html/<same-name>.html`. **HTML is written by default** next to every Markdown file; skip it only when the user passes `--no-html` or asks for Markdown only. (`--html` is still accepted and means the same as the default.)
 
 **One confirmation covers a run.** If `/codemap` already asked about overwriting `docs/codemap/` for this run, the individual skills do not ask again. **Never overwrite silently.** If `docs/codemap/` already holds a file you are about to write, ask the user first (suggest `/codemap refresh` as the alternative). Text between `<!-- codemap:manual-start -->` and `<!-- codemap:manual-end -->` belongs to the user and must be preserved byte-for-byte whenever a file is rewritten.
 
@@ -59,7 +59,7 @@ Every generated file ends with a short section naming `unread_scope` in the user
 ## Large repositories
 Do not try to read everything. Start from `entry_points`, follow imports along the main paths, skip generated/vendored/build folders, and record what was skipped in `unread_scope`.
 
-## HTML output (only when the user passes `--html` or asks for HTML)
+## HTML output (default; skipped with `--no-html`)
 1. Read `html-template.html` (same folder as this file). Never edit the template itself; write a new file at `docs/codemap/html/<artifact-name>.html` containing the template with three placeholders replaced: `{{LANG}}` (language code of the output, e.g. `ko`, `en`), `{{TITLE}}` (the artifact's title), `{{CONTENT}}` (below). Keep everything else byte-for-byte, including the pinned Mermaid script tag. **Create the file directly with the Write tool** (the full template text with the placeholders filled in). Do not write or run helper scripts (Python, Node, shell) to assemble it: the user's environment may not allow running them.
 2. Build `{{CONTENT}}` from the artifact you just wrote, same text and same diagrams:
    - each `##` section becomes `<section class="cm-section"><h2>…</h2>…</section>` (an `#` title is the page title, not a section)

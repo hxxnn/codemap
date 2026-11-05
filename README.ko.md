@@ -23,10 +23,10 @@ Claude Code에서:
 /codemap
 ```
 
-하나만 고르거나, `--html`을 붙여 인터랙티브 페이지로 받을 수도 있습니다.
+하나만 고를 수도 있습니다. HTML 페이지는 기본으로 함께 만들어지고, 마크다운만 원하면 `--no-html`을 붙입니다.
 
 ```
-/codemap architecture --html
+/codemap architecture --no-html
 /codemap deps
 /codemap mindmap
 /codemap sequence
@@ -49,7 +49,7 @@ Claude Code에서:
 | `/codemap present` | `present` | `present.md` — 다른 결과물로 만든 5~7장 발표 개요 |
 | `/codemap refresh` | `codemap-refresh` | 코드가 바뀐 파일만 갱신하고, 직접 수정한 부분은 보존 |
 
-`--html`을 붙이면 `docs/codemap/html/<이름>.html`도 만들어집니다. 확대·축소되는 다이어그램, 접을 수 있는 섹션, 검색이 파일 하나에 들어 있습니다.
+마크다운 파일마다 `docs/codemap/html/<이름>.html`이 함께 만들어집니다(`--no-html`을 붙이면 만들지 않습니다). 확대·축소되는 다이어그램, 접을 수 있는 섹션, 검색, 라이트/다크 전환이 파일 하나에 들어 있습니다.
 
 ## 신뢰성
 

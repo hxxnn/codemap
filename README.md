@@ -23,10 +23,10 @@ Open your project in Claude Code and run:
 /codemap
 ```
 
-or pick one output, and add `--html` for an interactive page:
+or pick one output (HTML pages are created by default; add `--no-html` for Markdown only):
 
 ```
-/codemap architecture --html
+/codemap architecture --no-html
 /codemap deps
 /codemap mindmap
 /codemap sequence
@@ -49,7 +49,7 @@ You can also just ask in plain words ("draw the architecture of this project", "
 | `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |
 | `/codemap refresh` | `codemap-refresh` | updates only the files whose source code changed, keeping your manual edits |
 
-`--html` additionally writes `docs/codemap/html/<name>.html`: zoomable diagrams, collapsible sections and search in a single file.
+Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): zoomable diagrams, collapsible sections, search and a light/dark toggle in a single file.
 
 ## Trust
 
