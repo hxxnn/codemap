@@ -29,7 +29,9 @@ mindmap
     a1["API"]
       a2["app/routes.py: HTTP routes"]
         a3["create_todo()"]
-``` Follow the pre-save checklist in `mermaid-rules.md`.
+```
+
+Follow the pre-save checklist in `mermaid-rules.md`.
 
 ## Document layout
 1. `# Mindmap` — one-sentence description

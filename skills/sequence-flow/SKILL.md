@@ -22,7 +22,7 @@ Without a named scenario, pick 2–3 from the entry points: the most central use
 2. Follow each call to the function it invokes (open that file too) until you reach a boundary: storage/database, network call, process exit, or a library call.
 3. Participants are real modules/files or components (alias with a short id; the label holds the repo-relative path or module name). Messages are the real function names; return arrows show returned values only when they matter.
 4. Use `alt`/`opt`/`loop` blocks only when the code has that branching, and label them from the actual condition.
-5. A call you cannot follow (dynamic dispatch, a framework doing it behind the scenes, code you did not read) is drawn with a dashed arrow (`-->>`) and a `Note over` saying "not traced", and the paragraph under the diagram carries `<!-- codemap:unverified -->`.
+5. A call you cannot follow (dynamic dispatch, a framework doing it behind the scenes, code you did not read) is drawn with an open async arrow (`-)`), an arrow style used for nothing else here (returns use `-->>`), and every such arrow gets its own `Note over` saying "not traced". The paragraph under the diagram carries `<!-- codemap:unverified -->`.
 
 ## Document layout
 1. `# Sequence flows` — one-sentence description

@@ -1,6 +1,6 @@
 ---
 name: present
-description: Use when the user wants to explain the project to other people: a presentation outline, talk script structure, "summarize this for a demo or meeting". Condenses existing codemap artifacts into 5–7 slides in docs/codemap/present.md without re-analyzing the code.
+description: Use when the user wants a presentation outline or slide structure that explains THIS project's codebase to other people (demo, talk, team walkthrough, onboarding session). Condenses existing codemap artifacts into 5–7 slides in docs/codemap/present.md without re-analyzing the code. Not for generic summaries of unrelated text.
 ---
 
 # Presentation outline

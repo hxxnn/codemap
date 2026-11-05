@@ -1,2 +1,3 @@
-# empty project
-Documentation only. There is no source code here.
+# demo
+
+Notes and sketches for a small demo.

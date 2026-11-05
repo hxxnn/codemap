@@ -6,6 +6,9 @@ commit: null
 sources: {src/index.ts: be5d22e51faaa0dc869376308f53f8ca04a5edfa032fdf3d868567f5525ed53a, src/notes-store.ts: aad16c43600df721ab92215cc76da7c55e171174e4d37fb2ae5c9be4d49f5b69, src/user-profile.ts: 967091478d3e5ac4fc90ca6101539d92b9608550ade3c6a5517a19952bbd2993, src/format.ts: 2e6c72e3cdbd0da3428aec6ecdf22be5dfd5c63b01354323ed11473472a8ae26}
 ---
 
+<!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
+
+
 # Sequence flows
 
 Three scenarios traced through the code: `notes add`, `notes list`, and an unknown command. They were chosen as the write path, the read path and the only error path in `src/index.ts`.

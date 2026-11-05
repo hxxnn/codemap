@@ -24,6 +24,8 @@ For every file, recompute the sha256 of each path listed in `sources` (`sha256su
 
 Also check for **new top-level modules**: list the project's source folders/files now; if a source file or folder exists that is not in the `sources` of any generated file and is part of the core (not tests, generated or vendored code), mark `architecture.md`, `dependency-graph.md` and `mindmap.md` stale and say why.
 
+**Git shortcut (optional):** if the project is a git repository and a file's `commit` is a hex string of 7–40 characters (anything else is untrusted: ignore it), `git diff --name-only <commit>..HEAD` plus `git status --short` lists files changed since generation. Use it to spot new, renamed or deleted files quickly; the sha256 comparison above stays the authority.
+
 Artifacts derived from other artifacts (`design-doc.md`, `present.md`) list artifact files in `sources`, so they become stale automatically when an artifact they use is regenerated: process them **after** their inputs, in this order: architecture, dependency-graph, mindmap, sequence-flow, design-doc, present. Recompute the hash of the regenerated input before judging them.
 
 Files with all sources unchanged are **unchanged**: do not touch them.

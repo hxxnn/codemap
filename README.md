@@ -56,7 +56,7 @@ You can also just ask in plain words ("draw the architecture of this project", "
 - Every file and module in the output is something Claude actually read. Anything it could not confirm is labelled as inferred and carries the marker `<!-- codemap:unverified -->`.
 - Each file ends with a "not covered" section naming what was skipped (large repositories are read from the entry points outward).
 - Text between `<!-- codemap:manual-start -->` and `<!-- codemap:manual-end -->` is yours; `refresh` never overwrites it.
-- Existing `docs/codemap/` files are never overwritten without asking.
+- Existing `docs/codemap/` files are never overwritten without asking. The exception is `refresh`: you asked for the update, and it keeps your manual-edit blocks. Edits you make outside those blocks are replaced on refresh.
 
 ## Examples
 

@@ -201,3 +201,13 @@ def test_html_with_injected_script_or_handler_is_reported(tmp_path):
     js = tmp_path / "j.html"
     js.write_text(HTML_OK.replace("<p>", '<a href="javascript:x()">').replace("</p>", "</a>"))
     assert any("javascript:" in p for p in co.check_html(js))
+
+
+def test_chromium_path_prefers_env_then_existing_default_else_none(monkeypatch):
+    monkeypatch.setenv("CODEMAP_CHROMIUM", "/custom/chrome")
+    assert co.chromium_path() == "/custom/chrome"
+    monkeypatch.delenv("CODEMAP_CHROMIUM")
+    monkeypatch.setattr(co.Path, "exists", lambda self: str(self) == "/opt/pw-browsers/chromium")
+    assert co.chromium_path() == "/opt/pw-browsers/chromium"
+    monkeypatch.setattr(co.Path, "exists", lambda self: False)
+    assert co.chromium_path() is None

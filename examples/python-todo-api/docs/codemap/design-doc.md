@@ -3,8 +3,11 @@ codemap: 1
 skill: design-doc
 generated_at: 2026-11-05
 commit: null
-sources: {README.md: 0400cdfb761e16937066332c0598879036142b20ef8fbf1835531feb33087731, pyproject.toml: d39952121dd8849656d105526fe1915af998c94fe648b6a7e32a214e53ac420d, app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66, docs/codemap/architecture.md: ad44b98013f1df7780a691a4c18fc91f6769cb417e43326282166b05e3fc8313, docs/codemap/dependency-graph.md: b7c70a3167141b14ea591f3e957250d834392b054a7e498e361e856f2183def6, docs/codemap/mindmap.md: 8c7e1a314c8a6d850316783f913c07abcc450aac009300883c8a422e7fa23550, docs/codemap/sequence-flow.md: 7abd52c457917a4890452a66f0aeba6999fe33519834ed2460393ba3f616ba18}
+sources: {README.md: 0400cdfb761e16937066332c0598879036142b20ef8fbf1835531feb33087731, pyproject.toml: d39952121dd8849656d105526fe1915af998c94fe648b6a7e32a214e53ac420d, app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66, docs/codemap/architecture.md: 68841850f67409cc0e28deb9cd2ef8915a881af22914d42386ba32cb448d67af, docs/codemap/dependency-graph.md: 0ced1e95e249a6a88e3d187a14261d340a631389fc33fdb830b8a3cf5a6d0b8b, docs/codemap/mindmap.md: c820de42460c97d8cdf63025da716aa59752566b8cfc40a6e89e0f625fc652a3, docs/codemap/sequence-flow.md: 8b78738ef8a1177f90d626af83b4dc616d9c1fade2120b95f2e4967b0fc3acda}
 ---
+
+<!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
+
 
 # Design doc and onboarding guide
 

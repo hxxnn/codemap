@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-05-codemap-design.md`
 
-**Location:** a new directory `/home/user/codemap/` (the future GitHub repo root). All paths below are relative to it. Task 1 runs `git init` locally; creating the GitHub remote and pushing are done by the user, never by the executor.
+**Location:** a new directory `<repo-root>/` (the future GitHub repo root). All paths below are relative to it. Task 1 runs `git init` locally; creating the GitHub remote and pushing are done by the user, never by the executor.
 
 ## Global Constraints
 
@@ -59,7 +59,7 @@
 **Interfaces:**
 - Produces: a valid plugin/marketplace manifest pair named `codemap`; later tasks add `commands/` and `skills/` beside it.
 
-- [ ] **Step 1:** Ask the user for the display name to put in `author.name` / `owner.name` (public; do not use their email). Then `mkdir -p /home/user/codemap && cd /home/user/codemap && git init`.
+- [ ] **Step 1:** Ask the user for the display name to put in `author.name` / `owner.name` (public; do not use their email). Then `mkdir -p <repo-root> && cd <repo-root> && git init`.
 - [ ] **Step 2:** Write `plugin.json` with `name: "codemap"`, `version: "0.1.0"`, a one-sentence `description` (maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc), and `author`.
 - [ ] **Step 3:** Write `marketplace.json` with `name: "codemap"`, `owner`, and one plugin entry `{"name":"codemap","source":"./","description":<same>}`.
 - [ ] **Step 4:** Add MIT `LICENSE` (year 2026, same display name), a `.gitignore` (`__pycache__/`, `node_modules/`, `.pytest_cache/`), and copy the spec into `docs/design/`.
@@ -113,7 +113,7 @@
 
 - [ ] **Step 1:** Write the two shared files with the exact contents specified above.
 - [ ] **Step 2:** Write `commands/codemap.md`.
-- [ ] **Step 3: Verify** — Run Claude Code with the plugin loaded (`claude --plugin-dir /home/user/codemap`) inside `examples/edge-empty` and run `/codemap`. Expected: it reports there is nothing to map and writes no `docs/codemap/` directory (`test ! -d docs/codemap`).
+- [ ] **Step 3: Verify** — Run Claude Code with the plugin loaded (`claude --plugin-dir <repo-root>`) inside `examples/edge-empty` and run `/codemap`. Expected: it reports there is nothing to map and writes no `docs/codemap/` directory (`test ! -d docs/codemap`).
 - [ ] **Step 4: Commit** — `git add -A && git commit -m "feat: add shared rules and /codemap command"`
 
 ### Task 5: `architecture-overview` skill
@@ -228,7 +228,7 @@
 
 - [ ] **Step 1:** Generate full outputs with `/codemap all --html` on both fixtures, run the checker with `--render` on each. Expected: exit 0 for both.
 - [ ] **Step 2:** Write both READMEs; every command and path mentioned must exist.
-- [ ] **Step 3: Install check** — In a clean Claude Code session: `/plugin marketplace add /home/user/codemap` then `/plugin install codemap@codemap`. Expected: the seven skills and `/codemap` are listed, and no skill named `_shared` appears.
+- [ ] **Step 3: Install check** — In a clean Claude Code session: `/plugin marketplace add <repo-root>` then `/plugin install codemap@codemap`. Expected: the seven skills and `/codemap` are listed, and no skill named `_shared` appears.
 - [ ] **Step 4:** Run `python3 -m pytest scripts/tests -q` once more. Expected: pass.
 - [ ] **Step 5: Commit** — `git add -A && git commit -m "docs: add READMEs and example outputs"`
 - [ ] **Step 6:** Tell the user the local repo is ready and give the commands to create the GitHub repository and push; do not run them.

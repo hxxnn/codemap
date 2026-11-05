@@ -3,8 +3,11 @@ codemap: 1
 skill: design-doc
 generated_at: 2026-11-05
 commit: null
-sources: {src/index.ts: be5d22e51faaa0dc869376308f53f8ca04a5edfa032fdf3d868567f5525ed53a, src/notes-store.ts: aad16c43600df721ab92215cc76da7c55e171174e4d37fb2ae5c9be4d49f5b69, src/user-profile.ts: 967091478d3e5ac4fc90ca6101539d92b9608550ade3c6a5517a19952bbd2993, src/format.ts: 2e6c72e3cdbd0da3428aec6ecdf22be5dfd5c63b01354323ed11473472a8ae26, src/types.ts: b0fbf687bc33cb22134e0f2fc8586140fa07017a3294fc7d8ce61dde9c83df62, package.json: cabefc4d84df127d8c363c8a9257c3815a258930510b4de924fadf0ff55edfee, tsconfig.json: fbfb5e54f48dbca20aff45f6530b732e22d3c4fd596d106e199b9ee5ff9eb439, README.md: ad3e9d59c7f90caab58f57655039b71b09108d4876e83a62570fdae41ee77e70, docs/codemap/architecture.md: 7cc23f53a6a47e3d9299a71692a3cb88d7441854f790b7800d79f9f704dada4a, docs/codemap/dependency-graph.md: 943773a88f52b60bf0b4f1deee69bf92efe6379f243b20f8a47d5792c36399a5, docs/codemap/mindmap.md: 44edf3b026b0c164ea8c1448781c15469f70776b791f686941cd10e2eb105722, docs/codemap/sequence-flow.md: fdc44442720286bc3f8c85bcfa109ea314b0cc209b29cab1d15c55367955ac34}
+sources: {src/index.ts: be5d22e51faaa0dc869376308f53f8ca04a5edfa032fdf3d868567f5525ed53a, src/notes-store.ts: aad16c43600df721ab92215cc76da7c55e171174e4d37fb2ae5c9be4d49f5b69, src/user-profile.ts: 967091478d3e5ac4fc90ca6101539d92b9608550ade3c6a5517a19952bbd2993, src/format.ts: 2e6c72e3cdbd0da3428aec6ecdf22be5dfd5c63b01354323ed11473472a8ae26, src/types.ts: b0fbf687bc33cb22134e0f2fc8586140fa07017a3294fc7d8ce61dde9c83df62, package.json: cabefc4d84df127d8c363c8a9257c3815a258930510b4de924fadf0ff55edfee, tsconfig.json: fbfb5e54f48dbca20aff45f6530b732e22d3c4fd596d106e199b9ee5ff9eb439, README.md: ad3e9d59c7f90caab58f57655039b71b09108d4876e83a62570fdae41ee77e70, docs/codemap/architecture.md: fabaf87a3aeb5141ee19be6283a4d4727a929ace6542da1e3da20eef52725ba0, docs/codemap/dependency-graph.md: 37de8c4b7a2765fed72da30bf7924d1c45e1ad42c27d048fc28b6812c6aacb0a, docs/codemap/mindmap.md: 5221fa8be8571bb10a223cc0fa7588328f199d0056142c1e646c672f4496743f, docs/codemap/sequence-flow.md: 94ed8888679da195a714b8251db773b141fd62b43e2cf91b62542ad81230d071}
 ---
+
+<!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
+
 
 # Design doc and onboarding guide
 

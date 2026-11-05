@@ -22,7 +22,7 @@ Write into the target project's `docs/codemap/`:
 
 HTML versions (only when the user passes `--html` or asks for HTML) go to `docs/codemap/html/<same-name>.html`.
 
-**Never overwrite silently.** If `docs/codemap/` already holds a file you are about to write, ask the user first (suggest `/codemap refresh` as the alternative). Text between `<!-- codemap:manual-start -->` and `<!-- codemap:manual-end -->` belongs to the user and must be preserved byte-for-byte whenever a file is rewritten.
+**One confirmation covers a run.** If `/codemap` already asked about overwriting `docs/codemap/` for this run, the individual skills do not ask again. **Never overwrite silently.** If `docs/codemap/` already holds a file you are about to write, ask the user first (suggest `/codemap refresh` as the alternative). Text between `<!-- codemap:manual-start -->` and `<!-- codemap:manual-end -->` belongs to the user and must be preserved byte-for-byte whenever a file is rewritten.
 
 ## Front matter (first lines of every generated file)
 ```yaml
@@ -34,6 +34,8 @@ commit: <git HEAD sha, or null when not a git repo>
 sources: {<relative/path>: <sha256 of that file when read>, ...}
 ---
 ```
+Directly after the front matter, every generated file carries this line: `<!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->`.
+
 `sources` lists every file the artifact was derived from. Compute hashes with `sha256sum` (or `shasum -a 256`). `codemap-refresh` relies on this block, so keep it accurate. Artifacts derived from other artifacts (design-doc, present) list those artifact paths in `sources` too, with the real sha256 of each artifact file as it exists on disk (run `sha256sum` on it). A `null`, empty or placeholder hash is never acceptable: if you cannot compute a hash, leave that file out of `sources` and say so in the document.
 
 ## Paths

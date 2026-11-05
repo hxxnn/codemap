@@ -3,8 +3,11 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: ad44b98013f1df7780a691a4c18fc91f6769cb417e43326282166b05e3fc8313, docs/codemap/dependency-graph.md: b7c70a3167141b14ea591f3e957250d834392b054a7e498e361e856f2183def6, docs/codemap/mindmap.md: 8c7e1a314c8a6d850316783f913c07abcc450aac009300883c8a422e7fa23550, docs/codemap/sequence-flow.md: 7abd52c457917a4890452a66f0aeba6999fe33519834ed2460393ba3f616ba18, docs/codemap/design-doc.md: 15212f1f451ac76f67b47ab1323e5bef0ccc368b71108c9ab6873c6fb4d7f836}
+sources: {docs/codemap/architecture.md: 68841850f67409cc0e28deb9cd2ef8915a881af22914d42386ba32cb448d67af, docs/codemap/dependency-graph.md: 0ced1e95e249a6a88e3d187a14261d340a631389fc33fdb830b8a3cf5a6d0b8b, docs/codemap/mindmap.md: c820de42460c97d8cdf63025da716aa59752566b8cfc40a6e89e0f625fc652a3, docs/codemap/sequence-flow.md: 8b78738ef8a1177f90d626af83b4dc616d9c1fade2120b95f2e4967b0fc3acda, docs/codemap/design-doc.md: 4098576aae2c19ef2edcc49d2910071a60fe1f4ff2bd4cf0920f4748e0ea7d2f}
 ---
+
+<!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
+
 
 # Presentation outline
 

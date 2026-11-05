@@ -5,6 +5,8 @@ Usage: check_output.py <fixture_dir> <output_dir> [--render]
 Exit code 1 if any problem is found.
 """
 import hashlib
+import json
+import os
 import re
 import subprocess
 import sys
@@ -139,12 +141,25 @@ def check_html(html_path):
     return problems
 
 
+def chromium_path():
+    """Browser for --render: $CODEMAP_CHROMIUM, else the sandbox default if present, else None (let puppeteer decide)."""
+    env = os.environ.get("CODEMAP_CHROMIUM")
+    if env:
+        return env
+    default = "/opt/pw-browsers/chromium"
+    return default if Path(default).exists() else None
+
+
 def render_mermaid(body):
     """Return None if the diagram renders, else an error string."""
     with tempfile.TemporaryDirectory() as tmp:
         src, out, cfg = Path(tmp, "d.mmd"), Path(tmp, "d.svg"), Path(tmp, "p.json")
         src.write_text(body, encoding="utf-8")
-        cfg.write_text('{"executablePath": "/opt/pw-browsers/chromium", "args": ["--no-sandbox"]}')
+        browser = chromium_path()
+        config = {"args": ["--no-sandbox"]}
+        if browser:
+            config["executablePath"] = browser
+        cfg.write_text(json.dumps(config))
         result = subprocess.run(
             ["npx", "-y", "@mermaid-js/mermaid-cli@11", "-i", str(src), "-o", str(out), "-p", str(cfg)],
             capture_output=True, text=True,
