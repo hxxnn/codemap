@@ -74,7 +74,7 @@ Then commit and push the project's `.claude/` folder. In a cloud session on that
 | `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |
 | `/codemap refresh` | `codemap-refresh` | updates only the files whose source code changed, keeping your manual edits |
 
-Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages in a single file. The presentation outline (`present.html`) has a slide mode (arrow keys, `Esc` to leave). Text is set in the Pretendard font loaded from a CDN with a pinned version; offline, text falls back to system fonts and diagrams show their source with a note.
+Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages on one page (styles and scripts are shared in `html/assets/`, so move the whole `html/` folder). The presentation outline (`present.html`) has a slide mode (arrow keys, `Esc` to leave). Text is set in the Pretendard font loaded from a CDN with a pinned version; offline, text falls back to system fonts and diagrams show their source with a note.
 
 ## Trust
 
@@ -95,7 +95,9 @@ Generated from the small sample projects in this repository (after cloning, open
 
 | To change | Edit |
 |---|---|
-| HTML colors, layout, fonts, controls | `skills/_shared/html-template.html` |
+| HTML colors, layout, fonts, print look | `skills/_shared/assets/codemap.css` |
+| HTML behaviour (contents, zoom, slide mode) and its wording | `skills/_shared/assets/codemap.js` |
+| The HTML page skeleton | `skills/_shared/html-template.html` |
 | Mermaid style and labelling rules | `skills/_shared/mermaid-rules.md` |
 | Language, file locations, front matter | `skills/_shared/language-and-output.md` |
 | What each document contains | `skills/<name>/SKILL.md` |

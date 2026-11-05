@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Dev tool: re-apply skills/_shared/html-template.html to the example HTML pages.
+"""Dev tool: re-apply the HTML shell and assets to the example HTML pages.
 
-Keeps each page's body content, language and title; refills the template's other
-placeholders from the sibling Markdown file's front matter. Usage:
+Keeps each page's body content, language and title; refills the shell's other
+placeholders from the sibling Markdown file's front matter and copies
+skills/_shared/assets/* next to the pages (html/assets/). Usage:
   rebuild_example_html.py [EXAMPLES_DIR]    (default: examples)
 """
 import html
@@ -12,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "skills" / "_shared" / "html-template.html"
+ASSETS = ROOT / "skills" / "_shared" / "assets"
 
 
 def front_matter(md_text):
@@ -56,6 +58,10 @@ def main(argv):
     count = 0
     for page in sorted(examples.glob("*/docs/codemap/html/*.html")):
         rebuild(page, page.parents[3].name)
+        assets = page.parent / "assets"
+        assets.mkdir(exist_ok=True)
+        for asset in ASSETS.iterdir():
+            (assets / asset.name).write_bytes(asset.read_bytes())
         count += 1
     print(f"rebuilt {count} page(s)")
     return 0

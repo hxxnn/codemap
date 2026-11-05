@@ -18,5 +18,6 @@ First read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/language-and-output.md` and `${
    - Anything else: show the usage line above and stop.
 3. **Existing output?** If `docs/codemap/` already exists and the chosen work would write files in it, ask the user before continuing and suggest `refresh` as the non-destructive option.
 4. **Build the project summary** as the Preflight describes and show it to the user in one short block.
+4b. **HTML assets.** Unless `--no-html` was given, prepare `docs/codemap/html/assets/` once now, as step 0 of the HTML section in `language-and-output.md` describes, before running any skill.
 5. **Run each chosen skill** in order, passing the project summary and the `--no-html` flag if present (HTML versions are written by default). After each, state which files were written.
 6. Finish with a short list of the files written and anything marked unverified.

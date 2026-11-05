@@ -35,7 +35,7 @@ For each stale file, run the skill named in its front matter `skill` field (`arc
 - **Small changes may be applied in place:** if only a few sources changed in a small way (a function added or renamed), you may edit the stale file directly instead of regenerating it, provided every statement the change affects is updated, manual-edit blocks stay untouched, and `generated_at`, `commit` and all `sources` hashes are updated. Anything larger (new modules, deleted files, restructured folders) is regenerated with the skill.
 - **Manual-edit zones:** before rewriting, extract every block between `<!-- codemap:manual-start -->` and `<!-- codemap:manual-end -->`. After regenerating, put each block back at the end of the same-named section (or at the end of the file if that section no longer exists), unchanged. If a block cannot be placed unambiguously, **do not overwrite** the file: save the new version beside it as `<name>.new.md` and report a conflict.
 - Refreshing is the user's request, so the overwrite-confirmation rule is satisfied for stale files. Never delete a generated file; if its subject disappeared, report it and ask.
-- If an HTML version exists in `docs/codemap/html/` for a regenerated file, regenerate it too. If none exists (the project was generated Markdown-only), do not create one unless the user asks.
+- If an HTML version exists in `docs/codemap/html/` for a regenerated file, regenerate it too. Also make sure `docs/codemap/html/assets/` holds current copies of the shared assets (see the HTML section of `language-and-output.md`). If none exists (the project was generated Markdown-only), do not create one unless the user asks.
 - Update `generated_at`, `commit` and every hash in `sources` in the new front matter.
 
 ## 4. Report

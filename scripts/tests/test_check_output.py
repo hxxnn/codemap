@@ -225,3 +225,20 @@ def test_unfilled_template_placeholders_are_reported(tmp_path):
     page = tmp_path / "p.html"
     page.write_text(HTML_OK.replace("<main>", "<main>{{PROJECT}}"))
     assert any("placeholder" in p and "{{PROJECT}}" in p for p in co.check_html(page))
+
+
+def test_html_must_have_the_asset_files_it_links_to(tmp_path):
+    html_dir = tmp_path / "html"
+    html_dir.mkdir()
+    page = html_dir / "p.html"
+    page.write_text(
+        HTML_OK.replace("<title>", '<link rel="stylesheet" href="assets/codemap.css"><title>')
+        .replace("<script>/* template */</script>", '<script src="assets/codemap.js"></script>')
+    )
+    problems = co.check_html(page)
+    assert any("assets/codemap.css" in p for p in problems)
+    assert any("assets/codemap.js" in p for p in problems)
+    (html_dir / "assets").mkdir()
+    (html_dir / "assets" / "codemap.css").write_text("/* css */")
+    (html_dir / "assets" / "codemap.js").write_text("/* js */")
+    assert co.check_html(page) == []

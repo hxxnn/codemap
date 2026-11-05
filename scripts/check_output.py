@@ -140,6 +140,12 @@ def check_html(html_path):
         problems.append(f"{html_path}: unexpected script tags ({len(scripts)} found, template has 2)")
     for name in sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", text))):
         problems.append(f"{html_path}: unfilled template placeholder {name}")
+    for ref in re.findall(r"<link\b[^>]*\bhref=\"([^\"]+)\"|<script\b[^>]*\bsrc=\"([^\"]+)\"", text):
+        target = ref[0] or ref[1]
+        if re.match(r"(https?:)?//|data:|#", target):
+            continue
+        if not (Path(html_path).parent / target).is_file():
+            problems.append(f"{html_path}: linked file does not exist: {target}")
     stripped = re.sub(r"<script\b.*?</script>|<style\b.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
     if re.search(r"<[^>]*\son[a-z]+\s*=", stripped, flags=re.IGNORECASE):
         problems.append(f"{html_path}: inline event handler found")
