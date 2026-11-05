@@ -46,7 +46,7 @@ or pick one output (HTML pages are created by default; add `--no-html` for Markd
 /codemap refresh
 ```
 
-You can also just ask in plain words ("draw the architecture of this project", "프로젝트 구조를 마인드맵으로 보여줘"). Output is written in the language you ask in.
+You can also just ask in plain words ("draw the architecture of this project", "프로젝트 구조를 마인드맵으로 보여줘"). Output is written in Korean by default; ask for another language explicitly (for example "in English") to change it.
 
 ## Use in cloud sessions (claude.ai/code, mobile, `--cloud`)
 
@@ -74,7 +74,7 @@ Then commit and push the project's `.claude/` folder. In a cloud session on that
 | `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |
 | `/codemap refresh` | `codemap-refresh` | updates only the files whose source code changed, keeping your manual edits |
 
-Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages in a single file.
+Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages in a single file. The presentation outline (`present.html`) has a slide mode (arrow keys, `Esc` to leave). Text is set in the Pretendard font loaded from a CDN with a pinned version; offline, text falls back to system fonts and diagrams show their source with a note.
 
 ## Trust
 
@@ -114,6 +114,7 @@ Check generated output against the project it describes (every referenced path m
 python3 scripts/check_output.py <project_dir> <project_dir>/docs/codemap --render
 pytest scripts/tests
 python3 scripts/rebuild_example_html.py   # re-apply the HTML template to the example pages
+node scripts/browser_check.js <page.html> [--deck] [--offline]   # open a page in a real browser (needs Playwright)
 ```
 
 The design and implementation plan are in [`docs/design/codemap-design.md`](docs/design/codemap-design.md) and [`docs/superpowers/plans/2026-11-05-codemap-plugin.md`](docs/superpowers/plans/2026-11-05-codemap-plugin.md).

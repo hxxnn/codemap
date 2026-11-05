@@ -5,6 +5,8 @@ argument-hint: "[all|architecture|deps|mindmap|sequence|doc|present|refresh] [--
 
 You are running the codemap workflow. Arguments: `$ARGUMENTS`
 
+Everything you write during this workflow, in files and in chat messages, is in the output language defined in `language-and-output.md`: Korean unless the user explicitly asked for another language.
+
 First read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/language-and-output.md` and `${CLAUDE_PLUGIN_ROOT}/skills/_shared/mermaid-rules.md` and follow them for everything below.
 
 1. **Preflight.** Run the Preflight in `language-and-output.md`: if there is no source code (only docs/config), say so, write nothing and stop.
