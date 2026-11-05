@@ -5,7 +5,7 @@
 //   node scripts/browser_check.js <page.html> [--deck] [--offline]
 //
 // Default checks: diagrams render, no console errors, zoom, section collapse (aria-expanded),
-// theme toggle re-renders diagrams, section filter. --deck: presentation mode (pages with
+// theme toggle re-renders diagrams, section filter, print layout. --deck: presentation mode (pages with
 // .cm-slide sections). --offline: block the CDN and expect the diagram fallback.
 // Exit code 1 if any check fails; the last line is a JSON summary.
 const { chromium } = require('playwright');
@@ -61,6 +61,18 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
     const total = await page.locator('.cm-section').count();
     expect((await page.locator('.cm-section[hidden]').count()) === total, 'filter hides every section when nothing matches');
     await page.fill('#cm-search', '');
+    // print layout: no diagram may be wider than the page, and the legend must stay visible
+    await page.emulateMedia({ media: 'print' });
+    await page.setViewportSize({ width: 700, height: 900 }); // about the printable width of A4
+    const overflow = await page.evaluate(() => {
+      const limit = document.documentElement.clientWidth + 1;
+      return Array.from(document.querySelectorAll('pre.mermaid svg')).filter((svg) => svg.getBoundingClientRect().right > limit).length;
+    });
+    expect(overflow === 0, 'print: ' + overflow + ' diagram(s) run past the page width');
+    const legendUsed = await page.evaluate(() => !document.getElementById('cm-legend').hidden);
+    if (legendUsed) expect(await page.locator('#cm-legend').isVisible(), 'print: the legend stays visible');
+    await page.setViewportSize({ width: 1360, height: 900 });
+    await page.emulateMedia({ media: 'screen' });
     expect(await page.evaluate(() => /^\d{4}-\d{2}-\d{2}/.test(document.querySelector('.cm-stats dd').textContent)), 'header shows the generated date');
   }
 

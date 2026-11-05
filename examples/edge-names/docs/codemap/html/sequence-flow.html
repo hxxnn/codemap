@@ -144,14 +144,20 @@
   @media (min-width: 901px) { .cm-nav summary { pointer-events: none; } }
   @media print {
     body { background: #fff; color: #222; font-size: 11pt; }
-    .cm-side, .cm-toolbar, .cm-collapse, .cm-skip { display: none !important; }
-    .cm-shell { display: block; }
-    .cm-main { padding: 0; }
+    .cm-toolbar, .cm-collapse, .cm-skip, .cm-deck { display: none !important; }
+    .cm-shell { display: flex; flex-direction: column; }
+    .cm-main { padding: 0; order: 1; }
+    /* the legend stays: it explains the diagram colors */
+    .cm-side { display: block !important; order: 2; position: static; height: auto; overflow: visible; background: none; border: 0; padding: 14px 0 0; }
+    .cm-side > :not(.cm-legend) { display: none !important; }
     .cm-section.collapsed > :not(h2) { display: block !important; }
     .cm-section[hidden] { display: block !important; }
-    .cm-section, figure.cm-diagram { break-inside: avoid; }
-    figure.cm-diagram { border-color: #bbb; }
-    .cm-viewport { background-image: none; padding: 12px; overflow: visible; }
+    .cm-section > h2 { break-after: avoid; }
+    figure.cm-diagram, table, .cm-legend { break-inside: avoid; }
+    figure.cm-diagram { border-color: #bbb; overflow: visible; }
+    .cm-viewport { background-image: none; padding: 12px; overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
+    .cm-viewport pre.mermaid { width: 100% !important; }
+    .cm-viewport pre.mermaid svg { min-width: 0 !important; max-width: 100% !important; height: auto; }
     a { color: inherit; }
   }
 </style>
