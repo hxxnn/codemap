@@ -74,7 +74,7 @@ python3 codemap/scripts/install_into_project.py /path/to/your/project
 | `/codemap present` | `present` | `present.md` — 다른 결과물로 만든 5~7장 발표 개요 |
 | `/codemap refresh` | `codemap-refresh` | 코드가 바뀐 파일만 갱신하고, 직접 수정한 부분은 보존 |
 
-마크다운 파일마다 `docs/codemap/html/<이름>.html`이 함께 만들어집니다(`--no-html`을 붙이면 만들지 않습니다). 확대·축소되는 다이어그램, 접을 수 있는 섹션, 검색, 라이트/다크 전환이 파일 하나에 들어 있습니다.
+마크다운 파일마다 `docs/codemap/html/<이름>.html`이 함께 만들어집니다(`--no-html`을 붙이면 만들지 않습니다). 목차 사이드바, 색 범례, 줄어들지 않고 스크롤되는 확대·축소 다이어그램, 접을 수 있는 섹션, 검색, 라이트/다크 전환, 인쇄용 레이아웃이 파일 하나에 들어 있습니다.
 
 ## 신뢰성
 
@@ -113,6 +113,7 @@ claude --plugin-dir /path/to/codemap
 ```
 python3 scripts/check_output.py <프로젝트_폴더> <프로젝트_폴더>/docs/codemap --render
 pytest scripts/tests
+python3 scripts/rebuild_example_html.py   # 예시 HTML 페이지에 템플릿을 다시 적용
 ```
 
 설계와 구현 계획은 [`docs/design/codemap-design.md`](docs/design/codemap-design.md), [`docs/superpowers/plans/2026-11-05-codemap-plugin.md`](docs/superpowers/plans/2026-11-05-codemap-plugin.md)에 있습니다.

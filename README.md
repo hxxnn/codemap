@@ -74,7 +74,7 @@ Then commit and push the project's `.claude/` folder. In a cloud session on that
 | `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |
 | `/codemap refresh` | `codemap-refresh` | updates only the files whose source code changed, keeping your manual edits |
 
-Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): zoomable diagrams, collapsible sections, search and a light/dark toggle in a single file.
+Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages in a single file.
 
 ## Trust
 
@@ -113,6 +113,7 @@ Check generated output against the project it describes (every referenced path m
 ```
 python3 scripts/check_output.py <project_dir> <project_dir>/docs/codemap --render
 pytest scripts/tests
+python3 scripts/rebuild_example_html.py   # re-apply the HTML template to the example pages
 ```
 
 The design and implementation plan are in [`docs/design/codemap-design.md`](docs/design/codemap-design.md) and [`docs/superpowers/plans/2026-11-05-codemap-plugin.md`](docs/superpowers/plans/2026-11-05-codemap-plugin.md).

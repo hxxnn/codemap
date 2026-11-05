@@ -219,3 +219,9 @@ def test_relative_import_specifiers_match_a_file_anywhere_in_the_project(tmp_pat
     assert co.check_file(ok, fx) == []
     bad = write(tmp_path, "b.md", BLOCK + "Imports `./ghost.py`.\n")
     assert any("./ghost.py" in p for p in co.check_file(bad, fx))
+
+
+def test_unfilled_template_placeholders_are_reported(tmp_path):
+    page = tmp_path / "p.html"
+    page.write_text(HTML_OK.replace("<main>", "<main>{{PROJECT}}"))
+    assert any("placeholder" in p and "{{PROJECT}}" in p for p in co.check_html(page))

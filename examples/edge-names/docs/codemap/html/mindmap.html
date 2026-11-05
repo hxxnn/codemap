@@ -3,60 +3,159 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mindmap: edge-names</title>
+<meta name="color-scheme" content="light dark">
+<title>Mindmap: edge-names - edge-names</title>
 <style>
   :root {
-    --bg: #f7f7f5; --surface: #ffffff; --text: #1d2327; --muted: #5b6770;
-    --border: #d9dde0; --accent: #2457c5; --accent-text: #ffffff; --mark: #fff2a8;
+    --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
+    --ink: #141a26; --text: #39435a; --muted: #5b677f; --rule: #dce0e8;
+    --accent: #3b4cca; --accent-soft: #e8ebfb; --focus: #3b4cca;
+    --c-external: #0e8f83; --c-external-bg: #e3f4f1;
+    --c-inferred: #b7791f; --c-inferred-bg: #fff6e0;
+    --c-cycle: #c62f3e; --c-cycle-bg: #fdecee; --c-warn: #9a5b00;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "D2Coding", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #14171a; --surface: #1d2226; --text: #e6e9eb; --muted: #9aa5ad;
-      --border: #333b41; --accent: #7aa2ff; --accent-text: #0d1117; --mark: #5a4b00;
+      --paper: #10141c; --side: #0d1118; --canvas: #151b26; --grid: #28303f;
+      --ink: #eef1f7; --text: #c3cadb; --muted: #94a1b9; --rule: #272e3b;
+      --accent: #8c9bff; --accent-soft: #1b2142; --focus: #8c9bff;
+      --c-external-bg: #10302d; --c-inferred-bg: #3a2e12; --c-inferred: #e6b04f; --c-cycle-bg: #3a1a20; --c-warn: #e6b04f;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #14171a; --surface: #1d2226; --text: #e6e9eb; --muted: #9aa5ad;
-    --border: #333b41; --accent: #7aa2ff; --accent-text: #0d1117; --mark: #5a4b00;
+    --paper: #10141c; --side: #0d1118; --canvas: #151b26; --grid: #28303f;
+    --ink: #eef1f7; --text: #c3cadb; --muted: #94a1b9; --rule: #272e3b;
+    --accent: #8c9bff; --accent-soft: #1b2142; --focus: #8c9bff;
+    --c-external-bg: #10302d; --c-inferred-bg: #3a2e12; --c-inferred: #e6b04f; --c-cycle-bg: #3a1a20; --c-warn: #e6b04f;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans KR", sans-serif; }
-  header.cm-top { position: sticky; top: 0; z-index: 5; background: var(--surface);
-                  border-bottom: 1px solid var(--border); padding: 12px 16px; }
-  .cm-top-inner { max-width: 1040px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .cm-top h1 { font-size: 1.1rem; margin: 0; flex: 1 1 200px; }
-  .cm-top input[type=search] { flex: 1 1 220px; min-width: 0; padding: 8px 10px; font: inherit;
-    color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
-  main { max-width: 1040px; margin: 0 auto; padding: 16px; }
-  .cm-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-                margin: 0 0 16px; padding: 4px 16px 12px; }
-  .cm-section > h2 { font-size: 1.15rem; margin: 12px 0 8px; display: flex; align-items: center; gap: 8px; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+  body { margin: 0; background: var(--paper); color: var(--text); font: 17px/1.75 var(--font); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  .cm-skip { position: absolute; left: -9999px; top: 8px; background: var(--ink); color: var(--paper); padding: 8px 12px; border-radius: 6px; z-index: 100; }
+  .cm-skip:focus { left: 8px; }
+
+  .cm-shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
+  .cm-side { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; background: var(--side);
+             border-right: 1px solid var(--rule); padding: 28px 20px 24px; display: flex; flex-direction: column; gap: 28px; font-size: 14.5px; line-height: 1.5; }
+  .cm-nav summary { list-style: none; font-weight: 650; color: var(--ink); margin-bottom: 8px; cursor: default; }
+  .cm-nav summary::-webkit-details-marker { display: none; }
+  #cm-toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  #cm-toc a { display: block; padding: 6px 10px; margin-left: -10px; border-radius: 8px; color: var(--text); text-decoration: none; border-left: 3px solid transparent; }
+  #cm-toc a:hover { background: var(--accent-soft); }
+  #cm-toc a[aria-current="true"] { color: var(--ink); font-weight: 650; background: var(--accent-soft); border-left-color: var(--accent); border-radius: 0 8px 8px 0; }
+  #cm-toc li[hidden] { display: none; }
+  .cm-legend h2 { font-size: 14.5px; margin: 0 0 8px; color: var(--ink); font-weight: 650; }
+  .cm-legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .cm-legend li { display: flex; align-items: center; gap: 10px; color: var(--text); }
+  .cm-swatch { width: 22px; height: 14px; border-radius: 4px; border: 2px solid var(--accent); background: var(--accent-soft); flex: none; }
+  .cm-swatch.external { border-color: var(--c-external); background: var(--c-external-bg); }
+  .cm-swatch.inferred { border-color: var(--c-inferred); background: var(--c-inferred-bg); border-style: dashed; }
+  .cm-swatch.cycle { border-color: var(--c-cycle); background: var(--c-cycle-bg); }
+  .cm-tools { margin-top: auto; display: grid; gap: 10px; }
+  .cm-tools input[type=search] { width: 100%; padding: 9px 11px; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; }
+  .cm-tools input::placeholder { color: var(--muted); }
+  .cm-btn { font: inherit; font-size: 13.5px; line-height: 1.2; padding: 8px 12px; color: var(--ink); background: var(--canvas); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; text-align: center; }
+  .cm-btn:hover { border-color: var(--accent); }
+
+  .cm-main { min-width: 0; padding: 56px clamp(20px, 5vw, 72px) 72px; }
+  .cm-head { max-width: 62rem; margin: 0 auto 40px; }
+  .cm-project { margin: 0 0 6px; color: var(--muted); font-size: 16px; font-weight: 550; overflow-wrap: anywhere; }
+  .cm-head h1 { margin: 0; color: var(--ink); font-size: clamp(30px, 4.2vw, 46px); line-height: 1.12; letter-spacing: -0.03em; font-weight: 780; text-wrap: balance; }
+  .cm-stats { display: flex; flex-wrap: wrap; gap: 8px 36px; margin: 22px 0 0; padding: 14px 0 0; border-top: 1px solid var(--rule); font-size: 14.5px; }
+  .cm-stats div { display: flex; gap: 8px; align-items: baseline; }
+  .cm-stats dt { color: var(--muted); }
+  .cm-stats dd { margin: 0; color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .cm-stats dd.attention { color: var(--c-warn); }
+  main#cm-main { max-width: 62rem; margin: 0 auto; }
+  main#cm-main > p, .cm-section > p, .cm-section > ul, .cm-section > ol { max-width: 44rem; }
+  main#cm-main > p:first-child { font-size: 19px; color: var(--ink); margin-top: 0; }
+
+  .cm-section { margin: 0; padding: 36px 0 8px; border-top: 1px solid var(--rule); }
   .cm-section[hidden] { display: none; }
+  .cm-section > h2 { position: relative; margin: 0 0 14px; color: var(--ink); font-size: 26px; line-height: 1.25; letter-spacing: -0.02em; font-weight: 720; }
+  .cm-collapse { position: absolute; left: -38px; top: 2px; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; font: inherit; font-size: 13px; line-height: 1; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer; opacity: .55; }
+  .cm-section:hover .cm-collapse, .cm-collapse:focus-visible { opacity: 1; border-color: var(--rule); }
   .cm-section.collapsed > :not(h2) { display: none; }
-  button.cm-btn { font: inherit; font-size: .85rem; padding: 4px 10px; color: var(--text);
-    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
-  button.cm-btn:hover, button.cm-btn:focus-visible { border-color: var(--accent); outline: none; }
-  figure.cm-diagram { margin: 12px 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .cm-toolbar { display: flex; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg); }
-  .cm-viewport { overflow: auto; max-height: 70vh; padding: 12px; }
-  .cm-viewport pre.mermaid { margin: 0; transform-origin: top left; background: transparent; }
-  code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: .9em; }
-  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
-  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
-  mark { background: var(--mark); color: inherit; }
-  .cm-unverified { color: var(--muted); font-style: italic; }
-  footer { max-width: 1040px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .85rem; }
+  .cm-section h3 { color: var(--ink); font-size: 19px; margin: 28px 0 8px; letter-spacing: -0.01em; }
+  .cm-section p, .cm-section li { margin: 0 0 14px; }
+  .cm-section li::marker { color: var(--muted); }
+  code { font: 0.88em/1 var(--mono); color: var(--ink); background: color-mix(in srgb, var(--accent) 9%, transparent); padding: 0.14em 0.4em; border-radius: 5px; overflow-wrap: anywhere; }
+  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; margin: 0 0 18px; font-size: 15.5px; }
+  th, td { border-bottom: 1px solid var(--rule); padding: 9px 14px 9px 0; text-align: left; vertical-align: top; }
+  th { color: var(--ink); font-weight: 650; }
+  .cm-unverified { display: inline; color: var(--muted); font-style: normal; padding-left: 10px; border-left: 3px solid var(--c-inferred); }
+
+  figure.cm-diagram { margin: 18px 0 24px; border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; background: var(--canvas); position: relative; }
+  .cm-toolbar { position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; gap: 6px; }
+  .cm-toolbar .cm-btn { padding: 6px 10px; font-size: 13px; background: color-mix(in srgb, var(--canvas) 92%, transparent); }
+  .cm-viewport { overflow: auto; padding: 52px 20px 24px; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 20px 20px; }
+  .cm-viewport pre.mermaid { margin: 0 auto; background: transparent; text-align: center; width: 100%; }
+  .cm-viewport pre.mermaid svg { max-width: 100%; height: auto; }
+  .cm-viewport.zoomed pre.mermaid svg { max-width: none; }
+  .cm-viewport.has-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); }
+  @media (max-width: 900px) { .cm-viewport pre.mermaid svg { min-width: 640px; } }
+  figure.cm-diagram.expanded { position: fixed; inset: 3vh 3vw; z-index: 60; margin: 0; box-shadow: 0 0 0 100vmax rgba(10, 14, 22, .62); }
+  figure.cm-diagram.expanded .cm-viewport { height: 100%; }
+  mark { background: var(--accent-soft); color: inherit; }
+
+  footer.cm-foot { max-width: 62rem; margin: 56px auto 0; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13.5px; }
+
+  @media (max-width: 900px) {
+    .cm-shell { display: block; }
+    .cm-side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); padding: 16px 20px; gap: 16px; }
+    .cm-nav summary { cursor: pointer; }
+    .cm-tools { margin-top: 0; grid-template-columns: 1fr auto; }
+    .cm-main { padding-top: 32px; }
+    .cm-collapse { position: static; margin-right: 8px; vertical-align: middle; }
+    .cm-section > h2 { display: flex; align-items: center; }
+  }
+  @media (min-width: 901px) { .cm-nav summary { pointer-events: none; } }
+  @media print {
+    body { background: #fff; color: #222; font-size: 11pt; }
+    .cm-side, .cm-toolbar, .cm-collapse, .cm-skip { display: none !important; }
+    .cm-shell { display: block; }
+    .cm-main { padding: 0; }
+    .cm-section.collapsed > :not(h2) { display: block !important; }
+    .cm-section[hidden] { display: block !important; }
+    .cm-section, figure.cm-diagram { break-inside: avoid; }
+    figure.cm-diagram { border-color: #bbb; }
+    .cm-viewport { background-image: none; padding: 12px; overflow: visible; }
+    a { color: inherit; }
+  }
 </style>
 </head>
 <body>
-<header class="cm-top">
-  <div class="cm-top-inner">
-    <h1>Mindmap: edge-names</h1>
-    <input type="search" id="cm-search" placeholder="Search / 검색" aria-label="Search">
-    <button class="cm-btn" id="cm-theme" type="button" aria-label="Toggle theme">◐</button>
-  </div>
-</header>
+<a class="cm-skip" href="#cm-main" id="cm-skip">Skip to content</a>
+<div class="cm-shell">
+  <aside class="cm-side">
+    <details class="cm-nav" open>
+      <summary id="cm-nav-title">Contents</summary>
+      <ul id="cm-toc"></ul>
+    </details>
+    <div class="cm-legend" id="cm-legend" hidden>
+      <h2 id="cm-legend-title">Legend</h2>
+      <ul id="cm-legend-list"></ul>
+    </div>
+    <div class="cm-tools">
+      <input type="search" id="cm-search" aria-label="Filter sections">
+      <button class="cm-btn" id="cm-theme" type="button"></button>
+    </div>
+  </aside>
+  <div class="cm-main">
+    <header class="cm-head">
+      <p class="cm-project">edge-names</p>
+      <h1>Mindmap: edge-names</h1>
+      <dl class="cm-stats" id="cm-stats">
+        <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>4</dd></div>
+        <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
+      </dl>
+    </header>
 <main id="cm-main">
 <section class="cm-section"><h2>Project at a glance</h2>
 <pre class="mermaid">mindmap
@@ -71,94 +170,179 @@
 <section class="cm-section"><h2>Not covered</h2>
 <p>The whole repository was read; nothing was skipped.</p></section>
 </main>
-<footer>Generated by codemap</footer>
+    <footer class="cm-foot">Generated by codemap</footer>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
 <script>
 (function () {
   var root = document.documentElement;
-  var dark = function () {
+  var KO = (root.lang || "").toLowerCase().indexOf("ko") === 0;
+  var T = KO ? {
+    contents: "목차", filter: "섹션 필터", dark: "다크 모드", light: "라이트 모드", generated: "생성일", sources: "읽은 파일",
+    unverified: "추정 항목", zoomIn: "확대", zoomOut: "축소", fit: "폭에 맞추기", expand: "크게 보기", close: "닫기", legend: "범례",
+    component: "컴포넌트", external: "외부 시스템", inferred: "추정(코드로 확인 못 함)", cycle: "순환 의존",
+    collapse: "섹션 접기", expandSec: "섹션 펼치기", skip: "본문으로 건너뛰기"
+  } : {
+    contents: "Contents", filter: "Filter sections", dark: "Dark mode", light: "Light mode", generated: "Generated", sources: "Files read",
+    unverified: "Unverified", zoomIn: "Zoom in", zoomOut: "Zoom out", fit: "Fit width", expand: "Expand", close: "Close", legend: "Legend",
+    component: "Component", external: "External system", inferred: "Inferred (not confirmed in code)", cycle: "Circular dependency",
+    collapse: "Collapse section", expandSec: "Expand section", skip: "Skip to content"
+  };
+  function $(id) { return document.getElementById(id); }
+  function isDark() {
     var t = root.getAttribute("data-theme");
     return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-  };
-  var scale = new WeakMap();
+  }
 
-  function wrapDiagrams() {
-    document.querySelectorAll("pre.mermaid").forEach(function (pre) {
-      var fig = document.createElement("figure");
-      fig.className = "cm-diagram";
-      var bar = document.createElement("div");
-      bar.className = "cm-toolbar";
-      var view = document.createElement("div");
-      view.className = "cm-viewport";
-      pre.setAttribute("data-src", pre.textContent);
-      pre.parentNode.insertBefore(fig, pre);
-      fig.appendChild(bar); fig.appendChild(view); view.appendChild(pre);
-      scale.set(pre, 1);
-      [["＋", 0.15], ["－", -0.15], ["100%", 0]].forEach(function (b) {
-        var btn = document.createElement("button");
-        btn.type = "button"; btn.className = "cm-btn"; btn.textContent = b[0];
-        btn.setAttribute("aria-label", b[0] === "100%" ? "Reset zoom" : b[1] > 0 ? "Zoom in" : "Zoom out");
-        btn.addEventListener("click", function () {
-          var s = b[1] === 0 ? 1 : Math.min(3, Math.max(0.3, scale.get(pre) + b[1]));
-          scale.set(pre, s); pre.style.transform = "scale(" + s + ")";
-        });
-        bar.appendChild(btn);
+  // static labels
+  $("cm-skip").textContent = T.skip; $("cm-nav-title").textContent = T.contents;
+  $("cm-legend-title").textContent = T.legend; $("cm-search").placeholder = T.filter; $("cm-search").setAttribute("aria-label", T.filter);
+  $("cm-l-generated").textContent = T.generated; $("cm-l-sources").textContent = T.sources; $("cm-l-unverified").textContent = T.unverified;
+  function themeLabel() { $("cm-theme").textContent = isDark() ? T.light : T.dark; }
+  themeLabel();
+
+  // unverified count
+  var unverified = document.querySelectorAll(".cm-unverified").length;
+  $("cm-unverified-count").textContent = String(unverified);
+  if (unverified > 0) $("cm-unverified-count").className = "attention";
+
+  // contents + collapsible sections
+  var sections = Array.prototype.slice.call(document.querySelectorAll(".cm-section"));
+  var toc = $("cm-toc"), links = [];
+  sections.forEach(function (sec, i) {
+    var h = sec.querySelector("h2"); if (!h) return;
+    var id = "s" + (i + 1); sec.id = id;
+    var li = document.createElement("li"), a = document.createElement("a");
+    a.href = "#" + id; a.textContent = h.textContent; li.appendChild(a); toc.appendChild(li); links.push({ a: a, sec: sec, li: li });
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "cm-collapse"; btn.textContent = "▾";
+    btn.setAttribute("aria-label", T.collapse); btn.setAttribute("aria-expanded", "true");
+    btn.addEventListener("click", function () {
+      var c = sec.classList.toggle("collapsed");
+      btn.textContent = c ? "▸" : "▾"; btn.setAttribute("aria-expanded", c ? "false" : "true"); btn.setAttribute("aria-label", c ? T.expandSec : T.collapse);
+    });
+    h.insertBefore(btn, h.firstChild);
+  });
+  if (window.matchMedia("(max-width: 900px)").matches) document.querySelector(".cm-nav").removeAttribute("open");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (l) { l.a.removeAttribute("aria-current"); });
+        links.forEach(function (l) { if (l.sec === e.target) l.a.setAttribute("aria-current", "true"); });
       });
-    });
+    }, { rootMargin: "-15% 0px -70% 0px" });
+    sections.forEach(function (s) { io.observe(s); });
   }
 
-  function makeSectionsCollapsible() {
-    document.querySelectorAll(".cm-section > h2").forEach(function (h) {
-      var btn = document.createElement("button");
-      btn.type = "button"; btn.className = "cm-btn"; btn.textContent = "▾";
-      btn.setAttribute("aria-label", "Collapse section");
-      btn.setAttribute("aria-expanded", "true");
-      btn.addEventListener("click", function () {
-        var sec = h.parentNode, c = sec.classList.toggle("collapsed");
-        btn.textContent = c ? "▸" : "▾";
-        btn.setAttribute("aria-expanded", c ? "false" : "true");
-        btn.setAttribute("aria-label", c ? "Expand section" : "Collapse section");
-      });
-      h.insertBefore(btn, h.firstChild);
+  // search filter
+  $("cm-search").addEventListener("input", function () {
+    var q = this.value.trim().toLowerCase();
+    links.forEach(function (l) {
+      var hide = q !== "" && l.sec.textContent.toLowerCase().indexOf(q) === -1;
+      l.sec.hidden = hide; l.li.hidden = hide;
     });
-  }
-
-  function setupSearch() {
-    var input = document.getElementById("cm-search");
-    input.addEventListener("input", function () {
-      var q = input.value.trim().toLowerCase();
-      document.querySelectorAll(".cm-section").forEach(function (sec) {
-        sec.hidden = q !== "" && sec.textContent.toLowerCase().indexOf(q) === -1;
-      });
-    });
-  }
-
-  function renderDiagrams() {
-    if (!window.mermaid) return;
-    mermaid.initialize({ startOnLoad: false, theme: dark() ? "dark" : "default", securityLevel: "strict" });
-    document.querySelectorAll("pre.mermaid").forEach(function (pre) {
-      pre.removeAttribute("data-processed");
-      pre.textContent = pre.getAttribute("data-src");
-    });
-    // Mermaid cannot measure hidden diagrams: show every section while rendering, then restore.
-    var saved = Array.prototype.map.call(document.querySelectorAll(".cm-section"), function (sec) {
-      var state = { sec: sec, collapsed: sec.classList.contains("collapsed"), hidden: sec.hidden };
-      sec.classList.remove("collapsed"); sec.hidden = false;
-      return state;
-    });
-    var restore = function () {
-      saved.forEach(function (s) { s.sec.classList.toggle("collapsed", s.collapsed); s.sec.hidden = s.hidden; });
-    };
-    mermaid.run({ querySelector: "pre.mermaid" }).then(restore, restore);
-  }
-
-  document.getElementById("cm-theme").addEventListener("click", function () {
-    root.setAttribute("data-theme", dark() ? "light" : "dark");
-    renderDiagrams();
   });
 
-  wrapDiagrams(); makeSectionsCollapsible(); setupSearch();
-  renderDiagrams();
+  // diagrams: canvas with zoom / fit / expand
+  var scale = new WeakMap();
+  function setZoom(pre, view, s) {
+    scale.set(pre, s);
+    pre.style.width = s === 1 ? "100%" : (s * 100) + "%";
+    view.classList.toggle("zoomed", s !== 1);
+  }
+  function wrapDiagrams() {
+    document.querySelectorAll("pre.mermaid").forEach(function (pre) {
+      pre.setAttribute("data-src", pre.textContent);
+      var fig = document.createElement("figure"), bar = document.createElement("div"), view = document.createElement("div");
+      fig.className = "cm-diagram"; bar.className = "cm-toolbar"; view.className = "cm-viewport";
+      view.tabIndex = 0; view.setAttribute("role", "region"); view.setAttribute("aria-label", pre.getAttribute("data-src").split("\n")[0].trim());
+      view.addEventListener("scroll", function () { hint(view); });
+      pre.parentNode.insertBefore(fig, pre); fig.appendChild(bar); fig.appendChild(view); view.appendChild(pre);
+      scale.set(pre, 1);
+      function add(label, handler) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "cm-btn"; b.textContent = label.text;
+        b.setAttribute("aria-label", label.aria); b.title = label.aria; b.addEventListener("click", function () { handler(b); }); bar.appendChild(b); return b;
+      }
+      add({ text: "−", aria: T.zoomOut }, function () { setZoom(pre, view, Math.max(0.4, scale.get(pre) - 0.25)); });
+      add({ text: "+", aria: T.zoomIn }, function () { setZoom(pre, view, Math.min(3, scale.get(pre) + 0.25)); });
+      add({ text: T.fit, aria: T.fit }, function () { setZoom(pre, view, 1); });
+      var ex = add({ text: T.expand, aria: T.expand }, function (b) {
+        var on = fig.classList.toggle("expanded"); b.textContent = on ? T.close : T.expand; b.setAttribute("aria-label", on ? T.close : T.expand);
+        document.body.style.overflow = on ? "hidden" : "";
+      });
+      ex.setAttribute("aria-label", T.expand);
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var open = document.querySelector("figure.cm-diagram.expanded");
+    if (open) { open.querySelector(".cm-toolbar .cm-btn:last-child").click(); }
+  });
+
+  // legend: only the meanings the diagrams actually use
+  function buildLegend() {
+    var srcs = Array.prototype.map.call(document.querySelectorAll("pre.mermaid"), function (p) { return p.getAttribute("data-src") || ""; });
+    var flow = srcs.filter(function (s) { return /^\s*(%%[^\n]*\n\s*)*flowchart|^\s*graph\b/.test(s); });
+    if (!flow.length) return;
+    var all = flow.join("\n"), list = $("cm-legend-list");
+    var uses = function (name) { return new RegExp("(:::|\\bclass\\b[^\\n]*\\b)" + name + "\\b").test(all); };
+    var cycleEdges = /linkStyle[^\n]*stroke:#(c62f3e|d33)/i.test(all);
+    [["", T.component, true], ["external", T.external, uses("external")], ["inferred", T.inferred, uses("inferred")], ["cycle", T.cycle, uses("cycle") || cycleEdges]].forEach(function (it) {
+      if (!it[2]) return;
+      var li = document.createElement("li"), sw = document.createElement("span"), tx = document.createElement("span");
+      sw.className = "cm-swatch " + it[0]; tx.textContent = it[1]; li.appendChild(sw); li.appendChild(tx); list.appendChild(li);
+    });
+    $("cm-legend").hidden = false;
+  }
+
+  // mermaid theming
+  var FONT = getComputedStyle(root).getPropertyValue("--font");
+  function themeVars() {
+    var d = isDark();
+    var c = d ? { p: "#1b2142", pb: "#8c9bff", t: "#eef1f7", l: "#94a1b9", cb: "#141a26", cbr: "#3a4457", el: "#151b26", note: "#222936", noteb: "#5b677f",
+                  s: ["#8c9bff", "#b49cf0", "#6cb6e8", "#94a1b9", "#4cc5b8"], sl: "#10141c" }
+             : { p: "#e8ebfb", pb: "#3b4cca", t: "#141a26", l: "#5b677f", cb: "#f3f5fa", cbr: "#b9c0d0", el: "#ffffff", note: "#f2f3f6", noteb: "#7b8499",
+                  s: ["#3b4cca", "#7a5ac8", "#2f7fb0", "#5b677f", "#0e8f83"], sl: "#ffffff" };
+    var v = { darkMode: d, fontFamily: FONT, fontSize: "15px", primaryColor: c.p, primaryBorderColor: c.pb, primaryTextColor: c.t, lineColor: c.l,
+              secondaryColor: c.cb, tertiaryColor: c.cb, clusterBkg: c.cb, clusterBorder: c.cbr, edgeLabelBackground: c.el, textColor: c.t,
+              noteBkgColor: c.note, noteBorderColor: c.noteb, noteTextColor: c.t, actorBkg: c.p, actorBorder: c.pb, actorTextColor: c.t, actorLineColor: c.l,
+              signalColor: c.l, signalTextColor: c.t, labelBoxBkgColor: c.cb, labelBoxBorderColor: c.cbr, labelTextColor: c.t, loopTextColor: c.t,
+              sequenceNumberColor: c.sl };
+    c.s.forEach(function (col, i) { v["cScale" + i] = col; v["cScaleLabel" + i] = c.sl; });
+    return v;
+  }
+  function hint(view) { view.classList.toggle("has-more", view.scrollWidth - view.clientWidth - view.scrollLeft > 2); }
+  window.addEventListener("resize", function () { document.querySelectorAll(".cm-viewport").forEach(hint); });
+
+  // Never shrink a diagram below 72% of its natural size: scroll sideways instead of making text unreadable.
+  function readableMinimum() {
+    document.querySelectorAll("pre.mermaid svg").forEach(function (svg) {
+      var vb = svg.viewBox && svg.viewBox.baseVal, w = vb && vb.width ? vb.width : parseFloat((svg.style.maxWidth || "").replace("px", ""));
+      if (w) svg.style.minWidth = Math.round(w * 0.72) + "px";
+    });
+    document.querySelectorAll(".cm-viewport").forEach(hint);
+  }
+  function renderDiagrams() {
+    if (!window.mermaid) return;
+    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: themeVars(),
+      flowchart: { htmlLabels: true, curve: "basis", padding: 14, nodeSpacing: 44, rankSpacing: 56, subGraphTitleMargin: { top: 12, bottom: 12 }, useMaxWidth: true },
+      sequence: { useMaxWidth: true, mirrorActors: false, actorMargin: 56, messageMargin: 34 }, mindmap: { useMaxWidth: true, padding: 14 } });
+    document.querySelectorAll("pre.mermaid").forEach(function (pre) { pre.removeAttribute("data-processed"); pre.textContent = pre.getAttribute("data-src"); });
+    // Mermaid cannot measure hidden diagrams: show every section while rendering, then restore.
+    var saved = sections.map(function (sec) {
+      var st = { sec: sec, collapsed: sec.classList.contains("collapsed"), hidden: sec.hidden };
+      sec.classList.remove("collapsed"); sec.hidden = false; return st;
+    });
+    var restore = function () { saved.forEach(function (s) { s.sec.classList.toggle("collapsed", s.collapsed); s.sec.hidden = s.hidden; }); };
+    mermaid.run({ querySelector: "pre.mermaid" }).then(function () { readableMinimum(); restore(); }, restore);
+  }
+
+  $("cm-theme").addEventListener("click", function () {
+    root.setAttribute("data-theme", isDark() ? "light" : "dark"); themeLabel(); renderDiagrams();
+  });
+  wrapDiagrams(); buildLegend(); renderDiagrams();
 })();
 </script>
 </body>

@@ -138,6 +138,8 @@ def check_html(html_path):
     scripts = re.findall(r"<script\b[^>]*>", text, flags=re.IGNORECASE)
     if len(scripts) != 2 or "mermaid@" not in scripts[0]:
         problems.append(f"{html_path}: unexpected script tags ({len(scripts)} found, template has 2)")
+    for name in sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", text))):
+        problems.append(f"{html_path}: unfilled template placeholder {name}")
     stripped = re.sub(r"<script\b.*?</script>|<style\b.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
     if re.search(r"<[^>]*\son[a-z]+\s*=", stripped, flags=re.IGNORECASE):
         problems.append(f"{html_path}: inline event handler found")
