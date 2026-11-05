@@ -7,33 +7,30 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Dependency graph: edge-names
+# Dependency graph
 
-## Internal imports
+Each arrow points from the file that `require`s to the file it requires, based on the `require(...)` statements in the three source files.
 
 ```mermaid
 flowchart LR
-  main["src/main.js"]
-  utils["src/my utils.js"]
-  loader["src/데이터 로더.js"]
-  main -->|"require"| utils
-  main -->|"require"| loader
+  n1["src/main.js"]
+  n2["src/my utils.js"]
+  n3["src/데이터 로더.js"]
+  n1 --> n2
+  n1 --> n3
 ```
 
-`src/main.js` is the only file with imports: it requires both helper modules, and neither helper imports anything.
+`src/main.js` is the only importer; the two helper files import nothing.
 
-## Imports table
+## Circular dependencies
 
-| File | Requires | Exports |
-|---|---|---|
-| `src/main.js` | `src/my utils.js`, `src/데이터 로더.js` | none |
-| `src/my utils.js` | none | `shout` |
-| `src/데이터 로더.js` | none | `loadItems` |
+None found: `src/my utils.js` and `src/데이터 로더.js` contain no `require` statements, and there are no self-imports.
 
-## Findings
-- Circular dependencies: none.
-- External (npm) packages: none; `package.json` has no `dependencies` field.
-- Note: the `require` strings contain a space and Hangul characters (`./my utils.js`, `./데이터 로더.js`), which Node resolves as normal file names.
+## Most depended-on files
+
+- `src/my utils.js`: 1 incoming edge (from `src/main.js`)
+- `src/데이터 로더.js`: 1 incoming edge (from `src/main.js`)
 
 ## Not covered
-The whole repository was read; nothing was skipped.
+
+All source files were read completely; there are no dynamic imports. Nothing was skipped.

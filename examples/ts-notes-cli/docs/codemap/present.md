@@ -3,44 +3,42 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: fabaf87a3aeb5141ee19be6283a4d4727a929ace6542da1e3da20eef52725ba0, docs/codemap/dependency-graph.md: 37de8c4b7a2765fed72da30bf7924d1c45e1ad42c27d048fc28b6812c6aacb0a, docs/codemap/mindmap.md: 5221fa8be8571bb10a223cc0fa7588328f199d0056142c1e646c672f4496743f, docs/codemap/sequence-flow.md: 94ed8888679da195a714b8251db773b141fd62b43e2cf91b62542ad81230d071, docs/codemap/design-doc.md: ac4e02f6d7f627732671b07d57d2d3cdae9d224114ae5b062aa32b465acc826e}
+sources: {docs/codemap/architecture.md: 8eca049d68973a1b7ac39eea77daca509e6ad1a05905d4f623f10b2b8e704d62, docs/codemap/dependency-graph.md: 3bb71e17ad5fe3cee22674e271c37e0ca2bd64bd076b498936e5f90b7b310941, docs/codemap/mindmap.md: 5243108c84621bb6d8f58083c9c3a5fdd5a9700e2457183b3afe168527c5a036, docs/codemap/sequence-flow.md: d8efe8e09a4a7166ee56cfb7408f4758aadd1b0126d5e609fa2c84205477e3b3, docs/codemap/design-doc.md: 7e5bf83f983afcbe7006c9b98bacbed5ad02168cafdde2c810ee1cc9244e43b1}
 ---
-
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
-
 
 # Presentation outline
 
-A 7-slide outline for `notes-cli`, built only from the other codemap artifacts. All five source artifacts were present.
+A seven-slide walkthrough of `notes-cli`, built only from the existing codemap artifacts (all five were available).
 
 ## Slide 1: What it is
-`notes-cli` is a small command-line notes tool written in TypeScript with no runtime dependencies. You add a note with `notes add` and print notes with `notes list`.
+A small TypeScript command-line notes tool with two commands, `notes add` and `notes list`, running on Node.js with no runtime dependencies.
 Show: `design-doc.md` → "Overview"
 
 ## Slide 2: The big picture
-There is one container: a Node.js CLI process that keeps notes in memory. The only outside inputs are the terminal user and the `USER` environment variable.
+One Node.js process talks to the user's terminal and keeps its notes in an in-memory array inside the same process; there is no database.
 Show: `architecture.md` → "Level 2: Containers" diagram
 
 ## Slide 3: How it is organized
-Five files, five responsibilities: CLI, storage, identity, presentation and types.
-Show: `mindmap.md` → the mindmap diagram
+Five small files, one responsibility each: CLI, storage, presentation, identity and types.
+Show: `mindmap.md` → "Mindmap" diagram
 
 ## Slide 4: How it runs
-`notes add` looks up the user, then appends a note to the in-memory array; `notes list` formats each note and prints it.
-Show: `sequence-flow.md` → "notes add" diagram
+`notes add` reads the user name, then stores a note; `notes list` formats every stored note and prints it.
+Show: `sequence-flow.md` → "Scenario 1: `notes add <text>`" diagram
 
 ## Slide 5: How the parts depend on each other
-Dependencies point one way, from the entry file down to the store, formatter and shared type. No circular dependencies were found.
-Show: `dependency-graph.md` → the dependency flowchart and "Circular dependencies"
+Imports flow one way from `src/index.ts` down to `src/types.ts`, and there are no circular dependencies.
+Show: `dependency-graph.md` → "Dependency graph" diagram and "Circular dependencies"
 
 ## Slide 6: Key design choices
-Storage is in memory behind a small module, so notes are lost when the process exits. Command parsing lives in a single entry file; the reasons for these choices are inferred, not stated in the repo. <!-- codemap:unverified -->
+Commands are parsed in a single entry file, and storage sits behind a small module with only `addNote` and `listNotes`. Notes are lost when the process ends; the reason for in-memory storage is a guess, not stated in the repository. (inferred) <!-- codemap:unverified -->
 Show: `design-doc.md` → "Key design choices"
 
 ## Slide 7: Where to start reading
-Start with `README.md`, then `package.json`, `src/index.ts`, `src/notes-store.ts` and `src/types.ts`.
+Start with `README.md`, then `package.json`, then `src/index.ts`, then `src/notes-store.ts`.
 Show: `design-doc.md` → "Reading order (onboarding guide)"
 
 ## Not covered
 
-Taken from the source artifacts: nothing was skipped; the whole repository was read. There are no tests and no dist/ folder in the repo.
+Taken from the artifacts' own footers: all source files, `package.json` and `README.md` were read completely; `tsconfig.json` was only skimmed; there are no tests and no build output (`dist/`) in the repository.

@@ -3,30 +3,42 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: 6be7a76b01b05fdfed2e24d082c375e06c288eccb5856363b5734c23ee428531, docs/codemap/dependency-graph.md: 78772b1968602fe63142de9af69c2838f086d83c6025b683d5c34668a1f1e6bf, docs/codemap/sequence-flow.md: ac7bf7cf4f4a171a10f53cd656ddf80d59c7fdae1a6ad1c4a9396e2c709fd227, docs/codemap/design-doc.md: 05065e0b12ab9257e067d676993264d1ed7dc6823b67282c79183ba9a6a38dc2}
+sources: {docs/codemap/architecture.md: a1dce4c80ed5d37e8b4c9414f13db76f5b269fd2b1f1e5115434d20dcfa72007, docs/codemap/dependency-graph.md: c8fb1e5cd1f6f020e04505984a32d70b563429d7e34d044d876bbb45d4517eea, docs/codemap/mindmap.md: 92aea1c5aba96bbd0c68db5b1829e178e299ed47d97e8f5eb3ef0b84942c8bae, docs/codemap/sequence-flow.md: e09ddff9e734bca61596933de13e2710026e3a91df179d728ab20f0409c9d4ec, docs/codemap/design-doc.md: 580cc28453e869f0bb4199d450a4bd154c16dc8aa0686d2022b43843cdb81b4b}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Presentation outline: edge-names
+# Presentation outline
 
-## Slide 1 — What it is
-- A tiny Node.js script that prints `ALPHA!`, `BETA!`, `GAMMA!`.
-- Entry point: `src/main.js`, declared in `package.json`.
+A seven-slide walkthrough of `edge-names`, built from the existing codemap artifacts; all five source artifacts were available.
 
-## Slide 2 — Architecture
-- One process, three files, no external systems (see `architecture.md`).
+## Slide 1: What it is
+A tiny Node.js (CommonJS) program that prints `alpha`, `beta`, `gamma` in upper case with a `!`. Its file names contain spaces and non-ASCII characters (per `README.md`).
+Show: `design-doc.md` → "Overview"
 
-## Slide 3 — Dependencies
-- `src/main.js` requires `src/my utils.js` and `src/데이터 로더.js`; no cycles, no npm packages (see `dependency-graph.md`).
+## Slide 2: The big picture
+One CLI script run by a terminal user, writing to standard output. No database or network.
+Show: `architecture.md` → "Level 2: Containers" diagram
 
-## Slide 4 — Runtime flow
-- Load items, then shout and print each one (see `sequence-flow.md`).
+## Slide 3: How it is organized
+Three groups, one file each: entry point, data, formatting.
+Show: `mindmap.md` → "Mindmap" diagram
 
-## Slide 5 — Design notes
-- Defensive copy in `loadItems`; file names with a space and Hangul are used on purpose (see `design-doc.md`).
+## Slide 4: How it runs
+`src/main.js` loads the items, shouts each one, and logs it.
+Show: `sequence-flow.md` → "Run `node src/main.js`" diagram
 
-## Slide 6 — Where to start reading
-- `package.json`, then `src/main.js`, then the two helpers.
+## Slide 5: How the parts depend on each other
+`src/main.js` requires both helpers; the helpers import nothing; there are no circular dependencies.
+Show: `dependency-graph.md` → "Dependency graph" diagram
+
+## Slide 6: Key design choices
+The data module returns a copy of its array, and formatting lives in a pure helper. The reason for wiring everything in the entry script is not stated in the code. <!-- codemap:unverified --> (inferred)
+Show: `design-doc.md` → "Key design choices"
+
+## Slide 7: Where to start reading
+Read `README.md`, `package.json`, `src/main.js`, then `src/데이터 로더.js` and `src/my utils.js`.
+Show: `design-doc.md` → "Reading order (onboarding guide)"
 
 ## Not covered
-Built only from the existing codemap files; no new code analysis.
+
+All artifacts report that the repository was read completely; nothing was skipped.

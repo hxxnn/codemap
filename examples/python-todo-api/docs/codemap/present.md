@@ -3,38 +3,36 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: 68841850f67409cc0e28deb9cd2ef8915a881af22914d42386ba32cb448d67af, docs/codemap/dependency-graph.md: 0ced1e95e249a6a88e3d187a14261d340a631389fc33fdb830b8a3cf5a6d0b8b, docs/codemap/mindmap.md: c820de42460c97d8cdf63025da716aa59752566b8cfc40a6e89e0f625fc652a3, docs/codemap/sequence-flow.md: 8b78738ef8a1177f90d626af83b4dc616d9c1fade2120b95f2e4967b0fc3acda, docs/codemap/design-doc.md: 4098576aae2c19ef2edcc49d2910071a60fe1f4ff2bd4cf0920f4748e0ea7d2f}
+sources: {docs/codemap/architecture.md: c940a044ff8cd39d09f2b8360bea94ffe130ceb79427ba4cac36246569394d0f, docs/codemap/dependency-graph.md: 40e7f7ff2816a8a0553c2e6197e20cc72d99cd5329a16975706b25e406188ce5, docs/codemap/mindmap.md: f2df21d103826f87a26c70e7c77135c26f38ada6760c8772ee083c027d8839f4, docs/codemap/sequence-flow.md: 72dc6439fcf2c9ad71f07485cfcb7fd6a853ce74e2956e58e7a814b3383b5e9f, docs/codemap/design-doc.md: 4faab1fc0cf13ef43d6571a26882771a0e2ace28b0a522ab5fda1781b5b6e0cc}
 ---
-
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
-
 
 # Presentation outline
 
-Seven slides explaining `todo-api`, built only from the other codemap artifacts (all five were present).
+A seven-slide walkthrough of `todo-api`, built from the existing codemap documents. All five source artifacts were available.
 
 ## Slide 1: What it is
-`todo-api` is a tiny FastAPI service for managing todos, run with uvicorn. It has two endpoints and keeps data in memory.
+`todo-api` is a tiny FastAPI service that creates and lists todos, kept in memory. It is written in Python with `fastapi` and `uvicorn`.
 Show: `design-doc.md` → "Overview"
 
 ## Slide 2: The big picture
-One uvicorn process holds the FastAPI app and an in-memory list of todos. The HTTP client is inferred, not present in the repo. <!-- codemap:unverified -->
-Show: `architecture.md` → "Level 2: Containers" diagram
+Clients call one HTTP service. Inside, the FastAPI app talks to a module-level list that holds all state.
+Show: `architecture.md` → "Containers" diagram
 
 ## Slide 3: How it is organized
-Four responsibilities, each in one small file under `app/`: app setup, API, domain and storage, utilities.
+The code splits into three groups: API, Data and Utilities.
 Show: `mindmap.md` → "Mindmap" diagram
 
 ## Slide 4: How it runs
-`POST /todos` validates the title, stamps the time, then storage asks the model to build a `Todo` and appends it. A blank title returns 422.
-Show: `sequence-flow.md` → "Create a todo (POST /todos)" diagram
+`POST /todos` validates the title, takes a timestamp, and asks storage to add the todo. The model asks storage for the next id along the way.
+Show: `sequence-flow.md` → "Create a todo" diagram
 
 ## Slide 5: How the parts depend on each other
-Five files with simple imports, except one deliberate cycle: `app/models.py` and `app/storage.py` import each other.
+Imports are shallow except for one circular import between `app/storage.py` and `app/models.py`, which the code comments call deliberate.
 Show: `dependency-graph.md` → "Dependency graph" diagram and "Circular dependencies"
 
 ## Slide 6: Key design choices
-Storage is an in-memory list, so data is lost on restart; the reason is inferred, not stated. <!-- codemap:unverified --> Ids come from list length, which would collide if items were ever removed; the reason is also inferred. <!-- codemap:unverified -->
+Storage is an in-memory list hidden behind a small module; its rationale is inferred. <!-- codemap:unverified --> (inferred) The cycle between models and storage works only because each uses the other inside functions; the reason for it is inferred. <!-- codemap:unverified --> (inferred)
 Show: `design-doc.md` → "Key design choices"
 
 ## Slide 7: Where to start reading
@@ -43,4 +41,4 @@ Show: `design-doc.md` → "Reading order (onboarding guide)"
 
 ## Not covered
 
-All Python files, `pyproject.toml` and `README.md` were read completely. The repo has no tests or deployment config, and FastAPI/uvicorn internals were not examined.
+All source files were read, and `app/__init__.py` is empty. There are no tests, config or deployment files, and FastAPI's internal request handling is not traced.

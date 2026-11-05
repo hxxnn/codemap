@@ -3,35 +3,26 @@ codemap: 1
 skill: sequence-flow
 generated_at: 2026-11-05
 commit: null
-sources: {app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66}
+sources: {app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66}
 ---
-
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
-
 
 # Sequence flows
 
-Two runtime scenarios traced through the code: creating a todo (including its validation error path) and listing todos.
+Three runtime scenarios traced through the code: creating a todo, rejecting an empty title, and listing todos.
 
-## Create a todo (POST /todos)
+## Create a todo
 
-Triggered when a client posts to `/todos` with a `title`; this is the main write operation and it touches storage and the model.
+A client sends `POST /todos` with a non-empty `title`.
 
 ```mermaid
 sequenceDiagram
-  participant C as HTTP client
-  participant F as FastAPI (app/main.py)
-  participant R as app/routes.py
-  participant U as app/utils.py
-  participant S as app/storage.py
-  participant M as app/models.py
-  C->>F: POST /todos
-  F-->>R: dispatch (not traced)
-  Note over F,R: framework routing, not traced
-  R->>R: create_todo(title)
-  alt title is blank
-    R-->>C: HTTPException 422 "title required"
-  else title present
+    participant C as Client
+    participant R as app/routes.py
+    participant U as app/utils.py
+    participant S as app/storage.py
+    participant M as app/models.py
+    C->>R: POST /todos (title)
     R->>U: now_iso()
     U-->>R: ISO timestamp
     R->>S: add_todo(title.strip(), created_at)
@@ -41,43 +32,54 @@ sequenceDiagram
     M-->>S: Todo
     S->>S: _TODOS.append(todo)
     S-->>R: Todo
-    R-->>C: todo.to_dict()
-  end
+    R->>R: todo.to_dict()
+    R-->>C: dict
 ```
 
-The route validates the title, stamps the time, and storage asks the model to build a `Todo` whose id comes back from storage.
+1. `app/routes.py:create_todo` checks the title, then calls `now_iso()` for the timestamp.
+2. `app/utils.py:now_iso` returns the current UTC time as an ISO string.
+3. `app/storage.py:add_todo` asks the model to build the todo.
+4. `app/models.py:Todo.create` calls `app/storage.py:next_id` for the id.
+5. `app/storage.py:add_todo` appends the todo to `_TODOS` and returns it.
+6. `app/routes.py:create_todo` returns `todo.to_dict()` (`app/models.py:Todo.to_dict`).
 
-1. Client sends the request; `app/main.py` registered the router via `app.include_router(router)`.
-2. FastAPI calls `app/routes.py:create_todo`.
-3. If `title.strip()` is empty it raises `HTTPException(422)`: `app/routes.py:create_todo`.
-4. Otherwise it gets a timestamp: `app/utils.py:now_iso`.
-5. It calls `app/storage.py:add_todo`.
-6. Storage calls `app/models.py:Todo.create`, which calls `app/storage.py:next_id`.
-7. Storage appends the todo to `_TODOS` and returns it; the route returns `Todo.to_dict()` (`app/models.py:Todo.to_dict`).
+## Create a todo with an empty title
 
-The framework dispatch step is not traced because FastAPI's internals were not read. <!-- codemap:unverified -->
-
-## List todos (GET /todos)
-
-Triggered when a client requests `/todos`; it only reads from storage.
+A client sends `POST /todos` with a blank `title`.
 
 ```mermaid
 sequenceDiagram
-  participant C as HTTP client
-  participant R as app/routes.py
-  participant S as app/storage.py
-  C->>R: GET /todos (via FastAPI, not traced)
-  R->>S: all_todos()
-  S-->>R: list copy of _TODOS
-  R-->>C: [t.to_dict() for t in todos]
+    participant C as Client
+    participant R as app/routes.py
+    C->>R: POST /todos (title)
+    alt not title.strip()
+        R-->>C: HTTPException 422 "title required"
+    end
 ```
 
-The route copies the stored list and serialises each `Todo`.
+1. `app/routes.py:create_todo` strips the title and, if it is empty, raises `HTTPException(status_code=422, detail="title required")`. Storage is never called.
 
-1. FastAPI calls `app/routes.py:list_todos`.
-2. It calls `app/storage.py:all_todos`, which returns `list(_TODOS)`.
-3. Each item is converted with `app/models.py:Todo.to_dict`.
+## List todos
+
+A client sends `GET /todos`.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as app/routes.py
+    participant S as app/storage.py
+    C->>R: GET /todos
+    R->>S: all_todos()
+    S-->>R: list copy of _TODOS
+    R->>R: t.to_dict() for each todo
+    R-->>C: list of dicts
+```
+
+1. `app/routes.py:list_todos` calls `app/storage.py:all_todos`, which returns a copy of the list.
+2. `app/routes.py:list_todos` converts each todo with `app/models.py:Todo.to_dict` and returns the list.
+
+Request routing from `app/main.py` (`app.include_router(router)`) is done by FastAPI and is not drawn.
 
 ## Not covered
 
-All Python files were read completely. FastAPI/uvicorn internals (routing, parameter parsing) were not traced.
+All source files were read; `app/__init__.py` is empty. FastAPI's internal request handling is not traced.

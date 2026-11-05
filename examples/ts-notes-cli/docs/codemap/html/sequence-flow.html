@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Sequence flows - ts-notes-cli</title>
+<title>Sequence flows - notes-cli</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -148,7 +148,7 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
+      <p class="cm-project">notes-cli</p>
       <h1>Sequence flows</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
@@ -157,66 +157,68 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>Three scenarios traced through the code: <code>notes add</code>, <code>notes list</code>, and an unknown command. They were chosen as the write path, the read path and the only error path in <code>src/index.ts</code>.</p>
-<section class="cm-section"><h2>notes add</h2>
-<p>Trigger: the user runs <code>notes add &lt;text&gt;</code>.</p>
+<p>Three runtime scenarios of the CLI, traced through <code>src/index.ts</code> and the modules it calls: <code>add</code> (the main operation), <code>list</code> (reads storage), and an unknown command (the error path).</p>
+<section class="cm-section"><h2>Scenario 1: <code>notes add &lt;text&gt;</code></h2>
+<p>The user runs <code>notes add "buy milk"</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  participant U as User
+  actor U as User
   participant I as src/index.ts
   participant P as src/user-profile.ts
   participant S as src/notes-store.ts
-  U-&gt;&gt;I: notes add text
+  U-&gt;&gt;I: notes add buy milk
   I-&gt;&gt;P: currentUser()
-  P--&gt;&gt;I: USER or "anonymous"
-  I-&gt;&gt;S: addNote(text, author)
-  S-&gt;&gt;S: push Note into notes array</pre>
-<p>The text is the remaining arguments joined by spaces, and the new note is appended to the in-memory array.</p>
+  P--&gt;&gt;I: process.env.USER or "anonymous"
+  I-&gt;&gt;S: addNote(rest.join(" "), author)
+  S-&gt;&gt;S: push {id, text, author} to notes</pre>
 <ol>
-<li><code>src/index.ts:top level</code> reads <code>process.argv</code>, matches <code>command === "add"</code>, and joins the remaining args.</li>
-<li><code>src/user-profile.ts:currentUser</code> returns <code>process.env.USER ?? "anonymous"</code>.</li>
-<li><code>src/notes-store.ts:addNote</code> builds <code>{ id, text, author }</code> with <code>id = notes.length + 1</code> and pushes it.</li>
+<li><code>src/index.ts:top level</code> — takes <code>command</code> and <code>rest</code> from <code>process.argv.slice(2)</code>; <code>command === "add"</code>.</li>
+<li><code>src/user-profile.ts:currentUser</code> — returns <code>process.env.USER ?? "anonymous"</code>.</li>
+<li><code>src/notes-store.ts:addNote</code> — creates a note with <code>id = notes.length + 1</code> and pushes it; the returned note is ignored by the caller and nothing is printed.</li>
 </ol>
-<p>Nothing is printed on success, because <code>src/index.ts</code> ignores the returned <code>Note</code>.</p>
 </section>
-<section class="cm-section"><h2>notes list</h2>
-<p>Trigger: the user runs <code>notes list</code>.</p>
+<section class="cm-section"><h2>Scenario 2: <code>notes list</code></h2>
+<p>The user runs <code>notes list</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  participant U as User
+  actor U as User
   participant I as src/index.ts
   participant S as src/notes-store.ts
   participant F as src/format.ts
   U-&gt;&gt;I: notes list
   I-&gt;&gt;S: listNotes()
-  loop each note
+  loop each note in notes
     S-&gt;&gt;F: formatNote(note)
-    F--&gt;&gt;S: "#id text (author)"
+    F--&gt;&gt;S: formatted line
   end
-  S--&gt;&gt;I: string array
-  I-&gt;&gt;U: console.log per line</pre>
-<p>Each stored note is formatted into one line and printed.</p>
+  S--&gt;&gt;I: string[]
+  I-&gt;&gt;U: console.log(line) per line</pre>
 <ol>
-<li><code>src/index.ts:top level</code> matches <code>command === "list"</code>.</li>
-<li><code>src/notes-store.ts:listNotes</code> maps <code>formatNote</code> over the notes array.</li>
-<li><code>src/format.ts:formatNote</code> returns <code>#${id} ${text} (${author})</code>.</li>
-<li><code>src/index.ts:top level</code> prints each line with <code>console.log</code>.</li>
+<li><code>src/index.ts:top level</code> — <code>command === "list"</code>.</li>
+<li><code>src/notes-store.ts:listNotes</code> — maps every stored note through <code>formatNote</code>.</li>
+<li><code>src/format.ts:formatNote</code> — returns <code>`#${note.id} ${note.text} (${note.author})`</code>.</li>
+<li><code>src/index.ts:top level</code> — prints each returned line with <code>console.log</code>.</li>
 </ol>
-<p>Because the array is in memory only, a fresh process always lists nothing.</p>
+<p>Because the array lives only in the running process, a fresh <code>notes list</code> invocation starts with an empty array and prints nothing.</p>
 </section>
-<section class="cm-section"><h2>Unknown command</h2>
-<p>Trigger: the user runs <code>notes</code> with no command or an unknown one.</p>
+<section class="cm-section"><h2>Scenario 3: unknown or missing command</h2>
+<p>The user runs <code>notes</code> with no arguments or an unsupported word.</p>
 <pre class="mermaid">sequenceDiagram
-  participant U as User
+  actor U as User
   participant I as src/index.ts
-  U-&gt;&gt;I: notes other
-  I-&gt;&gt;U: console.error usage message
-  I-&gt;&gt;I: process.exit(1)</pre>
-<p>The usage line goes to stderr and the process exits with code 1.</p>
+  U-&gt;&gt;I: notes (other)
+  alt command is "add"
+    I-&gt;&gt;I: add flow
+  else command is "list"
+    I-&gt;&gt;I: list flow
+  else anything else
+    I-&gt;&gt;U: console.error(usage line)
+    I-&gt;&gt;I: process.exit(1)
+  end</pre>
 <ol>
-<li><code>src/index.ts:top level</code> falls through to the <code>else</code> branch, prints <code>usage: notes add &lt;text&gt; | notes list</code>, and exits with status 1.</li>
+<li><code>src/index.ts:top level</code> — neither branch matches, so the final <code>else</code> prints the usage line to stderr and exits with code 1.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>Nothing was skipped; all source files on these paths were read. Node's own <code>process</code> and <code>console</code> internals are library boundaries and were not traced.</p>
+<p>All source files on these paths were read completely. <code>src/types.ts</code> only contributes the <code>Note</code> type and is not a participant. Build output (<code>dist/</code>) and Node internals were not examined.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

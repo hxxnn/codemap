@@ -3,40 +3,40 @@ codemap: 1
 skill: design-doc
 generated_at: 2026-11-05
 commit: null
-sources: {README.md: 0400cdfb761e16937066332c0598879036142b20ef8fbf1835531feb33087731, pyproject.toml: d39952121dd8849656d105526fe1915af998c94fe648b6a7e32a214e53ac420d, app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66, docs/codemap/architecture.md: 68841850f67409cc0e28deb9cd2ef8915a881af22914d42386ba32cb448d67af, docs/codemap/dependency-graph.md: 0ced1e95e249a6a88e3d187a14261d340a631389fc33fdb830b8a3cf5a6d0b8b, docs/codemap/mindmap.md: c820de42460c97d8cdf63025da716aa59752566b8cfc40a6e89e0f625fc652a3, docs/codemap/sequence-flow.md: 8b78738ef8a1177f90d626af83b4dc616d9c1fade2120b95f2e4967b0fc3acda}
+sources: {app/main.py: 137eaf99210854cdae4594b10f7650a868c121c96343a0136e8ddeb5c820b625, app/routes.py: 377631c48b9b9be27f99f9d510d77e1f182a633f2a63605686d201ea5479ddce, app/models.py: 810e4e46c5f327af8853fab85132e666b70e9550cf5b12f4ae28aad84f1ba091, app/storage.py: 774e6947a67eea390b5fd6cef912293c3e2ffd94e7c2377f2b9c07f79c578a89, app/utils.py: aa17c15daf74a9a7d6affdb3292a2478d2b9a3886277593917f765c783d3ca66, pyproject.toml: d39952121dd8849656d105526fe1915af998c94fe648b6a7e32a214e53ac420d, README.md: 0400cdfb761e16937066332c0598879036142b20ef8fbf1835531feb33087731, docs/codemap/architecture.md: c940a044ff8cd39d09f2b8360bea94ffe130ceb79427ba4cac36246569394d0f, docs/codemap/dependency-graph.md: 40e7f7ff2816a8a0553c2e6197e20cc72d99cd5329a16975706b25e406188ce5, docs/codemap/mindmap.md: f2df21d103826f87a26c70e7c77135c26f38ada6760c8772ee083c027d8839f4, docs/codemap/sequence-flow.md: 72dc6439fcf2c9ad71f07485cfcb7fd6a853ce74e2956e58e7a814b3383b5e9f}
 ---
-
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
-
 
 # Design doc and onboarding guide
 
+How `todo-api` is built and in what order to read it.
+
 ## Overview
 
-`todo-api` is a tiny service for managing todos (`README.md`). It is written in Python with FastAPI and served by uvicorn (`pyproject.toml`). It exposes two endpoints, `POST /todos` and `GET /todos`, and keeps all data in memory.
+`todo-api` is a small FastAPI service for managing todos (`README.md`). It exposes `POST /todos` to create a todo and `GET /todos` to list them. Todos live in memory, so they are lost when the process stops. It is written in Python, depends on `fastapi` and `uvicorn` (`pyproject.toml`), and starts with `uvicorn app.main:app`.
 
 ## How it is structured
 
-One process holds everything: `app/main.py` creates the app and mounts the router from `app/routes.py`; the routes call `app/storage.py`, which stores `Todo` objects defined in `app/models.py`; `app/utils.py` supplies timestamps. See `architecture.md` for the three zoom levels, `mindmap.md` for the overview tree, `sequence-flow.md` for the request flows and `dependency-graph.md` for imports.
+The code is one package, `app/`, in three layers: an HTTP layer (`app/main.py`, `app/routes.py`), a data layer (`app/models.py`, `app/storage.py`) and a helper (`app/utils.py`). See `architecture.md` for the diagrams, `dependency-graph.md` for imports, `mindmap.md` for the overview and `sequence-flow.md` for the request flows. Requests enter through the router, and the route functions call storage directly. Storage and the `Todo` model import each other.
 
 ## Key design choices
 
-1. **In-memory storage behind a small module.** Todos live in the module-level list `_TODOS` in `app/storage.py`, exposed only through `add_todo`, `all_todos` and `next_id`. Effect: no persistence, data is lost on restart. Reason: not stated in the code (inferred: keep the example simple). <!-- codemap:unverified -->
-2. **Models and storage import each other.** `app/models.py` and `app/storage.py` form a cycle; both files carry a comment calling it deliberate (`dependency-graph.md`). It works because each only uses the other inside functions.
-3. **IDs derived from list length.** `app/storage.py:next_id` returns `len(_TODOS) + 1`, so ids are sequential and would collide if items were ever removed. Reason not stated. <!-- codemap:unverified -->
-4. **Validation in the route.** `app/routes.py:create_todo` rejects blank titles with HTTP 422 and strips whitespace before storing.
-5. **One router, wired in the entry file.** `app/main.py` only builds `FastAPI(title="todo-api")` and includes the router; all endpoints are in `app/routes.py`.
+1. **In-memory storage behind a small module.** The list `_TODOS` is private to `app/storage.py`, and routes use only `add_todo` and `all_todos`. Effect: persistence could be swapped in one file, but data is lost on restart. The reason is not stated in the code. (inferred) <!-- codemap:unverified -->
+2. **Router separate from app setup.** `app/routes.py` defines an `APIRouter`, and `app/main.py` mounts it with `include_router`. Effect: routes can grow without touching app setup.
+3. **Dataclass model with `to_dict`.** `Todo` in `app/models.py` is a `@dataclass` and routes return `todo.to_dict()`. Effect: responses are plain dicts rather than FastAPI response models.
+4. **Deliberate circular import.** `app/models.py` and `app/storage.py` import each other, and both files have a comment saying it is deliberate. Effect: it works because each uses the other only inside functions; it is fragile to refactors. The reason for the cycle is not given. (inferred) <!-- codemap:unverified -->
+5. **Input validation in the route.** `create_todo` rejects blank titles with a 422 error in `app/routes.py`, before storage is touched.
 
 ## Reading order (onboarding guide)
 
 1. `README.md`: purpose and the run command.
 2. `pyproject.toml`: dependencies (`fastapi`, `uvicorn`).
-3. `app/main.py`: where the app is created and the router attached.
-4. `app/routes.py`: the two endpoints and the title validation.
-5. `app/storage.py`: how todos are stored and how ids are made.
-6. `app/models.py`: the `Todo` dataclass and `Todo.create`; note the import cycle with storage.
-7. `app/utils.py`: `now_iso`, the timestamp helper.
+3. `app/main.py`: where the app is created and the router mounted.
+4. `app/routes.py`: the two endpoints and the blank-title check.
+5. `app/storage.py`: the in-memory list and its three functions; note the import of `models`.
+6. `app/models.py`: the `Todo` dataclass and `Todo.create`, which calls back into storage for the id.
+7. `app/utils.py`: `now_iso()`, the UTC timestamp helper.
 
 ## Not covered
 
-All Python files, `pyproject.toml` and `README.md` were read completely. `app/__init__.py` is empty. The repo has no tests or deployment config. FastAPI/uvicorn internals were not examined.
+All source files were read. `app/__init__.py` is empty. There are no tests, config files or deployment files in the repository.

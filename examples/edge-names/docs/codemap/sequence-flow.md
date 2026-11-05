@@ -7,30 +7,36 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Sequence flow: edge-names
+# Sequence flows
 
-## Scenario: running the script
+The program has one runtime scenario, so a single flow is shown: running the script.
+
+## Run `node src/main.js`
+
+The user starts the script from a terminal; it loads the items and prints each one shouted.
 
 ```mermaid
 sequenceDiagram
-  participant U as Person
+  participant U as Terminal user
   participant M as src/main.js
   participant L as src/데이터 로더.js
   participant S as src/my utils.js
   participant O as stdout
   U->>M: node src/main.js
-  M->>S: require
-  M->>L: require
   M->>L: loadItems()
-  L-->>M: copy of alpha, beta, gamma
-  loop each item
+  L-->>M: copy of ["alpha","beta","gamma"]
+  loop for each item
     M->>S: shout(item)
-    S-->>M: upper-cased text plus "!"
-    M->>O: console.log
+    S-->>M: item upper-cased + "!"
+    M->>O: console.log(result)
   end
 ```
 
-On start, `src/main.js` requires both helpers, loads the three items, and prints each one upper-cased with a trailing exclamation mark (ALPHA!, BETA!, GAMMA!).
+1. Module load: `src/main.js` requires `shout` and `loadItems` (`src/main.js:require`).
+2. `loadItems()` returns `items.slice()` (`src/데이터 로더.js:loadItems`).
+3. For each item, `shout(item)` returns `text.toUpperCase() + "!"` (`src/my utils.js:shout`).
+4. `console.log` prints `ALPHA!`, `BETA!`, `GAMMA!` (`src/main.js:console.log`).
 
 ## Not covered
-The whole repository was read; the script was not executed, so the printed output is derived from reading the code.
+
+The repository was read completely. Only one scenario exists; there is no error handling or other branch in the code.

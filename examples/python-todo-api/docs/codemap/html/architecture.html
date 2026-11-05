@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Architecture overview - python-todo-api</title>
+<title>Architecture overview - todo-api</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -148,59 +148,56 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
+      <p class="cm-project">todo-api</p>
       <h1>Architecture overview</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>8</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
     </header>
 <main id="cm-main">
-<p><code>todo-api</code> is a tiny FastAPI service (see <code>pyproject.toml</code>, <code>README.md</code>) shown here at three zoom levels.</p>
-<section class="cm-section"><h2>Level 1: System context</h2>
-<pre class="mermaid">flowchart LR
-  client["HTTP client (inferred)"]
-  sys["todo-api (FastAPI service)"]
-  client --&gt;|"POST and GET /todos"| sys</pre>
-<p>The service is one system reached over HTTP; no database or third-party API is referenced anywhere in the code.</p>
-<p><span class="cm-unverified">The HTTP client is inferred from the routes in <code>app/routes.py</code>; no client code exists in the repo.</span></p>
-</section>
-<section class="cm-section"><h2>Level 2: Containers</h2>
-<pre class="mermaid">flowchart LR
-  client["HTTP client (inferred)"]
-  subgraph proc["uvicorn process (README.md)"]
-    api["FastAPI app (app/)"]
-    mem["In-memory list _TODOS (app/storage.py)"]
-  end
-  client --&gt;|"HTTP"| api
-  api --&gt;|"function calls"| mem</pre>
-<p>There is a single deployable process, started with <code>uvicorn app.main:app</code> per <code>README.md</code>; todos live in a module-level list inside it, so they are lost on restart.</p>
-</section>
-<section class="cm-section"><h2>Level 3: Components</h2>
+<p><code>todo-api</code> is a tiny FastAPI service that keeps todos in memory, shown at three zoom levels.</p>
+<section class="cm-section"><h2>System context</h2>
 <pre class="mermaid">flowchart TD
-  subgraph entry["Entry"]
-    main["App setup (app/main.py)"]
-  end
-  subgraph web["HTTP layer"]
-    routes["Routes (app/routes.py)"]
-  end
-  subgraph domain["Domain and data"]
-    models["Todo dataclass (app/models.py)"]
-    storage["In-memory store (app/storage.py)"]
-  end
-  subgraph helpers["Helpers"]
-    utils["now_iso (app/utils.py)"]
-  end
-  main --&gt;|"include_router"| routes
-  routes --&gt;|"add_todo, all_todos"| storage
-  routes --&gt;|"now_iso"| utils
-  storage --&gt;|"Todo.create"| models
-  models --&gt;|"next_id"| storage</pre>
-<p><code>app/main.py</code> mounts the router from <code>app/routes.py</code>, which delegates persistence to <code>app/storage.py</code>; <code>app/models.py</code> and <code>app/storage.py</code> import each other (a deliberate cycle per the comments in both files).</p>
+    n1["API client (HTTP)"]:::external
+    n2["todo-api (FastAPI service)"]
+    n1 --&gt;|"POST /todos, GET /todos"| n2
+    classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>Callers send HTTP requests to the single <code>todo-api</code> service; no database or third-party API is referenced in the code.</p>
+</section>
+<section class="cm-section"><h2>Containers</h2>
+<pre class="mermaid">flowchart TD
+    n1["API client (HTTP)"]:::external
+    subgraph n2["todo-api process (uvicorn app.main:app)"]
+        n3["FastAPI app (Python, app/)"]
+        n4["In-memory todo list (_TODOS in app/storage.py)"]
+    end
+    n1 --&gt;|"HTTP"| n3
+    n3 --&gt;|"function calls"| n4
+    classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>The service is one Python process (run command from <code>README.md</code>, dependencies from <code>pyproject.toml</code>) whose only state is a module-level list in <code>app/storage.py</code>.</p>
+</section>
+<section class="cm-section"><h2>Components</h2>
+<pre class="mermaid">flowchart TD
+    subgraph web["HTTP layer"]
+        main["App setup (app/main.py)"]
+        routes["Routes (app/routes.py)"]
+    end
+    subgraph domain["Domain and data"]
+        models["Todo model (app/models.py)"]
+        storage["Storage (app/storage.py)"]
+    end
+    utils["Time helper (app/utils.py)"]
+    main --&gt;|"include_router"| routes
+    routes --&gt;|"add_todo, all_todos"| storage
+    routes --&gt;|"now_iso"| utils
+    storage --&gt;|"Todo.create"| models
+    models --&gt;|"next_id"| storage</pre>
+<p><code>app/main.py</code> mounts the router from <code>app/routes.py</code>, which delegates to <code>app/storage.py</code>; storage and <code>app/models.py</code> call each other (a deliberate cycle, see <code>dependency-graph.md</code>).</p>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All 6 Python files, <code>pyproject.toml</code> and <code>README.md</code> were read completely. <code>app/__init__.py</code> is empty. There are no tests, config files or deployment files in the repo. Nothing was skipped.</p>
+<p>All source files were read (<code>app/__init__.py</code> is empty). Nothing was skipped; deployment, tests and CI do not exist in the repository.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

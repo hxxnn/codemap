@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Design doc: edge-names - edge-names</title>
+<title>Design doc and onboarding guide - edge-names</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -149,32 +149,41 @@
   <div class="cm-main">
     <header class="cm-head">
       <p class="cm-project">edge-names</p>
-      <h1>Design doc: edge-names</h1>
+      <h1>Design doc and onboarding guide</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>1</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>5</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
     </header>
 <main id="cm-main">
 <section class="cm-section"><h2>Overview</h2>
-<p><code>edge-names</code> is a tiny Node.js (CommonJS) script. <code>package.json</code> sets <code>main</code> to <code>src/main.js</code>, which prints each loaded item in upper case followed by <code>!</code>. See <code>architecture.md</code> for the diagrams.</p></section>
+<p><code>edge-names</code> is a tiny Node.js (CommonJS) command-line program. Running <code>src/main.js</code> prints each item of a fixed list (<code>alpha</code>, <code>beta</code>, <code>gamma</code>) in upper case followed by <code>!</code>. According to <code>README.md</code>, it is a small project whose file names contain spaces and non-ASCII characters, so it works as a test case for tooling that must handle such names.</p>
+</section>
+<section class="cm-section"><h2>How it is structured</h2>
+<p>Three files, one job each: an entry script, a data provider and a text helper. The entry script depends on both helpers and the helpers depend on nothing. See <code>architecture.md</code> for the three zoom levels, <code>dependency-graph.md</code> for the import edges (no cycles), <code>mindmap.md</code> for the overview and <code>sequence-flow.md</code> for the one runtime flow.</p>
+</section>
 <section class="cm-section"><h2>Key design choices</h2>
-<ul>
-<li><strong>Three small modules.</strong> Loading data (<code>src/데이터 로더.js</code>), formatting (<code>src/my utils.js</code>) and orchestration (<code>src/main.js</code>) are separate files.</li>
-<li><strong>Defensive copy.</strong> <code>loadItems</code> returns <code>items.slice()</code>, so callers cannot mutate the module's list.</li>
-<li><strong>Unusual file names.</strong> Two files have a space or Hangul in their names, and <code>require</code> uses those names verbatim. The README says this is the project's purpose (an edge case for names).</li>
-<li><span class="cm-unverified"><strong>Why it was built this way</strong> (a test fixture for tools handling odd file names) is only suggested by the README. (inferred)</span></li>
-</ul></section>
-<section class="cm-section"><h2>Reading order for newcomers</h2>
 <ol>
-<li><code>package.json</code> — find the entry point.</li>
-<li><code>src/main.js</code> — the whole control flow in six lines.</li>
-<li><code>src/데이터 로더.js</code> — where the data comes from.</li>
-<li><code>src/my utils.js</code> — the formatting helper.</li>
-</ol></section>
+<li><strong>Entry script wires everything.</strong> <code>src/main.js</code> imports both helpers and runs the loop. Effect: all control flow is in one place. <span class="cm-unverified">Reason: not stated in the code. (inferred)</span></li>
+<li><strong>Data behind a function.</strong> <code>src/데이터 로더.js</code> keeps the array private and returns <code>items.slice()</code>, a copy. Effect: callers cannot mutate the stored list.</li>
+<li><strong>Formatting in a utility module.</strong> <code>src/my utils.js</code> exports <code>shout</code>, a pure function. Effect: it is easy to test on its own.</li>
+<li><strong>CommonJS modules.</strong> Files use <code>require</code> and <code>module.exports</code>; <code>package.json</code> has no <code>"type": "module"</code>. Effect: Node loads them as CommonJS.</li>
+<li><strong>File names with a space and Hangul.</strong> <code>src/my utils.js</code> and <code>src/데이터 로더.js</code> are required by exact name. <code>README.md</code> describes the project as one whose file names contain spaces and non-ASCII characters.</li>
+</ol>
+</section>
+<section class="cm-section"><h2>Reading order (onboarding guide)</h2>
+<ol>
+<li><code>README.md</code>: one-line purpose of the project.</li>
+<li><code>package.json</code>: the <code>main</code> field points to <code>src/main.js</code>.</li>
+<li><code>src/main.js</code>: the whole flow; note the two <code>require</code> lines and the loop.</li>
+<li><code>src/데이터 로더.js</code>: where the items come from and why a copy is returned.</li>
+<li><code>src/my utils.js</code>: what <code>shout</code> does to each item.</li>
+</ol>
+</section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>The whole repository was read; the script was not executed.</p></section>
+<p>The repository was read completely; nothing was skipped.</p>
+</section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>
   </div>

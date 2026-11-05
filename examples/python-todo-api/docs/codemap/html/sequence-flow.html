@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Sequence flows - python-todo-api</title>
+<title>Sequence flows - todo-api</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -148,7 +148,7 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
+      <p class="cm-project">todo-api</p>
       <h1>Sequence flows</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
@@ -157,23 +157,16 @@
       </dl>
     </header>
 <main id="cm-main">
-<p>Two runtime scenarios traced through the code: creating a todo (including its validation error path) and listing todos.</p>
-<section class="cm-section"><h2>Create a todo (POST /todos)</h2>
-<p>Triggered when a client posts to <code>/todos</code> with a <code>title</code>; this is the main write operation and it touches storage and the model.</p>
+<p>Three runtime scenarios traced through the code: creating a todo, rejecting an empty title, and listing todos.</p>
+<section class="cm-section"><h2>Create a todo</h2>
+<p>A client sends <code>POST /todos</code> with a non-empty <code>title</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  participant C as HTTP client
-  participant F as FastAPI (app/main.py)
-  participant R as app/routes.py
-  participant U as app/utils.py
-  participant S as app/storage.py
-  participant M as app/models.py
-  C-&gt;&gt;F: POST /todos
-  F--&gt;&gt;R: dispatch (not traced)
-  Note over F,R: framework routing, not traced
-  R-&gt;&gt;R: create_todo(title)
-  alt title is blank
-    R--&gt;&gt;C: HTTPException 422 "title required"
-  else title present
+    participant C as Client
+    participant R as app/routes.py
+    participant U as app/utils.py
+    participant S as app/storage.py
+    participant M as app/models.py
+    C-&gt;&gt;R: POST /todos (title)
     R-&gt;&gt;U: now_iso()
     U--&gt;&gt;R: ISO timestamp
     R-&gt;&gt;S: add_todo(title.strip(), created_at)
@@ -183,39 +176,49 @@
     M--&gt;&gt;S: Todo
     S-&gt;&gt;S: _TODOS.append(todo)
     S--&gt;&gt;R: Todo
-    R--&gt;&gt;C: todo.to_dict()
-  end</pre>
-<p>The route validates the title, stamps the time, and storage asks the model to build a <code>Todo</code> whose id comes back from storage.</p>
+    R-&gt;&gt;R: todo.to_dict()
+    R--&gt;&gt;C: dict</pre>
 <ol>
-<li>Client sends the request; <code>app/main.py</code> registered the router via <code>app.include_router(router)</code>.</li>
-<li>FastAPI calls <code>app/routes.py:create_todo</code>.</li>
-<li>If <code>title.strip()</code> is empty it raises <code>HTTPException(422)</code>: <code>app/routes.py:create_todo</code>.</li>
-<li>Otherwise it gets a timestamp: <code>app/utils.py:now_iso</code>.</li>
-<li>It calls <code>app/storage.py:add_todo</code>.</li>
-<li>Storage calls <code>app/models.py:Todo.create</code>, which calls <code>app/storage.py:next_id</code>.</li>
-<li>Storage appends the todo to <code>_TODOS</code> and returns it; the route returns <code>Todo.to_dict()</code> (<code>app/models.py:Todo.to_dict</code>).</li>
+<li><code>app/routes.py:create_todo</code> checks the title, then calls <code>now_iso()</code> for the timestamp.</li>
+<li><code>app/utils.py:now_iso</code> returns the current UTC time as an ISO string.</li>
+<li><code>app/storage.py:add_todo</code> asks the model to build the todo.</li>
+<li><code>app/models.py:Todo.create</code> calls <code>app/storage.py:next_id</code> for the id.</li>
+<li><code>app/storage.py:add_todo</code> appends the todo to <code>_TODOS</code> and returns it.</li>
+<li><code>app/routes.py:create_todo</code> returns <code>todo.to_dict()</code> (<code>app/models.py:Todo.to_dict</code>).</li>
 </ol>
-<p><span class="cm-unverified">The framework dispatch step is not traced because FastAPI's internals were not read.</span></p>
 </section>
-<section class="cm-section"><h2>List todos (GET /todos)</h2>
-<p>Triggered when a client requests <code>/todos</code>; it only reads from storage.</p>
+<section class="cm-section"><h2>Create a todo with an empty title</h2>
+<p>A client sends <code>POST /todos</code> with a blank <code>title</code>.</p>
 <pre class="mermaid">sequenceDiagram
-  participant C as HTTP client
-  participant R as app/routes.py
-  participant S as app/storage.py
-  C-&gt;&gt;R: GET /todos (via FastAPI, not traced)
-  R-&gt;&gt;S: all_todos()
-  S--&gt;&gt;R: list copy of _TODOS
-  R--&gt;&gt;C: [t.to_dict() for t in todos]</pre>
-<p>The route copies the stored list and serialises each <code>Todo</code>.</p>
+    participant C as Client
+    participant R as app/routes.py
+    C-&gt;&gt;R: POST /todos (title)
+    alt not title.strip()
+        R--&gt;&gt;C: HTTPException 422 "title required"
+    end</pre>
 <ol>
-<li>FastAPI calls <code>app/routes.py:list_todos</code>.</li>
-<li>It calls <code>app/storage.py:all_todos</code>, which returns <code>list(_TODOS)</code>.</li>
-<li>Each item is converted with <code>app/models.py:Todo.to_dict</code>.</li>
+<li><code>app/routes.py:create_todo</code> strips the title and, if it is empty, raises <code>HTTPException(status_code=422, detail="title required")</code>. Storage is never called.</li>
 </ol>
+</section>
+<section class="cm-section"><h2>List todos</h2>
+<p>A client sends <code>GET /todos</code>.</p>
+<pre class="mermaid">sequenceDiagram
+    participant C as Client
+    participant R as app/routes.py
+    participant S as app/storage.py
+    C-&gt;&gt;R: GET /todos
+    R-&gt;&gt;S: all_todos()
+    S--&gt;&gt;R: list copy of _TODOS
+    R-&gt;&gt;R: t.to_dict() for each todo
+    R--&gt;&gt;C: list of dicts</pre>
+<ol>
+<li><code>app/routes.py:list_todos</code> calls <code>app/storage.py:all_todos</code>, which returns a copy of the list.</li>
+<li><code>app/routes.py:list_todos</code> converts each todo with <code>app/models.py:Todo.to_dict</code> and returns the list.</li>
+</ol>
+<p>Request routing from <code>app/main.py</code> (<code>app.include_router(router)</code>) is done by FastAPI and is not drawn.</p>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All Python files were read completely. FastAPI/uvicorn internals (routing, parameter parsing) were not traced.</p>
+<p>All source files were read; <code>app/__init__.py</code> is empty. FastAPI's internal request handling is not traced.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Design doc and onboarding guide - python-todo-api</title>
+<title>Design doc and onboarding guide - todo-api</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -148,7 +148,7 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
+      <p class="cm-project">todo-api</p>
       <h1>Design doc and onboarding guide</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
@@ -157,34 +157,35 @@
       </dl>
     </header>
 <main id="cm-main">
+<p>How <code>todo-api</code> is built and in what order to read it.</p>
 <section class="cm-section"><h2>Overview</h2>
-<p><code>todo-api</code> is a tiny service for managing todos (<code>README.md</code>). It is written in Python with FastAPI and served by uvicorn (<code>pyproject.toml</code>). It exposes two endpoints, <code>POST /todos</code> and <code>GET /todos</code>, and keeps all data in memory.</p>
+<p><code>todo-api</code> is a small FastAPI service for managing todos (<code>README.md</code>). It exposes <code>POST /todos</code> to create a todo and <code>GET /todos</code> to list them. Todos live in memory, so they are lost when the process stops. It is written in Python, depends on <code>fastapi</code> and <code>uvicorn</code> (<code>pyproject.toml</code>), and starts with <code>uvicorn app.main:app</code>.</p>
 </section>
 <section class="cm-section"><h2>How it is structured</h2>
-<p>One process holds everything: <code>app/main.py</code> creates the app and mounts the router from <code>app/routes.py</code>; the routes call <code>app/storage.py</code>, which stores <code>Todo</code> objects defined in <code>app/models.py</code>; <code>app/utils.py</code> supplies timestamps. See <code>architecture.md</code> for the three zoom levels, <code>mindmap.md</code> for the overview tree, <code>sequence-flow.md</code> for the request flows and <code>dependency-graph.md</code> for imports.</p>
+<p>The code is one package, <code>app/</code>, in three layers: an HTTP layer (<code>app/main.py</code>, <code>app/routes.py</code>), a data layer (<code>app/models.py</code>, <code>app/storage.py</code>) and a helper (<code>app/utils.py</code>). See <code>architecture.md</code> for the diagrams, <code>dependency-graph.md</code> for imports, <code>mindmap.md</code> for the overview and <code>sequence-flow.md</code> for the request flows. Requests enter through the router, and the route functions call storage directly. Storage and the <code>Todo</code> model import each other.</p>
 </section>
 <section class="cm-section"><h2>Key design choices</h2>
 <ol>
-<li><strong>In-memory storage behind a small module.</strong> Todos live in the module-level list <code>_TODOS</code> in <code>app/storage.py</code>, exposed only through <code>add_todo</code>, <code>all_todos</code> and <code>next_id</code>. Effect: no persistence, data is lost on restart. <span class="cm-unverified">Reason: not stated in the code (inferred: keep the example simple).</span></li>
-<li><strong>Models and storage import each other.</strong> <code>app/models.py</code> and <code>app/storage.py</code> form a cycle; both files carry a comment calling it deliberate (<code>dependency-graph.md</code>). It works because each only uses the other inside functions.</li>
-<li><strong>IDs derived from list length.</strong> <code>app/storage.py:next_id</code> returns <code>len(_TODOS) + 1</code>, so ids are sequential and would collide if items were ever removed. <span class="cm-unverified">Reason not stated.</span></li>
-<li><strong>Validation in the route.</strong> <code>app/routes.py:create_todo</code> rejects blank titles with HTTP 422 and strips whitespace before storing.</li>
-<li><strong>One router, wired in the entry file.</strong> <code>app/main.py</code> only builds <code>FastAPI(title="todo-api")</code> and includes the router; all endpoints are in <code>app/routes.py</code>.</li>
+<li><span class="cm-unverified"><strong>In-memory storage behind a small module.</strong> The list <code>_TODOS</code> is private to <code>app/storage.py</code>, and routes use only <code>add_todo</code> and <code>all_todos</code>. Effect: persistence could be swapped in one file, but data is lost on restart. The reason is not stated in the code. (inferred)</span></li>
+<li><strong>Router separate from app setup.</strong> <code>app/routes.py</code> defines an <code>APIRouter</code>, and <code>app/main.py</code> mounts it with <code>include_router</code>. Effect: routes can grow without touching app setup.</li>
+<li><strong>Dataclass model with <code>to_dict</code>.</strong> <code>Todo</code> in <code>app/models.py</code> is a <code>@dataclass</code> and routes return <code>todo.to_dict()</code>. Effect: responses are plain dicts rather than FastAPI response models.</li>
+<li><span class="cm-unverified"><strong>Deliberate circular import.</strong> <code>app/models.py</code> and <code>app/storage.py</code> import each other, and both files have a comment saying it is deliberate. Effect: it works because each uses the other only inside functions; it is fragile to refactors. The reason for the cycle is not given. (inferred)</span></li>
+<li><strong>Input validation in the route.</strong> <code>create_todo</code> rejects blank titles with a 422 error in <code>app/routes.py</code>, before storage is touched.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Reading order (onboarding guide)</h2>
 <ol>
 <li><code>README.md</code>: purpose and the run command.</li>
 <li><code>pyproject.toml</code>: dependencies (<code>fastapi</code>, <code>uvicorn</code>).</li>
-<li><code>app/main.py</code>: where the app is created and the router attached.</li>
-<li><code>app/routes.py</code>: the two endpoints and the title validation.</li>
-<li><code>app/storage.py</code>: how todos are stored and how ids are made.</li>
-<li><code>app/models.py</code>: the <code>Todo</code> dataclass and <code>Todo.create</code>; note the import cycle with storage.</li>
-<li><code>app/utils.py</code>: <code>now_iso</code>, the timestamp helper.</li>
+<li><code>app/main.py</code>: where the app is created and the router mounted.</li>
+<li><code>app/routes.py</code>: the two endpoints and the blank-title check.</li>
+<li><code>app/storage.py</code>: the in-memory list and its three functions; note the import of <code>models</code>.</li>
+<li><code>app/models.py</code>: the <code>Todo</code> dataclass and <code>Todo.create</code>, which calls back into storage for the id.</li>
+<li><code>app/utils.py</code>: <code>now_iso()</code>, the UTC timestamp helper.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>All Python files, <code>pyproject.toml</code> and <code>README.md</code> were read completely. <code>app/__init__.py</code> is empty. The repo has no tests or deployment config. FastAPI/uvicorn internals were not examined.</p>
+<p>All source files were read. <code>app/__init__.py</code> is empty. There are no tests, config files or deployment files in the repository.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

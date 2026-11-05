@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Architecture overview - ts-notes-cli</title>
+<title>Architecture overview - notes-cli</title>
 <style>
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
@@ -148,11 +148,11 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
+      <p class="cm-project">notes-cli</p>
       <h1>Architecture overview</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>8</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
     </header>
@@ -160,51 +160,51 @@
 <p><code>notes-cli</code> is a small TypeScript command-line notes tool, shown here at three zoom levels.</p>
 <section class="cm-section"><h2>Level 1: System context</h2>
 <pre class="mermaid">flowchart LR
-  user["Terminal user"]
-  sys["notes-cli (notes command)"]
-  env["USER environment variable"]
-  out["stdout / stderr"]
-  user --&gt;|"notes add / notes list"| sys
-  env --&gt;|"author name"| sys
-  sys --&gt;|"formatted notes, usage errors"| out</pre>
-<p>The user runs the <code>notes</code> command; the tool reads the author from the <code>USER</code> environment variable and prints to the terminal.</p>
+  n1["User (terminal)"]:::external
+  n2["notes-cli (package.json)"]
+  n3["Environment variable USER"]:::external
+  n1 --&gt;|"notes add / notes list"| n2
+  n2 --&gt;|"reads process.env.USER"| n3
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>A person runs the <code>notes</code> command; the tool reads the <code>USER</code> environment variable (<code>src/user-profile.ts</code>) and has no other external system.</p>
 </section>
 <section class="cm-section"><h2>Level 2: Containers</h2>
 <pre class="mermaid">flowchart LR
-  user["Terminal user"]
-  cli["CLI process (Node.js, TypeScript) src/ built to dist/index.js"]
-  mem["In-memory note array (inside the CLI process)"]
-  user --&gt; cli
-  cli --&gt; mem</pre>
-<p>There is a single container, the Node.js CLI process (<code>bin</code> in <code>package.json</code>); notes live only in that process's memory, with no database or file storage.</p>
+  n1["User (terminal)"]:::external
+  n2["notes CLI process: Node.js / TypeScript (src/)"]
+  n3["In-memory array of notes (src/notes-store.ts)"]
+  n1 --&gt;|"argv"| n2
+  n2 --&gt;|"addNote / listNotes"| n3
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>There is one deployable unit, a Node.js CLI (<code>bin</code> entry <code>notes</code> → build output <code>dist/index.js</code>); its only store is a module-level array inside the same process, not a database.</p>
 </section>
 <section class="cm-section"><h2>Level 3: Components</h2>
 <pre class="mermaid">flowchart TD
-  subgraph entry["Entry layer"]
-    idx["CLI entry (src/index.ts)"]
+  subgraph cli["CLI layer"]
+    idx["Entry and command dispatch (src/index.ts)"]
   end
   subgraph logic["Logic layer"]
     store["Notes store (src/notes-store.ts)"]
-    prof["User profile (src/user-profile.ts)"]
+    user["User profile (src/user-profile.ts)"]
     fmt["Formatter (src/format.ts)"]
   end
   subgraph shared["Shared types"]
     types["Note interface (src/types.ts)"]
   end
-  idx --&gt; store
-  idx --&gt; prof
-  store --&gt; fmt
-  store --&gt; types
-  fmt --&gt; types</pre>
-<p><code>src/index.ts</code> parses the command and delegates to <code>src/notes-store.ts</code> and <code>src/user-profile.ts</code>; the store uses <code>src/format.ts</code> for output, and both share the <code>Note</code> type from <code>src/types.ts</code>.</p>
+  idx --&gt;|"addNote, listNotes"| store
+  idx --&gt;|"currentUser"| user
+  store --&gt;|"formatNote"| fmt
+  store --&gt;|"type Note"| types
+  fmt --&gt;|"type Note"| types</pre>
+<p><code>src/index.ts</code> parses the command and delegates; <code>src/notes-store.ts</code> owns the data and uses <code>src/format.ts</code> to turn notes into display lines, with <code>src/types.ts</code> defining the shared <code>Note</code> shape.</p>
 </section>
 <section class="cm-section"><h2>Notes</h2>
 <ul>
-<li>The notes array is a module-level variable in <code>src/notes-store.ts</code>, so notes do not survive between runs of the command.</li>
+<li>Because <code>notes</code> is a module-level array in <code>src/notes-store.ts</code> with no file or database code anywhere in the project, notes live only for the lifetime of one process. Two separate <code>notes</code> invocations do not share data.</li>
 </ul>
 </section>
 <section class="cm-section"><h2>Not covered</h2>
-<p>Nothing was skipped: all five files under <code>src/</code> plus <code>package.json</code>, <code>tsconfig.json</code> and <code>README.md</code> were read. The build output folder dist/ does not exist in the repo.</p>
+<p>All five files under <code>src/</code>, <code>package.json</code> and <code>README.md</code> were read completely. <code>tsconfig.json</code> was only skimmed for the output folder. Build output (<code>dist/</code>) does not exist in the repo and was not examined.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>
