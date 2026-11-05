@@ -77,3 +77,11 @@ def test_render_flag_reports_render_failures(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(co, "render_mermaid", lambda body: "boom")
     assert co.main([str(fx), str(out), "--render"]) == 1
     assert "boom" in capsys.readouterr().out
+
+
+def test_generated_and_vendored_dirs_may_be_mentioned(tmp_path):
+    fx = fixture(tmp_path)
+    body = BLOCK + "Built into `dist/index.js`; deps live in `node_modules/` and `.venv/bin/python`.\n"
+    assert co.check_file(write(tmp_path, "a.md", body), fx) == []
+    md2 = write(tmp_path, "b.md", BLOCK + "See `distro/ghost.py`.\n")
+    assert any("distro/ghost.py" in p for p in co.check_file(md2, fx))

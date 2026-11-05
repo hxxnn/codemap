@@ -14,6 +14,8 @@ REQUIRED_KEYS = ("codemap", "skill", "generated_at", "sources")
 NO_DIAGRAM_SKILLS = {"design-doc", "present"}
 SOURCE_EXTS = (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".md", ".json", ".toml")
 UNVERIFIED = "<!-- codemap:unverified -->"
+# Generated/vendored folders legitimately do not exist in a fresh checkout.
+GENERATED_DIRS = {"dist", "build", "node_modules", ".venv", "venv", "target", "__pycache__", "out"}
 FENCE = re.compile(r"^```")
 
 
@@ -71,6 +73,8 @@ def check_file(md_path, fixture_dir):
             continue
         for ref in path_refs(line):
             rel = ref[2:] if ref.startswith("./") else ref
+            if rel.split("/", 1)[0] in GENERATED_DIRS:
+                continue
             if not (Path(fixture_dir) / rel).exists():
                 problems.append(f"{md_path}: path does not exist: {ref}")
     return problems
