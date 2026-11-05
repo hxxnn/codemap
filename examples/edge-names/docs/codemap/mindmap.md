@@ -3,36 +3,30 @@ codemap: 1
 skill: mindmap
 generated_at: 2026-11-05
 commit: null
-sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5ca172cd9, src/my utils.js: 305439bc482c12b23f78d0d9a2175edcaf9d6aa2a4fc8faee9e6edc7125fac8c, src/데이터 로더.js: 992b2fa3a7a70e6fa9d036713db3edf2e7a7b7c1c67cae7bd75e74a31791473d}
+sources: {package.json: ae5b4fc82dbaebc1fe8d80c1ac2975a5ef58fcb05a0e74481a1cf90fe72baad0, src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5ca172cd9, src/my utils.js: 305439bc482c12b23f78d0d9a2175edcaf9d6aa2a4fc8faee9e6edc7125fac8c}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# 마인드맵
+# 구조 트리
 
-프로젝트 `edge-names`를 하는 일 기준으로 세 갈래로 묶은 한눈에 보는 지도입니다.
+프로젝트를 기능 단위로 묶어 파일과 핵심 함수까지 한눈에 보여 주는 트리입니다.
 
-```mermaid
-mindmap
-  root((edge-names))
-    a1["실행"]
-      a2["src/main.js: 항목을 불러와 출력"]
-    a3["데이터"]
-      a4["src/데이터 로더.js: 고정 목록 제공"]
-        a5["loadItems()"]
-    a6["문자열 변환"]
-      a7["src/my utils.js: 대문자 + 느낌표"]
-        a8["shout()"]
-```
+- **edge-names** — 공백·한글 파일명을 가진 모듈들을 불러와 항목을 출력하는 작은 Node.js 프로그램
+  - **진입점** — 실행이 시작되고 전체 흐름을 조립하는 곳
+    - `src/main.js` — 두 모듈을 불러와 항목마다 출력
+  - **문자열 가공** — 텍스트를 바꾸는 유틸리티
+    - `src/my utils.js` — 문자열 유틸 모듈
+      - `shout()` — 대문자로 바꾸고 느낌표를 붙임
+  - **데이터** — 출력할 항목을 제공
+    - `src/데이터 로더.js` — 항목 목록 모듈
+      - `loadItems()` — 항목 배열의 복사본을 돌려줌
 
-중앙의 프로젝트에서 실행, 데이터, 문자열 변환 세 갈래가 뻗어 나갑니다.
+## 그룹별 설명
 
-## 그룹
-
-- 실행: `src/main.js`가 `package.json`의 `main`으로 지정된 진입점이며 두 모듈을 불러와 결과를 출력합니다.
-- 데이터: `src/데이터 로더.js`가 `alpha`, `beta`, `gamma` 배열의 복사본을 돌려줍니다.
-- 문자열 변환: `src/my utils.js`가 문자열을 대문자로 바꾸고 `!`를 붙입니다.
-- 생략한 항목은 없습니다.
+- **진입점** — `package.json`의 `main`이 가리키는 파일 하나뿐입니다.
+- **문자열 가공** — 함수 하나만 내보내므로 트리에서 빠뜨린 항목은 없습니다.
+- **데이터** — `alpha`, `beta`, `gamma` 세 항목이 모듈 안에 고정되어 있고, 빠뜨린 항목은 없습니다.
 
 ## 다루지 않은 범위
 
-소스 파일 3개를 모두 읽었으며, 읽지 않은 범위는 없습니다.
+소스 3개를 모두 읽었습니다. `src/데이터 로더.js`는 경로에 한글이 있어 해시 안전 규칙을 통과하지 못해 `sources`에 넣지 못했습니다 (확인 필요) <!-- codemap:unverified -->.

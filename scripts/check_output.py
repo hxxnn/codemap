@@ -76,6 +76,14 @@ def _exists(rel, fixture_dir):
     return len(words) > 1 and (root / words[-1]).exists()
 
 
+def _claims_a_path(ref, fixture_dir):
+    """A slashed token like `if/else` is prose, not a file reference. Treat it as a path only when it
+    has a known extension, ends with '/', is relative (./ ../), or starts with a real top-level entry."""
+    if ref.endswith(SOURCE_EXTS) or ref.endswith("/") or ref.startswith(("./", "../")):
+        return True
+    return "/" not in ref or (Path(fixture_dir) / ref.split("/", 1)[0]).exists()
+
+
 def _prose_lines(text):
     in_fence = False
     for line in text.splitlines():
@@ -116,6 +124,8 @@ def check_file(md_path, fixture_dir):
         if UNVERIFIED in line:
             continue
         for ref in path_refs(line):
+            if not _claims_a_path(ref, fixture_dir):
+                continue
             if not _exists(ref, fixture_dir):
                 problems.append(f"{md_path}: path does not exist: {ref}")
     for body in mermaid_blocks(text):

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>아키텍처 개요 - ts-notes-cli</title>
+<title>아키텍처 개요 - notes-cli</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,74 +28,62 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
+      <p class="cm-project">notes-cli</p>
       <h1>아키텍처 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>8</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>6</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p><code>notes-cli</code>는 터미널에서 메모를 추가하고 목록을 보는 작은 TypeScript 명령줄 도구이며, 아래에서 세 단계의 확대 수준으로 구조를 보여 줍니다.</p>
-<section class="cm-section"><h2>1단계: 시스템 컨텍스트</h2>
+<p><code>notes-cli</code>는 터미널에서 메모를 추가하고 목록으로 보는 작은 TypeScript 명령줄 도구이며, 아래에 세 단계의 확대 수준으로 구조를 그렸습니다.</p>
+<section class="cm-section"><h2>1. 시스템 컨텍스트</h2>
 <pre class="mermaid">flowchart LR
-  user["사용자 (터미널)"]:::external
-  cli["notes-cli (src/index.ts)"]
-  env["환경 변수 USER (process.env)"]:::external
-  user --&gt;|"notes add / list"| cli
-  cli --&gt;|"결과 / 오류 출력"| user
-  cli --&gt;|"USER 읽기"| env
+  user["터미널 사용자"]:::external
+  env["환경변수 USER"]:::external
+  sys["notes-cli (CLI 도구)"]
+  user --&gt;|"notes add / list"| sys
+  env --&gt;|"작성자 이름"| sys
+  sys --&gt;|"메모 출력"| user
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>사용자가 터미널에서 <code>notes add</code>나 <code>notes list</code>를 실행하고, 도구는 작성자 이름을 얻기 위해 환경 변수 <code>USER</code>를 읽습니다(<code>src/user-profile.ts</code>). 데이터베이스나 네트워크 API 호출은 코드에서 찾지 못했습니다.</p>
+<p>사용자가 <code>notes</code> 명령을 실행하면 도구가 환경변수 <code>USER</code>에서 작성자 이름을 읽고 결과를 터미널에 출력합니다(<code>src/index.ts</code>, <code>src/user-profile.ts</code>).</p>
 </section>
-<section class="cm-section"><h2>2단계: 컨테이너</h2>
+<section class="cm-section"><h2>2. 컨테이너</h2>
 <pre class="mermaid">flowchart LR
-  user["사용자 (터미널)"]:::external
-  subgraph proc["Node.js 프로세스 (TypeScript, src/)"]
-    entry["CLI 진입점 (src/index.ts)"]
-    mem["메모 저장소: 메모리 배열 (src/notes-store.ts)"]
+  user["터미널 사용자"]:::external
+  subgraph proc["notes 프로세스 (Node.js, src/)"]
+    cli["CLI 프로세스 (TypeScript, src/)"]
+    mem["메모리 내 notes 배열 (src/notes-store.ts)"]
   end
-  env["환경 변수 USER"]:::external
-  user --&gt;|"명령 인자"| entry
-  entry --&gt;|"추가 / 조회"| mem
-  entry --&gt;|"작성자 조회"| env
+  user --&gt;|"명령 실행"| cli
+  cli --&gt;|"읽기/쓰기"| mem
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>배포 단위는 하나의 CLI 프로세스뿐이며, 메모는 이 프로세스 안의 배열(<code>const notes: Note[] = []</code>)에만 저장되어 프로세스가 끝나면 사라집니다. <code>package.json</code>의 <code>bin</code>은 <code>notes</code>를 빌드 산출물 dist/index.js로 연결하고, <code>npm run build</code>는 <code>tsc</code>를 실행합니다.</p>
+<p>배포 단위는 <code>package.json</code>의 <code>bin</code>이 가리키는 단일 CLI 하나이고, 저장소는 별도 DB 없이 프로세스 메모리의 배열뿐이라 명령이 끝나면 메모는 사라집니다.</p>
 </section>
-<section class="cm-section"><h2>3단계: 컴포넌트</h2>
+<section class="cm-section"><h2>3. 컴포넌트</h2>
 <pre class="mermaid">flowchart LR
-  subgraph entryl["진입 계층"]
-    index["CLI 진입점 (src/index.ts)"]
+  subgraph entry["진입"]
+    idx["CLI 진입 (src/index.ts)"]
   end
-  subgraph domain["메모 도메인"]
+  subgraph logic["로직"]
     store["메모 저장소 (src/notes-store.ts)"]
-    fmt["표시 포맷터 (src/format.ts)"]
-    types["Note 타입 (src/types.ts)"]
-  end
-  subgraph envl["환경 계층"]
     prof["사용자 정보 (src/user-profile.ts)"]
+    fmt["포맷터 (src/format.ts)"]
   end
-  env["환경 변수 USER"]:::external
-  index --&gt;|"addNote / listNotes"| store
-  index --&gt;|"currentUser"| prof
+  subgraph shared["공유"]
+    types["타입 (src/types.ts)"]
+  end
+  idx --&gt;|"addNote, listNotes"| store
+  idx --&gt;|"currentUser"| prof
   store --&gt;|"formatNote"| fmt
-  store -.-&gt;|"Note"| types
-  fmt -.-&gt;|"Note"| types
-  prof --&gt;|"읽기"| env
-  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p><code>src/index.ts</code>가 명령을 해석해 <code>src/notes-store.ts</code>와 <code>src/user-profile.ts</code>를 호출하고, 저장소는 <code>src/format.ts</code>로 한 줄 문자열을 만들며, 점선은 타입만 가져오는 의존입니다.</p>
-<table><thead><tr><th>컴포넌트</th><th>책임</th></tr></thead><tbody>
-<tr><td><code>src/index.ts</code></td><td><code>process.argv</code>를 읽어 <code>add</code> / <code>list</code> / 사용법 오류로 분기</td></tr>
-<tr><td><code>src/notes-store.ts</code></td><td>메모리 배열에 메모 추가(<code>addNote</code>), 포맷된 줄 목록 반환(<code>listNotes</code>)</td></tr>
-<tr><td><code>src/format.ts</code></td><td><code>#id 본문 (작성자)</code> 형식의 문자열 생성(<code>formatNote</code>)</td></tr>
-<tr><td><code>src/user-profile.ts</code></td><td><code>USER</code> 환경 변수 또는 <code>&quot;anonymous&quot;</code> 반환(<code>currentUser</code>)</td></tr>
-<tr><td><code>src/types.ts</code></td><td><code>Note</code> 인터페이스(<code>id</code>, <code>text</code>, <code>author</code>) 정의</td></tr>
-</tbody></table>
+  store --&gt;|"Note"| types
+  fmt --&gt;|"Note"| types</pre>
+<p><code>src/index.ts</code>가 명령을 해석해 저장소와 사용자 정보 모듈을 부르고, 저장소는 출력 문자열 생성을 <code>src/format.ts</code>에 맡기며, <code>Note</code> 타입은 <code>src/types.ts</code> 한 곳에 정의됩니다.</p>
 </section>
 <section class="cm-section"><h2>다루지 않은 범위</h2>
-<p>소스 파일 5개(<code>src/</code> 전체)와 <code>README.md</code>, <code>package.json</code>, <code>tsconfig.json</code>을 모두 읽었습니다. 빌드 산출물 dist/와 node_modules/는 저장소에 없어 읽지 않았습니다.</p>
+<p><code>tsconfig.json</code>은 읽지 않았고, 빌드 산출물 dist/는 저장소에 없어 보지 못했습니다. 나머지 소스 5개는 모두 끝까지 읽었습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

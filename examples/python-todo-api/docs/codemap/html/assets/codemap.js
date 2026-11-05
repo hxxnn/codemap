@@ -1,4 +1,4 @@
-/* codemap html assets v4 */
+/* codemap html assets v5 */
 (function () {
   var root = document.documentElement;
   var KO = (root.lang || "").toLowerCase().indexOf("ko") === 0;
@@ -204,7 +204,7 @@
   }
 
   // presentation mode: one .cm-slide at a time (used by the "present" artifact)
-  var slides = Array.prototype.slice.call(document.querySelectorAll(".cm-slide")), cur = 0, savedState = null;
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".cm-slide")), cur = 0, savedState = null, foldedTree = [];
   function showSlide(i) {
     cur = Math.max(0, Math.min(slides.length - 1, i));
     slides.forEach(function (s, k) { s.classList.toggle("current", k === cur); });
@@ -214,6 +214,9 @@
   function startDeck() {
     savedState = slides.map(function (s) { return { s: s, c: s.classList.contains("collapsed"), h: s.hidden }; });
     slides.forEach(function (s) { s.classList.remove("collapsed"); s.hidden = false; });
+    // a long tree must fit one screen: fold the function level (click to open); restored on exit
+    foldedTree = Array.prototype.slice.call(document.querySelectorAll(".cm-slide ul.cm-tree ul ul details[open]"));
+    foldedTree.forEach(function (d) { d.open = false; });
     document.body.classList.add("cm-presenting"); $("cm-deck").hidden = false; showSlide(0);
     var el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
   }
@@ -223,6 +226,7 @@
     slides.forEach(function (s) { s.classList.remove("current"); });
     if (savedState) savedState.forEach(function (x) { x.s.classList.toggle("collapsed", x.c); x.s.hidden = x.h; });
     savedState = null;
+    foldedTree.forEach(function (d) { d.open = true; }); foldedTree = [];
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
   }
   if (slides.length) {

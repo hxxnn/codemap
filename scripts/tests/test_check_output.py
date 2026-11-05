@@ -251,3 +251,15 @@ def test_mindmap_tree_needs_no_diagram_but_its_paths_are_still_checked(tmp_path)
     assert co.check_file(ok, fx) == []
     bad = write(tmp_path, "n.md", tree + "    - `src/ghost.py`: made up\n", skill="mindmap")
     assert any("src/ghost.py" in p for p in co.check_file(bad, fx))
+
+
+def test_slashed_code_phrases_are_not_paths_but_real_looking_paths_still_are(tmp_path):
+    fx = fixture(tmp_path)
+    ok = write(tmp_path, "a.md", BLOCK + "Use `async/await`, `if/else` and `read/write` freely.\n")
+    assert co.check_file(ok, fx) == []
+    ghost_in_real_dir = write(tmp_path, "b.md", BLOCK + "See `src/ghost`.\n")
+    assert any("src/ghost" in p for p in co.check_file(ghost_in_real_dir, fx))
+    ghost_folder = write(tmp_path, "c.md", BLOCK + "See `nowhere/`.\n")
+    assert any("nowhere/" in p for p in co.check_file(ghost_folder, fx))
+    ghost_file = write(tmp_path, "d.md", BLOCK + "See `lib/util.py`.\n")
+    assert any("lib/util.py" in p for p in co.check_file(ghost_file, fx))

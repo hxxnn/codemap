@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>발표 개요: todo-api - python-todo-api</title>
+<title>발표 개요 - todo-api</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,8 +28,8 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
-      <h1>발표 개요: todo-api</h1>
+      <p class="cm-project">todo-api</p>
+      <h1>발표 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -38,58 +38,77 @@
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p><code>todo-api</code> 코드베이스를 팀에 소개하기 위한 7장짜리 슬라이드 구성안입니다.</p>
-<section class="cm-section cm-slide"><h2>슬라이드 1: 이 프로젝트는 무엇인가</h2>
-<p>할 일을 만들고 목록으로 조회하는 아주 작은 REST 서비스입니다. Python, FastAPI, uvicorn으로 만들어졌습니다.</p>
+<p><code>todo-api</code> 코드베이스를 팀에 소개하기 위한 7장짜리 개요입니다. 다섯 개 문서가 모두 있어 빠진 슬라이드는 없습니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 1: 이게 무엇인가</h2>
+<p>할 일을 추가하고 목록으로 조회하는 작은 HTTP API이고, Python과 FastAPI로 만들어 <code>uvicorn app.main:app</code>으로 실행합니다. 데이터는 DB 없이 메모리에만 보관합니다.</p>
 </section>
-<section class="cm-section cm-slide"><h2>슬라이드 2: 큰 그림</h2>
-<p>HTTP 클라이언트가 하나의 uvicorn 프로세스에 요청하고, 데이터는 같은 프로세스의 메모리 리스트에 저장됩니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 2: 전체 그림</h2>
+<p>사용자 요청은 uvicorn을 거쳐 FastAPI 앱으로 들어가고, 앱 안의 메모리 목록에 저장됩니다. 외부 시스템은 없습니다.</p>
 <pre class="mermaid">flowchart LR
-  user["HTTP 클라이언트"]:::external
-  subgraph proc["uvicorn 프로세스 (README.md)"]
-    api["FastAPI 앱 (Python, app/)"]
-    mem["메모리 목록 _TODOS (app/storage.py)"]
-  end
-  user --&gt;|"HTTP"| api
-  api --&gt;|"함수 호출"| mem
+  n1["HTTP 클라이언트"]:::external
+  n2["uvicorn 서버 (uvicorn app.main:app)"]
+  n3["FastAPI 앱 (app/)"]
+  n4["메모리 목록 _TODOS (app/storage.py)"]
+  n1 --&gt;|"HTTP"| n2
+  n2 --&gt;|"ASGI 앱 호출"| n3
+  n3 --&gt;|"함수 호출"| n4
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
 </section>
 <section class="cm-section cm-slide"><h2>슬라이드 3: 어떻게 구성되어 있나</h2>
-<p><code>app/</code> 아래 진입점, API, 모델, 저장소, 유틸리티의 다섯 역할로 나뉩니다.</p>
-<pre class="mermaid">mindmap
-  root((todo-api))
-    a1["진입점"]
-      a2["app/main.py: FastAPI 앱 생성"]
-    a3["API"]
-      a4["app/routes.py: HTTP 라우트"]
-        a5["create_todo()"]
-        a6["list_todos()"]
-    a7["도메인 모델"]
-      a8["app/models.py: Todo 데이터클래스"]
-        a9["Todo.create()"]
-    a10["저장소"]
-      a11["app/storage.py: 메모리 저장"]
-        a12["add_todo()"]
-        a13["all_todos()"]
-    a14["유틸리티"]
-      a15["app/utils.py: 시각 헬퍼"]
-        a16["now_iso()"]
-    a17["설정과 문서"]
-      a18["pyproject.toml: 의존성"]
-      a19["README.md: 실행 방법"]</pre>
+<p>진입, API, 저장소, 모델, 유틸의 다섯 그룹이고 파일은 <code>app/</code> 아래 5개입니다.</p>
+<ul class="cm-tree">
+<li><strong>todo-api</strong> — 할 일을 추가하고 목록으로 보여 주는 작은 FastAPI 서비스
+<ul>
+<li><strong>진입</strong> — 앱을 만들고 라우터를 붙이는 곳
+<ul>
+<li><code>app/main.py</code> — <code>FastAPI</code> 앱 생성과 라우터 등록</li>
+</ul></li>
+<li><strong>API</strong> — HTTP 요청을 받는 층
+<ul>
+<li><code>app/routes.py</code> — POST·GET <code>/todos</code> 라우트
+<ul>
+<li><code>create_todo()</code> — 제목을 검사하고 저장소에 넘김</li>
+<li><code>list_todos()</code> — 저장된 할 일을 딕셔너리 목록으로 반환</li>
+</ul></li>
+</ul></li>
+<li><strong>저장소</strong> — 메모리에 보관
+<ul>
+<li><code>app/storage.py</code> — 모듈 전역 목록 <code>_TODOS</code>
+<ul>
+<li><code>add_todo()</code> — 할 일을 만들어 목록에 추가</li>
+<li><code>all_todos()</code> — 목록의 복사본 반환</li>
+<li><code>next_id()</code> — 다음 id 계산</li>
+</ul></li>
+</ul></li>
+<li><strong>모델</strong> — 할 일 데이터 형태
+<ul>
+<li><code>app/models.py</code> — <code>Todo</code> 데이터클래스
+<ul>
+<li><code>Todo.create()</code> — 저장소에서 id를 받아 <code>Todo</code> 생성</li>
+<li><code>Todo.to_dict()</code> — 응답용 딕셔너리로 변환</li>
+</ul></li>
+</ul></li>
+<li><strong>유틸</strong> — 공용 보조 함수
+<ul>
+<li><code>app/utils.py</code> — 시간 문자열 생성
+<ul>
+<li><code>now_iso()</code> — 현재 UTC 시각을 ISO 문자열로 반환</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
 </section>
 <section class="cm-section cm-slide"><h2>슬라이드 4: 어떻게 실행되나</h2>
-<p><code>POST /todos</code>는 시각 생성, 저장소 추가, 모델 생성, dict 변환 순서로 진행됩니다. 라우팅과 직렬화는 프레임워크 내부라 추적하지 않았습니다.</p>
+<p><span class="cm-unverified"><code>POST /todos</code>는 라우트가 시각을 만들고, 저장소가 모델에게 객체 생성을 맡기는 순서로 흐릅니다. FastAPI가 처리하는 구간은 추적하지 않았습니다.</span></p>
 <pre class="mermaid">sequenceDiagram
   participant C as 클라이언트
-  participant F as FastAPI (app/main.py)
   participant R as app/routes.py
   participant U as app/utils.py
   participant S as app/storage.py
   participant M as app/models.py
-  C-&gt;&gt;F: POST /todos
-  F-)R: create_todo(title)
-  Note over F,R: 프레임워크의 라우팅 호출은 추적하지 않음
+  C-)R: POST /todos
+  Note over C,R: FastAPI의 라우팅 호출은 추적하지 않음
+  R-&gt;&gt;R: create_todo(title) 검사
   R-&gt;&gt;U: now_iso()
   U--&gt;&gt;R: ISO 시각 문자열
   R-&gt;&gt;S: add_todo(title.strip(), created_at)
@@ -99,41 +118,35 @@
   M--&gt;&gt;S: Todo
   S-&gt;&gt;S: _TODOS.append(todo)
   S--&gt;&gt;R: Todo
-  R-&gt;&gt;M: todo.to_dict()
-  M--&gt;&gt;R: dict
-  R-)F: dict 반환
-  Note over R,F: JSON 직렬화는 추적하지 않음
-  F--&gt;&gt;C: 응답</pre>
+  R-&gt;&gt;R: todo.to_dict()
+  R-)C: 딕셔너리 응답
+  Note over R,C: 응답 직렬화는 FastAPI가 처리, 추적하지 않음</pre>
 </section>
-<section class="cm-section cm-slide"><h2>슬라이드 5: 부분들의 의존 관계</h2>
-<p><code>app/main.py</code>에서 <code>app/routes.py</code>를 거쳐 <code>app/storage.py</code>와 <code>app/utils.py</code>로 이어집니다. <code>app/models.py</code>와 <code>app/storage.py</code>는 서로를 import하는 순환 의존이며, 주석에 "deliberate cycle"로 적혀 있습니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 5: 부품끼리의 의존 관계</h2>
+<p>대부분 한 방향 흐름이지만 <code>app/storage.py</code>와 <code>app/models.py</code>가 서로를 import하는 순환이 하나 있고, 코드 주석이 의도적이라고 밝힙니다.</p>
 <pre class="mermaid">flowchart LR
-  n3["app/models.py"]:::cycle
-  n4["app/storage.py"]:::cycle
-  n1["app/main.py"]
-  n2["app/routes.py"]
-  n5["app/utils.py"]
-  n3 --&gt; n4
-  n4 --&gt; n3
-  n1 --&gt; n2
-  n2 --&gt; n4
-  n2 --&gt; n5
+  storage["app/storage.py"]:::cycle
+  models["app/models.py"]:::cycle
+  main["app/main.py"]
+  routes["app/routes.py"]
+  utils["app/utils.py"]
+  storage --&gt; models
+  models --&gt; storage
+  main --&gt; routes
+  routes --&gt; storage
+  routes --&gt; utils
   linkStyle 0 stroke:#C62F3E,stroke-width:3px
   linkStyle 1 stroke:#C62F3E,stroke-width:3px
   classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823</pre>
 </section>
 <section class="cm-section cm-slide"><h2>슬라이드 6: 핵심 설계 선택</h2>
-<ul>
-<li>메모리 안의 저장소 모듈(<code>app/storage.py</code>): 재시작하면 데이터가 사라집니다. <span class="cm-unverified">이유는 코드에 없습니다. (추정)</span></li>
-<li>라우터 분리: <code>app/routes.py</code>의 라우터를 <code>app/main.py</code>에서 붙입니다.</li>
-<li>의도된 순환 import: <code>app/models.py</code>와 <code>app/storage.py</code>가 서로 호출합니다.</li>
-</ul>
+<p><span class="cm-unverified">메모리 저장소를 작은 모듈 뒤에 두었고, 저장소와 모델은 의도적으로 순환 import합니다. 이렇게 한 이유는 코드에 없습니다 (추정)</span></p>
 </section>
 <section class="cm-section cm-slide"><h2>슬라이드 7: 어디서부터 읽을까</h2>
-<p><code>README.md</code>, <code>pyproject.toml</code>, <code>app/main.py</code>, <code>app/routes.py</code>, <code>app/storage.py</code> 순서로 읽기 시작합니다.</p>
+<p><code>README.md</code>, <code>pyproject.toml</code>, <code>app/main.py</code>, <code>app/routes.py</code> 순으로 읽으면 전체 흐름이 잡힙니다.</p>
 </section>
 <section class="cm-section"><h2>다루지 않은 범위</h2>
-<p>각 산출물의 "다루지 않은 범위"를 따릅니다. 모든 소스와 <code>README.md</code>, <code>pyproject.toml</code>을 읽었고, 테스트와 배포 설정은 저장소에 없으며, FastAPI 내부 동작과 실제 서버 실행은 확인하지 않았습니다.</p>
+<p>소스 파일과 설정 파일은 모두 읽었고 빠진 범위는 없습니다. FastAPI와 uvicorn 내부 동작은 다루지 않았습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

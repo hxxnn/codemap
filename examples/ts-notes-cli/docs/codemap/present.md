@@ -3,58 +3,50 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: 9db7a85e6b362e4c5c18f21b06766696ddfeaa2cb2c586d79939545e509ebb8b, docs/codemap/dependency-graph.md: 91c9072196ae3897e9b2d95dfcc3f4cd6557a3418825ae49f35fd92eef2a0661, docs/codemap/mindmap.md: 1b56d3af32ea633c2b1a4f8f81560b5eee55f12762252ae74c95d75a24f6dfc1, docs/codemap/sequence-flow.md: 74e892ecc97a58b3f979b50fa659c0225b330fbc540a90f1b1a6c6fcc43dad12, docs/codemap/design-doc.md: f1e76827d7e21038d28a4cc92e220f227e21033dd80da8d85a87c25fe3d1e2a0}
+sources: {docs/codemap/architecture.md: 0b3d1389317e9a0ab4fcb87446bf55dd34567826c9c1d89d3aa18a4811970932, docs/codemap/dependency-graph.md: aaa5364d6b569e97ed9c72dd055cca72632c28d218b04d52f7ab502ab70f0fd1, docs/codemap/mindmap.md: de0ef7d606a8d96be6c3780193bf9e99e1dcb2477c15b6e7a5935ef5e3981b3e, docs/codemap/sequence-flow.md: 015eee2d2ee144769340373a10396a28dcd96430248ba4df188439328af1efa9, docs/codemap/design-doc.md: d263b0998e0de2f4fd5f290874c8dac68c689f3a5a9eccd0ac585f3c8bc2cdb6}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
 # 발표 개요
 
-`notes-cli`를 다른 사람에게 소개하기 위한 7장짜리 슬라이드 개요이며, 모든 내용은 기존 codemap 문서 5개(`architecture.md`, `dependency-graph.md`, `mindmap.md`, `sequence-flow.md`, `design-doc.md`)에서 가져왔습니다.
+`notes-cli`를 팀에 소개하기 위한 7장짜리 슬라이드 개요이며, 다섯 개 codemap 문서가 모두 있어 빠진 출처는 없습니다.
 
 ## 슬라이드 1: 무엇인가
 
-`notes-cli`는 터미널에서 메모를 추가하고 목록을 보는 작은 명령줄 도구입니다. TypeScript로 작성되었고 런타임 의존성이 없으며, 메모는 프로세스 메모리에만 저장됩니다.
-
-Show: `design-doc.md` → "개요" 섹션(텍스트만, 다이어그램 없음)
+터미널에서 `notes add`, `notes list`로 메모를 다루는 작은 TypeScript 명령줄 도구입니다.
+Show: `design-doc.md` → "개요"
 
 ## 슬라이드 2: 큰 그림
 
-사용자가 터미널에서 명령을 실행하면 하나의 Node.js 프로세스가 처리합니다. 프로세스 안에는 진입점과 메모리 저장소가 있고, 작성자 이름은 환경 변수 `USER`에서 얻습니다.
-
-Show: `architecture.md` → "2단계: 컨테이너" 다이어그램
+사용자 한 명, 프로세스 하나, 메모리 배열 하나로 이루어진 단순한 구조입니다.
+Show: `architecture.md` → "2. 컨테이너" 다이어그램
 
 ## 슬라이드 3: 어떻게 구성되어 있나
 
-코드는 진입점, 저장소, 표시, 사용자 정보, 타입, 빌드 설정의 여섯 가지로 나뉩니다. 각 가지가 하나의 책임과 하나의 파일(또는 설정 파일)에 대응합니다.
-
-Show: `mindmap.md` → "마인드맵" 다이어그램
+CLI, 저장소, 보조, 타입 네 묶음으로 나뉘며 파일은 모두 `src/` 아래에 있습니다.
+Show: `mindmap.md` → 구조 트리
 
 ## 슬라이드 4: 어떻게 실행되나
 
-`notes add`를 실행하면 `src/index.ts`가 작성자를 조회하고 저장소에 메모를 추가합니다. 저장은 메모리 배열에만 일어나며 결과는 출력하지 않습니다.
+`notes list`는 저장소가 각 메모를 포맷터에 넘겨 한 줄씩 만든 뒤 진입 파일이 출력합니다.
+Show: `sequence-flow.md` → "notes list 실행" 다이어그램
 
-Show: `sequence-flow.md` → "메모 추가: notes add" 다이어그램
+## 슬라이드 5: 부분들의 의존 관계
 
-## 슬라이드 5: 파일들은 서로 어떻게 의존하나
-
-의존은 `src/index.ts`에서 `src/types.ts` 방향으로만 흐르고 순환 의존은 없습니다. 가장 많이 의존되는 파일은 `src/types.ts`입니다.
-
-Show: `dependency-graph.md` → "의존성 그래프" 다이어그램
+모든 의존이 `src/types.ts`로 모이고, 순환 의존은 없습니다.
+Show: `dependency-graph.md` → 의존성 그래프 다이어그램
 
 ## 슬라이드 6: 핵심 설계 선택
 
-메모리 배열 저장은 작은 모듈(`src/notes-store.ts`) 뒤에 숨겨져 있고, 명령 파싱은 `src/index.ts` 한 파일에서 라이브러리 없이 처리합니다. 두 선택의 이유는 코드에 적혀 있지 않습니다. (추정) <!-- codemap:unverified -->
+메모는 모듈 전역 배열에만 있어 프로세스가 끝나면 사라지고, 그 이유는 코드에 적혀 있지 않습니다. (추정: 프로토타입이라서) <!-- codemap:unverified -->
+또한 출력 형식을 `src/format.ts`로 분리해 저장 로직과 독립시켰습니다.
+Show: `design-doc.md` → "핵심 설계 선택"
 
-환경 변수 접근은 `src/user-profile.ts`의 `currentUser` 한 곳에 모여 있습니다.
+## 슬라이드 7: 어디부터 읽을까
 
-Show: `design-doc.md` → "핵심 설계 선택" 섹션(텍스트만, 다이어그램 없음)
-
-## 슬라이드 7: 어디서부터 읽을까
-
-`README.md`, `package.json`, `src/index.ts` 순서로 시작해 `src/notes-store.ts`와 `src/types.ts`로 내려가면 전체 흐름이 잡힙니다.
-
-Show: `design-doc.md` → "읽는 순서" 섹션(텍스트만, 다이어그램 없음)
+`README.md`, `package.json`, `src/index.ts`, `src/notes-store.ts` 순서로 읽으면 흐름이 잡힙니다.
+Show: `design-doc.md` → "읽는 순서"
 
 ## 다루지 않은 범위
 
-원본 문서들의 범위와 같습니다. 소스 파일 5개와 `README.md`, `package.json`, `tsconfig.json`을 모두 읽었고, 테스트와 CI 설정, 커밋 이력은 저장소에 없습니다. 빌드 산출물 dist/와 node_modules/도 저장소에 없습니다.
+`tsconfig.json`과 빌드 산출물 `dist/`는 읽지 않았고, 소스 5개는 모두 읽었습니다.

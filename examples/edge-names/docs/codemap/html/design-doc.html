@@ -32,38 +32,38 @@
       <h1>설계 문서와 온보딩 가이드</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>5</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>4</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
 <section class="cm-section"><h2>개요</h2>
-<p><code>edge-names</code>는 <code>README.md</code>에 따르면 파일 이름에 공백과 한글이 들어간 경우를 시험하기 위한 작은 프로젝트입니다. 실행하면 고정된 항목 목록(<code>alpha</code>, <code>beta</code>, <code>gamma</code>)을 불러와 각 항목을 대문자로 바꾸고 <code>!</code>를 붙여 한 줄씩 출력합니다. 기술은 Node.js(CommonJS <code>require</code>)뿐이고 외부 패키지는 없습니다.</p>
+<p><code>edge-names</code>는 <code>README.md</code>에 따르면 &quot;파일 이름에 공백과 ASCII가 아닌 문자가 들어 있는 아주 작은 프로젝트&quot;입니다. 실행하면 고정된 항목 세 개(<code>alpha</code>, <code>beta</code>, <code>gamma</code>)를 대문자로 바꾸고 느낌표를 붙여 콘솔에 한 줄씩 출력합니다. 기술은 외부 의존성이 없는 Node.js(CommonJS, <code>require</code>/<code>module.exports</code>)뿐입니다.</p>
 </section>
 <section class="cm-section"><h2>구조</h2>
-<p>프로세스 하나가 <code>src/main.js</code>에서 시작해 <code>src/데이터 로더.js</code>와 <code>src/my utils.js</code>를 불러 쓰는 단순한 구조입니다. 단계별 다이어그램은 <code>architecture.md</code>, 파일 간 import는 <code>dependency-graph.md</code>, 전체 지도는 <code>mindmap.md</code>, 실행 순서는 <code>sequence-flow.md</code>에 있습니다. 순환 의존은 없습니다.</p>
+<p>코드는 <code>src/</code> 아래 파일 3개로 이루어집니다. <code>src/main.js</code>가 진입점이고, <code>src/my utils.js</code>(문자열 변환)와 <code>src/데이터 로더.js</code>(항목 제공)를 불러옵니다. 두 모듈은 서로를 알지 못하며, 화살표는 모두 진입점에서 바깥으로만 향합니다. 자세한 그림은 <code>architecture.md</code>, 의존 관계는 <code>dependency-graph.md</code>, 파일·함수 목록은 <code>mindmap.md</code>, 호출 순서는 <code>sequence-flow.md</code>를 보세요.</p>
 </section>
 <section class="cm-section"><h2>핵심 설계 선택</h2>
 <ol>
-<li><strong>역할별로 파일 하나씩 분리</strong>: 데이터 제공은 <code>src/데이터 로더.js</code>, 문자열 변환은 <code>src/my utils.js</code>, 조립은 <code>src/main.js</code>가 맡습니다. 효과는 각 파일이 함수 하나만 내보내 읽기 쉽다는 점입니다.</li>
-<li><strong>진입 파일이 조립만 담당</strong>: <code>src/main.js</code>는 불러오기와 출력 반복만 하고 변환 로직은 갖지 않습니다.</li>
-<li><strong>데이터를 모듈 안의 메모리 배열로 보관</strong>: <code>src/데이터 로더.js</code>는 <code>items</code> 배열을 두고 <code>slice()</code> 복사본을 돌려주어 호출자가 원본을 바꾸지 못합니다. 복사본을 돌려주는 이유가 코드나 주석에 적혀 있지는 않습니다. <span class="cm-unverified">(추정) 원본 보호가 의도였을 가능성이 있습니다.</span></li>
-<li><strong>CommonJS 모듈 형식</strong>: 세 파일 모두 <code>require</code>와 <code>module.exports</code>를 씁니다 (<code>src/main.js</code>, <code>src/my utils.js</code>, <code>src/데이터 로더.js</code>).</li>
-<li><strong>파일 이름에 공백과 한글 사용</strong>: <code>src/my utils.js</code>, <code>src/데이터 로더.js</code>가 그 예이며, <code>README.md</code>가 이를 프로젝트의 목적으로 밝히고 있습니다.</li>
+<li><strong>진입 파일에서 흐름을 조립</strong> — <code>src/main.js</code>가 두 모듈을 불러와 반복문 안에서 연결합니다. 모듈끼리의 결합이 없어 각각 따로 이해할 수 있습니다.</li>
+<li><strong>모듈마다 함수 하나를 <code>module.exports</code>로 내보냄</strong> — <code>src/my utils.js</code>는 <code>shout</code>, <code>src/데이터 로더.js</code>는 <code>loadItems</code>만 공개합니다. 공개 표면이 작습니다.</li>
+<li><strong>데이터를 모듈 안 배열에 두고 복사본을 반환</strong> — <code>src/데이터 로더.js</code>의 <code>loadItems()</code>는 <code>items.slice()</code>를 돌려줍니다. 호출자가 결과를 바꿔도 원본 배열은 영향을 받지 않는 효과가 있습니다. <span class="cm-unverified">이렇게 한 이유는 코드에 적혀 있지 않습니다 (추정)</span></li>
+<li><strong>파일 이름에 공백과 한글을 의도적으로 사용</strong> — <code>src/my utils.js</code>, <code>src/데이터 로더.js</code>가 그 예이며, <code>README.md</code>가 이 점을 프로젝트의 목적으로 밝힙니다. <code>require(&quot;./my utils.js&quot;)</code>처럼 경로를 문자열 그대로 적어야 하는 효과가 있습니다.</li>
+<li><strong>외부 패키지 없음</strong> — <code>package.json</code>에 의존성 항목이 없고 <code>main</code>만 <code>src/main.js</code>로 지정되어 있습니다.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>읽는 순서 (온보딩 가이드)</h2>
 <ol>
-<li><code>README.md</code>: 프로젝트가 무엇을 시험하려는지 확인합니다.</li>
-<li><code>package.json</code>: <code>main</code>이 <code>src/main.js</code>인지, 의존 패키지가 없는지 확인합니다.</li>
-<li><code>src/main.js</code>: 전체 흐름이 여기서 조립됩니다. <code>require</code> 두 줄과 반복문을 보세요.</li>
-<li><code>src/데이터 로더.js</code>: <code>loadItems()</code>가 무엇을 돌려주는지, 왜 <code>slice()</code>를 쓰는지 봅니다.</li>
-<li><code>src/my utils.js</code>: <code>shout()</code>의 변환 규칙을 확인합니다.</li>
+<li><code>README.md</code> — 프로젝트의 목적(특이한 파일 이름)을 먼저 확인합니다.</li>
+<li><code>package.json</code> — <code>main</code>이 <code>src/main.js</code>를 가리키는지, 의존성이 없는지 봅니다.</li>
+<li><code>src/main.js</code> — 전체 흐름이 여기 있습니다. 두 <code>require</code>와 <code>for...of</code> 반복을 따라가세요.</li>
+<li><code>src/my utils.js</code> — <code>shout</code>가 문자열을 어떻게 바꾸는지 봅니다.</li>
+<li><code>src/데이터 로더.js</code> — 항목 배열과 <code>slice()</code>로 복사해 돌려주는 부분을 봅니다.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>다루지 않은 범위</h2>
-<p>프로젝트의 모든 소스와 설정 파일(<code>README.md</code>, <code>package.json</code>, <code>src/</code> 아래 3개)을 읽었으며, 읽지 않은 범위는 없습니다. 테스트와 빌드 설정은 저장소에 존재하지 않았습니다.</p>
+<p>소스와 설정 파일을 모두 읽었고 건너뛴 폴더는 없습니다. 위 구조 설명은 코드를 직접 읽어 확인했습니다. <span class="cm-unverified">다만 <code>src/데이터 로더.js</code>는 경로에 한글이 있어 해시 안전 규칙을 통과하지 못해 <code>sources</code>에 넣지 못했습니다 (확인 필요)</span></p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

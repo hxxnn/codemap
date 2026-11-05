@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>설계 문서와 온보딩 가이드 - ts-notes-cli</title>
+<title>설계 문서와 온보딩 가이드 - notes-cli</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,48 +28,44 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
+      <p class="cm-project">notes-cli</p>
       <h1>설계 문서와 온보딩 가이드</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>8</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p><code>notes-cli</code>가 어떻게 만들어졌는지 설명하고, 처음 읽는 사람을 위해 코드를 읽을 순서를 안내하는 문서입니다.</p>
 <section class="cm-section"><h2>개요</h2>
-<p><code>notes-cli</code>는 터미널에서 메모를 추가(<code>notes add &quot;text&quot;</code>)하고 목록을 보는(<code>notes list</code>) 명령줄 도구이며, <code>README.md</code>도 같은 사용법을 설명합니다. TypeScript 5.4 이상으로 작성되었고(<code>package.json</code>) 컴파일 대상은 ES2022, 모듈 방식은 CommonJS, <code>strict</code> 모드입니다(<code>tsconfig.json</code>). 런타임 의존성은 없고 개발 의존성은 <code>typescript</code>뿐입니다. 메모는 프로세스 메모리 배열에만 저장됩니다.</p>
+<p><code>notes-cli</code>는 <code>notes add "text"</code>로 메모를 추가하고 <code>notes list</code>로 보는 명령줄 메모 도구입니다(<code>README.md</code>). TypeScript로 작성되었고 <code>package.json</code>의 <code>bin</code>이 <code>notes</code>를 dist/index.js에 연결하며, 빌드는 <code>tsc</code>를 씁니다. 런타임 의존성은 없고 개발 의존성은 <code>typescript</code>뿐입니다.</p>
 </section>
 <section class="cm-section"><h2>구조</h2>
-<p>프로젝트는 하나의 CLI 프로세스이고, <code>src/</code> 아래 5개 파일이 진입점, 저장소, 포맷터, 사용자 정보, 타입으로 나뉘어 있습니다. 의존 방향은 위에서 아래로만 흐르며 순환은 없습니다. 자세한 그림은 <code>architecture.md</code>(세 단계 구조), <code>dependency-graph.md</code>(import 간선), <code>mindmap.md</code>(기능 지도), <code>sequence-flow.md</code>(<code>add</code>, <code>list</code>, 오류 경로의 호출 순서)를 보세요.</p>
-<p>요약하면 <code>src/index.ts</code>가 <code>src/notes-store.ts</code>와 <code>src/user-profile.ts</code>를 부르고, 저장소는 <code>src/format.ts</code>로 출력 문자열을 만들며, <code>src/types.ts</code>의 <code>Note</code>를 공유합니다.</p>
+<p>진입 파일 <code>src/index.ts</code>가 명령을 나누고, 저장소(<code>src/notes-store.ts</code>), 사용자 정보(<code>src/user-profile.ts</code>), 포맷터(<code>src/format.ts</code>), 타입(<code>src/types.ts</code>)이 각각 한 가지 일만 맡습니다. 세 단계 다이어그램은 <code>architecture.md</code>, import 관계는 <code>dependency-graph.md</code>, 파일별 트리는 <code>mindmap.md</code>, 호출 순서는 <code>sequence-flow.md</code>에 있습니다. 의존 방향은 한쪽으로만 흐르며 순환은 없습니다.</p>
 </section>
 <section class="cm-section"><h2>핵심 설계 선택</h2>
 <ol>
-<li><strong>메모리 배열 저장을 작은 모듈 뒤에 숨김.</strong> <code>src/notes-store.ts</code>가 모듈 수준 배열 <code>notes</code>를 가지고 <code>addNote</code>와 <code>listNotes</code>만 내보냅니다. 효과: 호출부는 저장 방식을 몰라도 되지만, 프로세스가 끝나면 메모가 사라지므로 <code>notes add</code> 다음에 별도로 실행한 <code>notes list</code>에는 아무것도 나오지 않습니다. <span class="cm-unverified">이렇게 한 이유는 코드와 <code>README.md</code>에 적혀 있지 않습니다. 단순함을 위한 초기 단계 선택으로 보이지만 근거는 없습니다. (추정)</span></li>
-<li><strong>명령줄 파싱을 진입점 한 파일에서 직접 처리.</strong> <code>src/index.ts</code>가 <code>process.argv.slice(2)</code>를 구조분해하고 <code>if / else if / else</code>로 분기하며, 인자 처리 라이브러리를 쓰지 않습니다(<code>package.json</code>에 런타임 의존성 없음). 효과: 명령이 두 개뿐이라 한 화면에서 전체 흐름이 보입니다. <span class="cm-unverified">라이브러리를 쓰지 않은 이유는 코드에 나와 있지 않습니다. (추정)</span></li>
-<li><strong>공유 타입을 별도 파일로 분리.</strong> <code>src/types.ts</code>가 <code>Note</code>(<code>id</code>, <code>text</code>, <code>author</code>)만 정의하고, <code>src/notes-store.ts</code>와 <code>src/format.ts</code>가 이를 가져다 씁니다. 효과: 저장소와 포맷터가 서로를 거치지 않고 같은 형태를 공유합니다.</li>
-<li><strong>표시 형식을 순수 함수로 분리.</strong> <code>src/format.ts</code>의 <code>formatNote</code>는 <code>Note</code>를 받아 <code>#id 본문 (작성자)</code> 문자열만 돌려줍니다. 효과: 출력 형식을 바꿀 때 저장 로직을 건드리지 않아도 됩니다. 저장소는 <code>notes.map(formatNote)</code>로 이를 사용합니다.</li>
-<li><strong>환경 의존을 한 함수에 격리.</strong> <code>src/user-profile.ts</code>의 <code>currentUser</code>가 <code>process.env.USER</code>를 읽고 없으면 <code>&quot;anonymous&quot;</code>를 반환합니다. 효과: 환경 변수 접근이 이 한 곳에만 있어 나머지 코드가 <code>process.env</code>를 직접 알 필요가 없습니다.</li>
-<li><strong>저장소가 문자열 목록을 반환.</strong> <code>listNotes</code>가 <code>Note</code>가 아니라 포맷된 <code>string[]</code>을 돌려주므로 저장소가 표시 형식에 의존합니다(<code>src/notes-store.ts</code>가 <code>src/format.ts</code>를 가져옴). 효과: 진입점은 단순해지지만 저장과 표시가 한 모듈에서 만납니다.</li>
+<li><strong>메모리 내 저장소</strong> — <code>src/notes-store.ts</code>의 모듈 전역 배열 <code>notes</code>에 보관합니다. 효과: 프로세스가 끝나면 메모가 사라지므로 <code>add</code> 뒤 <code>list</code>를 다른 실행에서 해도 비어 있습니다. 이유는 코드에 적혀 있지 않습니다. <span class="cm-unverified">(추정: 프로토타입이라서)</span></li>
+<li><strong>진입 파일에서 명령 분기</strong> — <code>src/index.ts</code> 한 파일에서 <code>process.argv</code>를 직접 <code>if/else</code>로 나눕니다. 효과: 명령이 둘뿐이라 단순하지만, 명령이 늘면 이 파일이 커집니다.</li>
+<li><strong>출력 형식 분리</strong> — <code>formatNote()</code>를 <code>src/format.ts</code>로 따로 두고 저장소가 <code>map(formatNote)</code>로 부릅니다. 효과: 출력 모양을 저장 로직과 독립해 바꿀 수 있습니다.</li>
+<li><strong>작성자는 환경변수에서</strong> — <code>currentUser()</code>가 <code>process.env.USER ?? "anonymous"</code>를 반환합니다(<code>src/user-profile.ts</code>). 효과: 로그인 개념 없이 OS 사용자 이름을 씁니다.</li>
+<li><strong>타입 한 곳 정의</strong> — <code>Note</code> 인터페이스를 <code>src/types.ts</code>에만 두어 저장소와 포맷터가 함께 씁니다.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>읽는 순서</h2>
 <ol>
-<li><code>README.md</code>: 도구의 목적과 두 명령의 사용법부터 확인합니다.</li>
-<li><code>package.json</code>: <code>bin</code>의 <code>notes</code> 항목과 <code>build</code> 스크립트(<code>tsc</code>), 개발 의존성만 있다는 점을 봅니다.</li>
-<li><code>src/index.ts</code>: 전체 흐름이 시작되는 곳입니다. <code>add</code>, <code>list</code>, 오류 분기 세 갈래를 찾아보세요.</li>
-<li><code>src/notes-store.ts</code>: 메모가 실제로 쌓이는 곳입니다. 모듈 수준 배열과 id 부여 방식(<code>notes.length + 1</code>)을 보세요.</li>
-<li><code>src/types.ts</code>: 모든 모듈이 공유하는 <code>Note</code>의 세 필드를 확인합니다.</li>
-<li><code>src/format.ts</code>: 출력 한 줄의 형식이 여기서 정해집니다.</li>
-<li><code>src/user-profile.ts</code>: 작성자 이름이 어디서 오는지, 기본값이 무엇인지 봅니다.</li>
-<li><code>tsconfig.json</code>: 컴파일 옵션(<code>strict</code>, <code>outDir</code>)으로 마무리합니다.</li>
+<li><code>README.md</code> — 도구의 목적과 사용법을 먼저 확인합니다.</li>
+<li><code>package.json</code> — <code>bin</code>과 빌드 스크립트로 실행 방식을 봅니다.</li>
+<li><code>src/index.ts</code> — 실행이 시작되는 곳이며 <code>add</code>/<code>list</code> 분기를 봅니다.</li>
+<li><code>src/notes-store.ts</code> — 메모가 어디에 어떻게 쌓이는지 봅니다.</li>
+<li><code>src/format.ts</code> — 출력 한 줄의 모양을 확인합니다.</li>
+<li><code>src/types.ts</code> — <code>Note</code>의 필드 3개를 확인합니다.</li>
+<li><code>src/user-profile.ts</code> — 작성자 이름을 얻는 방식을 봅니다.</li>
 </ol>
 </section>
 <section class="cm-section"><h2>다루지 않은 범위</h2>
-<p>소스 파일 5개와 <code>README.md</code>, <code>package.json</code>, <code>tsconfig.json</code>을 모두 읽었습니다. 테스트 코드와 CI 설정, 커밋 이력은 저장소에 없어 근거로 쓰지 못했습니다. 빌드 산출물 dist/와 node_modules/도 저장소에 없습니다. 다른 codemap 문서 4개는 모두 존재해 그 내용을 재사용했습니다.</p>
+<p><code>tsconfig.json</code>과 빌드 산출물 dist/는 읽지 않았습니다. 소스 5개, <code>package.json</code>, <code>README.md</code>는 모두 읽었습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>
