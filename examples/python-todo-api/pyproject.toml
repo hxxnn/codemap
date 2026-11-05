@@ -1,0 +1,4 @@
+[project]
+name = "todo-api"
+version = "0.1.0"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29"]

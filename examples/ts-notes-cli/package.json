@@ -1,0 +1,7 @@
+{
+  "name": "notes-cli",
+  "version": "0.1.0",
+  "bin": { "notes": "dist/index.js" },
+  "scripts": { "build": "tsc" },
+  "devDependencies": { "typescript": "^5.4.0" }
+}
