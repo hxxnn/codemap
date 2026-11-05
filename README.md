@@ -15,6 +15,17 @@ In Claude Code:
 /plugin install codemap@codemap
 ```
 
+## Update
+
+Installed copies are not updated automatically unless you turn that on. Either enable it in `/plugin` → **Marketplaces** → `codemap` → **Enable auto-update**, or update by hand and restart Claude Code:
+
+```
+/plugin marketplace update codemap
+/plugin install codemap@codemap
+```
+
+or from a terminal: `claude plugin update codemap@codemap`. This plugin has no fixed version number: every new commit on `main` counts as a new version for people who update.
+
 ## Use
 
 Open your project in Claude Code and run:

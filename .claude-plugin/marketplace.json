@@ -8,7 +8,7 @@
     {
       "name": "codemap",
       "source": "./",
-      "description": "Maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc (Mermaid Markdown, optional interactive HTML)."
+      "description": "Maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc (Mermaid Markdown plus interactive HTML)."
     }
   ]
 }

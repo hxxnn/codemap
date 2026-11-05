@@ -15,6 +15,17 @@ Claude Code에서:
 /plugin install codemap@codemap
 ```
 
+## 업데이트
+
+설치한 플러그인은 자동 업데이트를 켜지 않으면 저절로 바뀌지 않습니다. `/plugin` → **Marketplaces** → `codemap` → **Enable auto-update**로 켜거나, 직접 업데이트한 뒤 Claude Code를 재시작하세요.
+
+```
+/plugin marketplace update codemap
+/plugin install codemap@codemap
+```
+
+터미널에서는 `claude plugin update codemap@codemap`으로도 됩니다. 이 플러그인에는 고정된 버전 번호가 없어서, `main`에 새 커밋이 올라가면 업데이트하는 사람에게는 모두 새 버전으로 인식됩니다.
+
 ## 사용법
 
 프로젝트를 Claude Code로 열고 실행합니다.
