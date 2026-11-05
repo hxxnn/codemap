@@ -48,6 +48,20 @@ Claude Code에서:
 
 "이 프로젝트 구조를 그려줘"처럼 말로 요청해도 됩니다. 결과물은 요청한 언어로 작성됩니다.
 
+## 클라우드 세션에서 쓰기 (claude.ai/code, 모바일, `--cloud`)
+
+클라우드 세션에서는 마켓플레이스 플러그인을 설치할 수 없습니다(`/plugin` 명령이 없습니다). 대신 저장소에 커밋된 `.claude/` 폴더는 불러옵니다. 아래 스크립트가 codemap을 프로젝트의 `.claude/` 폴더로 복사해 줍니다.
+
+```
+git clone https://github.com/hxxnn/codemap
+python3 codemap/scripts/install_into_project.py /path/to/your/project
+```
+
+그다음 프로젝트의 `.claude/` 폴더를 커밋하고 push하세요. 그 저장소의 클라우드 세션에서 `/codemap`과 스킬이 플러그인과 똑같이 동작합니다(스킬 이름 앞에 `codemap:`이 붙지 않는 점만 다릅니다).
+
+- 업데이트하려면 `codemap`을 최신으로 받아서 스크립트를 다시 실행하세요. 직접 수정한 파일은 덮어쓰지 않고, 충돌이라고 알리며 아무것도 쓰지 않습니다(`--force`를 붙이면 덮어씁니다).
+- 한 프로젝트에서는 플러그인과 이 복사본 중 하나만 쓰세요. 둘 다 쓰면 스킬이 두 번씩 보입니다.
+
 ## 만들어지는 것
 
 | 명령 | 스킬 | 결과물 (`docs/codemap/`) |

@@ -1,5 +1,5 @@
 ---
-description: Map this codebase into architecture diagrams, a dependency graph, a mindmap, sequence flows and an onboarding doc (Mermaid Markdown, optional HTML).
+description: Map this codebase into architecture diagrams, a dependency graph, a mindmap, sequence flows and an onboarding doc (Mermaid Markdown plus HTML).
 argument-hint: "[all|architecture|deps|mindmap|sequence|doc|present|refresh] [--no-html]"
 ---
 

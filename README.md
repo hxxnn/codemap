@@ -48,6 +48,20 @@ or pick one output (HTML pages are created by default; add `--no-html` for Markd
 
 You can also just ask in plain words ("draw the architecture of this project", "프로젝트 구조를 마인드맵으로 보여줘"). Output is written in the language you ask in.
 
+## Use in cloud sessions (claude.ai/code, mobile, `--cloud`)
+
+Cloud sessions cannot install marketplace plugins (there is no `/plugin` there), but they do load the `.claude/` folder that is committed to your repository. This script copies codemap into a project's `.claude/` folder:
+
+```
+git clone https://github.com/hxxnn/codemap
+python3 codemap/scripts/install_into_project.py /path/to/your/project
+```
+
+Then commit and push the project's `.claude/` folder. In a cloud session on that repository, `/codemap` and the skills work like in the plugin (the skill names just have no `codemap:` prefix).
+
+- To update, pull the latest `codemap` and run the script again. Files you edited are never overwritten: the script reports a conflict and writes nothing (`--force` overwrites).
+- Use either the plugin or this copy in one project, not both, or every skill shows up twice.
+
 ## What you get
 
 | Command | Skill | Output (`docs/codemap/`) |
