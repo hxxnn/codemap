@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>todo-api Dependency Graph - python-todo-api</title>
+<title>의존성 그래프 - todo-api</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,47 +28,53 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
-      <h1>todo-api Dependency Graph</h1>
+      <p class="cm-project">todo-api</p>
+      <h1>의존성 그래프</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>5</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>6</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p>This graph comes from the real <code>import</code> statements in <code>app/</code>. It shows one circular dependency.</p>
-<section class="cm-section"><h2>Internal import graph</h2>
+<p>각 파일의 <code>import</code> 문을 직접 읽어 프로젝트 내부 파일 사이의 import 관계(importer → imported)를 그렸습니다.</p>
 <pre class="mermaid">flowchart LR
-    models["app/models.py"]
-    storage["app/storage.py"]
-    main["app/main.py"]
-    routes["app/routes.py"]
-    utils["app/utils.py"]
-    fastapi["fastapi"]:::external
-    models --&gt;|"imports"| storage
-    storage --&gt;|"imports"| models
-    main --&gt;|"imports"| routes
-    routes --&gt;|"imports"| storage
-    routes --&gt;|"imports"| utils
-    main --&gt; fastapi
-    routes --&gt; fastapi
-    linkStyle 0 stroke:#C62F3E,stroke-width:3px
-    linkStyle 1 stroke:#C62F3E,stroke-width:3px
-    classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49
-    classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823
-    class models,storage cycle</pre>
-<p>An arrow means &quot;imports&quot;. <code>app/main.py</code> leads to <code>app/routes.py</code>, which uses <code>app/storage.py</code> and <code>app/utils.py</code>; <code>fastapi</code> is the only third-party import. The standard library (<code>dataclasses</code>, <code>datetime</code>) is left out.</p>
-</section>
-<section class="cm-section"><h2>Circular dependency</h2>
+  n3["app/models.py"]:::cycle
+  n4["app/storage.py"]:::cycle
+  n1["app/main.py"]
+  n2["app/routes.py"]
+  n5["app/utils.py"]
+  n3 --&gt; n4
+  n4 --&gt; n3
+  n1 --&gt; n2
+  n2 --&gt; n4
+  n2 --&gt; n5
+  linkStyle 0 stroke:#C62F3E,stroke-width:3px
+  linkStyle 1 stroke:#C62F3E,stroke-width:3px
+  classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823</pre>
+<p><code>app/main.py</code>에서 <code>app/routes.py</code>를 거쳐 <code>app/storage.py</code>와 <code>app/utils.py</code>로 내려가며, 붉은 선으로 표시한 <code>app/models.py</code>와 <code>app/storage.py</code>는 서로를 import합니다. 외부 패키지(<code>fastapi</code>, <code>dataclasses</code>, <code>datetime</code>)는 제외했고, <code>app/__init__.py</code>는 비어 있어 간선이 없습니다.</p>
+<section class="cm-section"><h2>순환 의존</h2>
 <ul>
-<li><code>app/models.py</code> has <code>from app import storage</code> and <code>app/storage.py</code> has <code>from app import models</code>. Both files mark the cycle as deliberate in a comment.</li>
-<li><span class="cm-unverified">The cycle is only used inside function bodies (<code>storage.next_id()</code> in <code>Todo.create</code>, <code>models.Todo.create</code> in <code>add_todo</code>), not at import time. (inferred from reading; the app was not run to confirm the import order works)</span></li>
+<li>순환 그룹 1개: <code>app/models.py</code>, <code>app/storage.py</code>
+<ul>
+<li>예시 순환: <code>app/models.py</code> → <code>app/storage.py</code> → <code>app/models.py</code></li>
+<li>근거: <code>app/models.py</code>의 <code>from app import storage</code>와 <code>app/storage.py</code>의 <code>from app import models</code>. 두 파일 모두 주석으로 "deliberate cycle"이라고 적고 있어 의도된 순환입니다.</li>
+<li><span class="cm-unverified">두 import 모두 모듈 최상단에 있고 함수 안에서만 상대 모듈의 속성을 쓰기 때문에 import 시점에는 문제가 되지 않는 구조입니다. 다만 실제 실행으로 확인하지는 않았습니다.</span></li>
+</ul>
+</li>
 </ul>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>All five Python modules were read. <code>app/__init__.py</code> is empty. Standard-library and installed-package internals were not examined.</p>
+<section class="cm-section"><h2>가장 많이 import되는 파일</h2>
+<ul>
+<li><code>app/storage.py</code>: 2회 (<code>app/routes.py</code>, <code>app/models.py</code>)</li>
+<li><code>app/models.py</code>: 1회 (<code>app/storage.py</code>)</li>
+<li><code>app/routes.py</code>: 1회 (<code>app/main.py</code>)</li>
+<li><code>app/utils.py</code>: 1회 (<code>app/routes.py</code>)</li>
+</ul>
+</section>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p><code>app/</code> 아래 모든 파이썬 파일을 읽었고 동적 import나 리플렉션은 발견하지 못했습니다. 테스트 코드는 저장소에 없습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

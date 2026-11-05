@@ -3,42 +3,49 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: 1d913ac79b8c246c8953950089a111b8fcbcb9f308b1ed2d9d90e2b1bf5f0d6b, docs/codemap/dependency-graph.md: 092f5354fdffc5909503b5d5039a406d2c49f0207db94c256994e2e832dd84a0, docs/codemap/mindmap.md: 310e0b8f312fe690a6034bb023c5d95d9ccf06a3c97a945d8bb338715640f52a, docs/codemap/sequence-flow.md: ab6917491e31ef924747c353d75e8e53342eaaa28b7bea99f4994a9faac820d4, docs/codemap/design-doc.md: a3216b28b66b989b44f45f4d716324b9f87ef097f308d3f92e4d19837097b38c}
+sources: {docs/codemap/architecture.md: b66f362e7f2acb92ff52d43ec6b132250b6a83ec450b98d0a5fd07e403cb8d18, docs/codemap/dependency-graph.md: 9e276e4f40ace831ae920c3ce602b1de0603d5d09dd21e5dd813bf0a4e77b0e5, docs/codemap/mindmap.md: e42d2d8fb11875bd3269dd0bb6a4d10681c45e60d6ae5652a07440f6ab9ae24b, docs/codemap/sequence-flow.md: 2b848623d60393fd918cada3eadea07522f9e35499db41f26012fd374c5853e7, docs/codemap/design-doc.md: 0774dc3a0cb09b295a71a3318300c2194a7e4172296750d883cb55cd7f56db99}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Presentation outline
+# 발표 개요
 
-A 7-slide walkthrough of `edge-names`, built only from the existing codemap artifacts (none were missing).
+`edge-names` 코드베이스를 팀에 소개하기 위한 7장짜리 슬라이드 개요이며, 기존 codemap 문서 5개에서만 내용을 가져왔습니다.
 
-## Slide 1: What it is
-A tiny Node.js script that prints three upper-cased words. Its README says its purpose is to have file names with spaces and non-ASCII characters.
-Show: `design-doc.md` → "Overview"
+## 슬라이드 1: 이게 무엇인가
 
-## Slide 2: The big picture
-One container, a CLI script, run by a developer and printing to the terminal.
-Show: `architecture.md` → "Containers" diagram
+고정된 항목 목록을 대문자로 바꿔 출력하는 아주 작은 Node.js 프로그램으로, 파일 이름에 공백과 한글이 들어간 경우를 시험하려는 프로젝트입니다. 외부 패키지는 쓰지 않습니다.
+Show: `design-doc.md` → "개요"
 
-## Slide 3: How it is organized
-Three files in three groups: entry, data and formatting.
-Show: `mindmap.md` → "Mindmap" diagram
+## 슬라이드 2: 큰 그림
 
-## Slide 4: How it runs
-The entry file loads the items once, then formats and prints each one in a loop.
-Show: `sequence-flow.md` → "Running the script" diagram
+프로세스 하나가 사용자의 실행을 받아 결과를 터미널로 내보냅니다. 서버나 데이터베이스는 없습니다.
+Show: `architecture.md` → "2단계: 컨테이너" 다이어그램
 
-## Slide 5: How the parts depend on each other
-Only `src/main.js` imports anything, and there are no circular dependencies.
-Show: `dependency-graph.md` → "Dependency graph" diagram
+## 슬라이드 3: 어떻게 구성되어 있나
 
-## Slide 6: Key design choices
-The entry file wires everything, so the helper modules stay independent. The data module returns a copy of its list; the reason for the copy is inferred. <!-- codemap:unverified -->
-Show: `design-doc.md` → "Key design choices"
+실행, 데이터, 문자열 변환 세 갈래로 나뉩니다.
+Show: `mindmap.md` → 마인드맵 다이어그램
 
-## Slide 7: Where to start reading
-Read `README.md`, then `package.json`, then `src/main.js`, then `src/데이터 로더.js`.
-Show: `design-doc.md` → "Reading order (onboarding guide)"
+## 슬라이드 4: 어떻게 실행되나
 
-## Not covered
+`src/main.js`가 항목을 불러온 뒤 하나씩 변환하고 출력합니다.
+Show: `sequence-flow.md` → "프로그램 실행: 항목을 대문자로 출력" 다이어그램
 
-Taken from the artifacts' own footers: nothing was skipped; all source files, `package.json` and `README.md` were read. The script was not executed, and the project has no tests.
+## 슬라이드 5: 파일끼리의 의존 관계
+
+`src/main.js`만 다른 두 파일을 가져오며, 순환 의존은 없습니다.
+Show: `dependency-graph.md` → 의존성 그래프 다이어그램
+
+## 슬라이드 6: 핵심 설계 선택
+
+역할별로 파일 하나씩 분리하고, 진입 파일은 조립만 맡습니다. 데이터는 모듈 안의 메모리 배열에 두고 복사본을 돌려줍니다. <!-- codemap:unverified --> (추정) 복사본을 돌려주는 이유는 코드에 적혀 있지 않습니다.
+Show: `design-doc.md` → "핵심 설계 선택"
+
+## 슬라이드 7: 어디서부터 읽을까
+
+`README.md`, `package.json`, `src/main.js` 순서로 읽고, 그다음 `src/데이터 로더.js`와 `src/my utils.js`를 봅니다.
+Show: `design-doc.md` → "읽는 순서 (온보딩 가이드)"
+
+## 다루지 않은 범위
+
+원본 문서들의 범위와 같습니다. 소스 파일 3개와 `package.json`, `README.md`를 모두 읽었으며, 읽지 않은 범위는 없습니다.

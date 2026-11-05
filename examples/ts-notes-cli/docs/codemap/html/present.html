@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Presentation outline: notes-cli - ts-notes-cli</title>
+<title>발표 개요 - notes-cli</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,8 +28,8 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
-      <h1>Presentation outline: notes-cli</h1>
+      <p class="cm-project">notes-cli</p>
+      <h1>발표 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -38,38 +38,84 @@
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p>A seven-slide walkthrough built from the five existing codemap artifacts; none were missing.</p>
-<section class="cm-section"><h2>Slide 1: What it is</h2>
-<p><code>notes-cli</code> is a small command-line notes tool written in TypeScript on Node.js, with <code>notes add</code> and <code>notes list</code> commands.</p>
-<p>Show: <code>design-doc.md</code> → "Overview"</p>
+<p><code>notes-cli</code>를 다른 사람에게 소개하기 위한 7장짜리 슬라이드 개요이며, 모든 내용은 기존 codemap 문서 5개(<code>architecture.md</code>, <code>dependency-graph.md</code>, <code>mindmap.md</code>, <code>sequence-flow.md</code>, <code>design-doc.md</code>)에서 가져왔습니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 1: 무엇인가</h2>
+<p><code>notes-cli</code>는 터미널에서 메모를 추가하고 목록을 보는 작은 명령줄 도구입니다. TypeScript로 작성되었고 런타임 의존성이 없으며, 메모는 프로세스 메모리에만 저장됩니다.</p>
 </section>
-<section class="cm-section"><h2>Slide 2: The big picture</h2>
-<p>The tool is a single Node.js process: a user runs a command and the process reads the <code>USER</code> environment variable to name the author.</p>
-<p>Show: <code>architecture.md</code> → "Level 2: Containers" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 2: 큰 그림</h2>
+<p>사용자가 터미널에서 명령을 실행하면 하나의 Node.js 프로세스가 처리합니다. 프로세스 안에는 진입점과 메모리 저장소가 있고, 작성자 이름은 환경 변수 <code>USER</code>에서 얻습니다.</p>
+<pre class="mermaid">flowchart LR
+  user["사용자 (터미널)"]:::external
+  subgraph proc["Node.js 프로세스 (TypeScript, src/)"]
+    entry["CLI 진입점 (src/index.ts)"]
+    mem["메모 저장소: 메모리 배열 (src/notes-store.ts)"]
+  end
+  env["환경 변수 USER"]:::external
+  user --&gt;|"명령 인자"| entry
+  entry --&gt;|"추가 / 조회"| mem
+  entry --&gt;|"작성자 조회"| env
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
 </section>
-<section class="cm-section"><h2>Slide 3: How it is organized</h2>
-<p>Five small source files fall into five groups: CLI, Storage, Presentation, Identity and Types.</p>
-<p>Show: <code>mindmap.md</code> → the mindmap diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 3: 어떻게 구성되어 있나</h2>
+<p>코드는 진입점, 저장소, 표시, 사용자 정보, 타입, 빌드 설정의 여섯 가지로 나뉩니다. 각 가지가 하나의 책임과 하나의 파일(또는 설정 파일)에 대응합니다.</p>
+<pre class="mermaid">mindmap
+  root((notes-cli))
+    n1["진입점 / CLI"]
+      n2["src/index.ts: add, list 명령 분기"]
+    n3["저장소"]
+      n4["src/notes-store.ts: 메모리 배열에 저장"]
+        n5["addNote()"]
+        n6["listNotes()"]
+    n7["표시"]
+      n8["src/format.ts: 메모 한 줄 포맷"]
+        n9["formatNote()"]
+    n10["사용자 정보"]
+      n11["src/user-profile.ts: USER 환경 변수"]
+        n12["currentUser()"]
+    n13["타입"]
+      n14["src/types.ts: Note 인터페이스"]
+    n15["빌드 설정"]
+      n16["package.json: bin, tsc 빌드"]
+      n17["tsconfig.json: strict, ES2022"]</pre>
 </section>
-<section class="cm-section"><h2>Slide 4: How it runs</h2>
-<p>For <code>notes add</code>, the entry file asks for the current user, then hands the text and author to the store.</p>
-<p>Show: <code>sequence-flow.md</code> → "The add command" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 4: 어떻게 실행되나</h2>
+<p><code>notes add</code>를 실행하면 <code>src/index.ts</code>가 작성자를 조회하고 저장소에 메모를 추가합니다. 저장은 메모리 배열에만 일어나며 결과는 출력하지 않습니다.</p>
+<pre class="mermaid">sequenceDiagram
+  participant U as 사용자
+  participant idx as src/index.ts
+  participant prof as src/user-profile.ts
+  participant store as src/notes-store.ts
+  U-&gt;&gt;idx: notes add 본문
+  idx-&gt;&gt;idx: argv.slice(2) 분해, command가 add인지 확인
+  idx-&gt;&gt;prof: currentUser()
+  prof--&gt;&gt;idx: USER 또는 anonymous
+  idx-&gt;&gt;store: addNote(rest.join, author)
+  store-&gt;&gt;store: id = 길이 + 1, notes.push(note)
+  store--&gt;&gt;idx: Note</pre>
 </section>
-<section class="cm-section"><h2>Slide 5: How the parts depend on each other</h2>
-<p>Imports flow one way from <code>src/index.ts</code> down to <code>src/types.ts</code>, and no circular dependencies were found.</p>
-<p>Show: <code>dependency-graph.md</code> → the flowchart and "Circular dependencies"</p>
+<section class="cm-section cm-slide"><h2>슬라이드 5: 파일들은 서로 어떻게 의존하나</h2>
+<p>의존은 <code>src/index.ts</code>에서 <code>src/types.ts</code> 방향으로만 흐르고 순환 의존은 없습니다. 가장 많이 의존되는 파일은 <code>src/types.ts</code>입니다.</p>
+<pre class="mermaid">flowchart LR
+  n1["src/index.ts"]
+  n2["src/notes-store.ts"]
+  n3["src/user-profile.ts"]
+  n4["src/format.ts"]
+  n5["src/types.ts"]
+  n1 --&gt; n2
+  n1 --&gt; n3
+  n2 --&gt; n4
+  n2 --&gt; n5
+  n4 --&gt; n5</pre>
 </section>
-<section class="cm-section"><h2>Slide 6: Key design choices</h2>
-<p>Notes are kept in a module-level array, so they are not saved between runs. <span class="cm-unverified">The reason for this is not stated in the code. (inferred)</span></p>
-<p>Command parsing is done by hand in the entry file, with a usage message and exit code 1 for unknown commands. <span class="cm-unverified">The reason is not stated in the code. (inferred)</span></p>
-<p>Show: <code>design-doc.md</code> → "Key design choices"</p>
+<section class="cm-section cm-slide"><h2>슬라이드 6: 핵심 설계 선택</h2>
+<p>메모리 배열 저장은 작은 모듈(<code>src/notes-store.ts</code>) 뒤에 숨겨져 있고, 명령 파싱은 <code>src/index.ts</code> 한 파일에서 라이브러리 없이 처리합니다. <span class="cm-unverified">두 선택의 이유는 코드에 적혀 있지 않습니다. (추정)</span></p>
+<p>환경 변수 접근은 <code>src/user-profile.ts</code>의 <code>currentUser</code> 한 곳에 모여 있습니다.</p>
 </section>
-<section class="cm-section"><h2>Slide 7: Where to start reading</h2>
-<p>Start with <code>README.md</code>, then <code>package.json</code>, then <code>src/index.ts</code> and <code>src/notes-store.ts</code>.</p>
-<p>Show: <code>design-doc.md</code> → "Reading order (onboarding guide)"</p>
+<section class="cm-section cm-slide"><h2>슬라이드 7: 어디서부터 읽을까</h2>
+<p><code>README.md</code>, <code>package.json</code>, <code>src/index.ts</code> 순서로 시작해 <code>src/notes-store.ts</code>와 <code>src/types.ts</code>로 내려가면 전체 흐름이 잡힙니다.</p>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>The small repo was read completely except <code>tsconfig.json</code>, which was not opened. Nothing is vendored or generated, and no test files exist in the repo.</p>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p>원본 문서들의 범위와 같습니다. 소스 파일 5개와 <code>README.md</code>, <code>package.json</code>, <code>tsconfig.json</code>을 모두 읽었고, 테스트와 CI 설정, 커밋 이력은 저장소에 없습니다. 빌드 산출물 dist/와 node_modules/도 저장소에 없습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

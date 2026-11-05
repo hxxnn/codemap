@@ -28,7 +28,7 @@ Skip slides whose source artifact is missing and renumber.
 
 ## Slide format
 ```
-## Slide N: <title>
+## Slide N: <title>   (write the word "Slide" in the output language too: Korean "슬라이드 N: <제목>")
 <1–2 sentences the presenter can say>
 Show: `architecture.md` → "Containers" diagram
 ```

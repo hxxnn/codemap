@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>todo-api Presentation Outline - python-todo-api</title>
+<title>발표 개요: todo-api - todo-api</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,8 +28,8 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
-      <h1>todo-api Presentation Outline</h1>
+      <p class="cm-project">todo-api</p>
+      <h1>발표 개요: todo-api</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -38,46 +38,102 @@
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<section class="cm-section"><h2>Slide 1: What is todo-api?</h2>
+<p><code>todo-api</code> 코드베이스를 팀에 소개하기 위한 7장짜리 슬라이드 구성안입니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 1: 이 프로젝트는 무엇인가</h2>
+<p>할 일을 만들고 목록으로 조회하는 아주 작은 REST 서비스입니다. Python, FastAPI, uvicorn으로 만들어졌습니다.</p>
+</section>
+<section class="cm-section cm-slide"><h2>슬라이드 2: 큰 그림</h2>
+<p>HTTP 클라이언트가 하나의 uvicorn 프로세스에 요청하고, 데이터는 같은 프로세스의 메모리 리스트에 저장됩니다.</p>
+<pre class="mermaid">flowchart LR
+  user["HTTP 클라이언트"]:::external
+  subgraph proc["uvicorn 프로세스 (README.md)"]
+    api["FastAPI 앱 (Python, app/)"]
+    mem["메모리 목록 _TODOS (app/storage.py)"]
+  end
+  user --&gt;|"HTTP"| api
+  api --&gt;|"함수 호출"| mem
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+</section>
+<section class="cm-section cm-slide"><h2>슬라이드 3: 어떻게 구성되어 있나</h2>
+<p><code>app/</code> 아래 진입점, API, 모델, 저장소, 유틸리티의 다섯 역할로 나뉩니다.</p>
+<pre class="mermaid">mindmap
+  root((todo-api))
+    a1["진입점"]
+      a2["app/main.py: FastAPI 앱 생성"]
+    a3["API"]
+      a4["app/routes.py: HTTP 라우트"]
+        a5["create_todo()"]
+        a6["list_todos()"]
+    a7["도메인 모델"]
+      a8["app/models.py: Todo 데이터클래스"]
+        a9["Todo.create()"]
+    a10["저장소"]
+      a11["app/storage.py: 메모리 저장"]
+        a12["add_todo()"]
+        a13["all_todos()"]
+    a14["유틸리티"]
+      a15["app/utils.py: 시각 헬퍼"]
+        a16["now_iso()"]
+    a17["설정과 문서"]
+      a18["pyproject.toml: 의존성"]
+      a19["README.md: 실행 방법"]</pre>
+</section>
+<section class="cm-section cm-slide"><h2>슬라이드 4: 어떻게 실행되나</h2>
+<p><code>POST /todos</code>는 시각 생성, 저장소 추가, 모델 생성, dict 변환 순서로 진행됩니다. 라우팅과 직렬화는 프레임워크 내부라 추적하지 않았습니다.</p>
+<pre class="mermaid">sequenceDiagram
+  participant C as 클라이언트
+  participant F as FastAPI (app/main.py)
+  participant R as app/routes.py
+  participant U as app/utils.py
+  participant S as app/storage.py
+  participant M as app/models.py
+  C-&gt;&gt;F: POST /todos
+  F-)R: create_todo(title)
+  Note over F,R: 프레임워크의 라우팅 호출은 추적하지 않음
+  R-&gt;&gt;U: now_iso()
+  U--&gt;&gt;R: ISO 시각 문자열
+  R-&gt;&gt;S: add_todo(title.strip(), created_at)
+  S-&gt;&gt;M: Todo.create(title, created_at)
+  M-&gt;&gt;S: next_id()
+  S--&gt;&gt;M: len(_TODOS) + 1
+  M--&gt;&gt;S: Todo
+  S-&gt;&gt;S: _TODOS.append(todo)
+  S--&gt;&gt;R: Todo
+  R-&gt;&gt;M: todo.to_dict()
+  M--&gt;&gt;R: dict
+  R-)F: dict 반환
+  Note over R,F: JSON 직렬화는 추적하지 않음
+  F--&gt;&gt;C: 응답</pre>
+</section>
+<section class="cm-section cm-slide"><h2>슬라이드 5: 부분들의 의존 관계</h2>
+<p><code>app/main.py</code>에서 <code>app/routes.py</code>를 거쳐 <code>app/storage.py</code>와 <code>app/utils.py</code>로 이어집니다. <code>app/models.py</code>와 <code>app/storage.py</code>는 서로를 import하는 순환 의존이며, 주석에 "deliberate cycle"로 적혀 있습니다.</p>
+<pre class="mermaid">flowchart LR
+  n3["app/models.py"]:::cycle
+  n4["app/storage.py"]:::cycle
+  n1["app/main.py"]
+  n2["app/routes.py"]
+  n5["app/utils.py"]
+  n3 --&gt; n4
+  n4 --&gt; n3
+  n1 --&gt; n2
+  n2 --&gt; n4
+  n2 --&gt; n5
+  linkStyle 0 stroke:#C62F3E,stroke-width:3px
+  linkStyle 1 stroke:#C62F3E,stroke-width:3px
+  classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823</pre>
+</section>
+<section class="cm-section cm-slide"><h2>슬라이드 6: 핵심 설계 선택</h2>
 <ul>
-<li>A tiny FastAPI service for managing todos</li>
-<li>Two endpoints: <code>POST /todos</code>, <code>GET /todos</code></li>
-<li>Run with <code>uvicorn app.main:app</code></li>
+<li>메모리 안의 저장소 모듈(<code>app/storage.py</code>): 재시작하면 데이터가 사라집니다. <span class="cm-unverified">이유는 코드에 없습니다. (추정)</span></li>
+<li>라우터 분리: <code>app/routes.py</code>의 라우터를 <code>app/main.py</code>에서 붙입니다.</li>
+<li>의도된 순환 import: <code>app/models.py</code>와 <code>app/storage.py</code>가 서로 호출합니다.</li>
 </ul>
 </section>
-<section class="cm-section"><h2>Slide 2: Architecture</h2>
-<ul>
-<li>Client, then uvicorn, then the FastAPI app in <code>app/main.py</code></li>
-<li>Data lives in an in-memory list in <code>app/storage.py</code></li>
-<li>Diagram: Level 2 in <code>architecture.md</code></li>
-</ul>
+<section class="cm-section cm-slide"><h2>슬라이드 7: 어디서부터 읽을까</h2>
+<p><code>README.md</code>, <code>pyproject.toml</code>, <code>app/main.py</code>, <code>app/routes.py</code>, <code>app/storage.py</code> 순서로 읽기 시작합니다.</p>
 </section>
-<section class="cm-section"><h2>Slide 3: Code layout</h2>
-<ul>
-<li>Five modules in <code>app/</code>: main, routes, models, storage, utils</li>
-<li>Diagram: <code>mindmap.md</code></li>
-</ul>
-</section>
-<section class="cm-section"><h2>Slide 4: Creating a todo</h2>
-<ul>
-<li>Blank titles are rejected with 422</li>
-<li>Timestamp, id and storage happen in <code>app/utils.py</code>, <code>app/models.py</code>, <code>app/storage.py</code></li>
-<li>Diagram: scenario 1 in <code>sequence-flow.md</code></li>
-</ul>
-</section>
-<section class="cm-section"><h2>Slide 5: Watch out for</h2>
-<ul>
-<li><code>app/models.py</code> and <code>app/storage.py</code> import each other (deliberate cycle), see <code>dependency-graph.md</code></li>
-<li>Data is lost on restart; ids are <code>len + 1</code></li>
-</ul>
-</section>
-<section class="cm-section"><h2>Slide 6: Where to start reading</h2>
-<ul>
-<li><code>README.md</code>, <code>app/main.py</code>, <code>app/routes.py</code>, <code>app/storage.py</code>; full order in <code>design-doc.md</code></li>
-</ul>
-</section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>This outline condenses the existing codemap files and did not re-read the code. Nothing was executed.</p>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p>각 산출물의 "다루지 않은 범위"를 따릅니다. 모든 소스와 <code>README.md</code>, <code>pyproject.toml</code>을 읽었고, 테스트와 배포 설정은 저장소에 없으며, FastAPI 내부 동작과 실제 서버 실행은 확인하지 않았습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

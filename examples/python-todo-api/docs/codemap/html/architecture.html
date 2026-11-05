@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>todo-api Architecture Overview - python-todo-api</title>
+<title>아키텍처 개요 - todo-api</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,8 +28,8 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
-      <h1>todo-api Architecture Overview</h1>
+      <p class="cm-project">todo-api</p>
+      <h1>아키텍처 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
@@ -38,55 +38,56 @@
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p><code>todo-api</code> is a tiny FastAPI service that creates and lists todos. It keeps all data in a process-local Python list.</p>
-<section class="cm-section"><h2>Level 1: System context</h2>
+<p><code>todo-api</code>는 FastAPI로 만든 작은 할 일(todo) REST 서비스이며, 아래에서 시스템 맥락, 컨테이너, 컴포넌트 순서로 세 단계로 확대해 설명합니다.</p>
+<section class="cm-section"><h2>시스템 맥락</h2>
 <pre class="mermaid">flowchart LR
-    client["API client"]:::external
-    api["todo-api (FastAPI app)"]
-    client --&gt;|"HTTP"| api
-    classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>An HTTP client calls the single <code>todo-api</code> service; there is no database or other external system in the code.</p>
+  user["HTTP 클라이언트"]:::external
+  sys["todo-api 서비스"]
+  user --&gt;|"HTTP 요청"| sys
+  sys --&gt;|"JSON 응답"| user
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>사용자(HTTP 클라이언트)가 <code>/todos</code> 경로로 요청을 보내고 JSON을 돌려받는 단일 시스템이며, 코드에서 확인된 외부 데이터베이스나 타사 API는 없습니다.</p>
 </section>
-<section class="cm-section"><h2>Level 2: Containers</h2>
+<section class="cm-section"><h2>컨테이너</h2>
 <pre class="mermaid">flowchart LR
-    client["API client"]:::external
-    server["uvicorn server"]:::external
-    app["FastAPI app: app/main.py"]
-    mem["In-memory list _TODOS: app/storage.py"]
-    client --&gt;|"HTTP"| server
-    server --&gt;|"ASGI"| app
-    app --&gt;|"calls"| mem
-    classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>The README starts the service with <code>uvicorn app.main:app</code>; uvicorn hands requests to the FastAPI <code>app</code>, which reads and writes the <code>_TODOS</code> list in <code>app/storage.py</code>. Persistence ends when the process stops, because no file or database is used.</p>
+  user["HTTP 클라이언트"]:::external
+  subgraph proc["uvicorn 프로세스 (README.md)"]
+    api["FastAPI 앱 (Python, app/)"]
+    mem["메모리 목록 _TODOS (app/storage.py)"]
+  end
+  user --&gt;|"HTTP"| api
+  api --&gt;|"함수 호출"| mem
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p>배포 단위는 <code>uvicorn app.main:app</code>으로 실행되는 하나의 프로세스이고, 데이터는 별도 DB 없이 같은 프로세스의 파이썬 리스트에 저장됩니다.</p>
 </section>
-<section class="cm-section"><h2>Level 3: Components</h2>
-<pre class="mermaid">flowchart TD
-    main["main: app/main.py"]
-    routes["routes: app/routes.py"]
-    models["models: app/models.py"]
-    storage["storage: app/storage.py"]
-    utils["utils: app/utils.py"]
-    models &lt;--&gt;|"import cycle"| storage
-    main --&gt;|"include_router"| routes
-    routes --&gt;|"add_todo, all_todos"| storage
-    routes --&gt;|"now_iso"| utils
-    linkStyle 0 stroke:#C62F3E,stroke-width:3px
-    classDef cycle fill:#FDECEE,stroke:#C62F3E,color:#7A1823
-    class models,storage cycle</pre>
-<p><code>app/main.py</code> builds the app and mounts the router from <code>app/routes.py</code>; the router calls <code>app/storage.py</code> and <code>app/utils.py</code>. <code>app/models.py</code> and <code>app/storage.py</code> import each other, a deliberate cycle noted in the code comments.</p>
-<table>
-<thead><tr><th>Component</th><th>Responsibility</th></tr></thead>
-<tbody>
-<tr><td><code>app/main.py</code></td><td>Creates <code>FastAPI(title=&quot;todo-api&quot;)</code> and includes the router</td></tr>
-<tr><td><code>app/routes.py</code></td><td><code>POST /todos</code> (validates a non-blank title) and <code>GET /todos</code></td></tr>
-<tr><td><code>app/models.py</code></td><td><code>Todo</code> dataclass with <code>to_dict()</code> and <code>create()</code></td></tr>
-<tr><td><code>app/storage.py</code></td><td><code>_TODOS</code> list, <code>next_id()</code>, <code>add_todo()</code>, <code>all_todos()</code></td></tr>
-<tr><td><code>app/utils.py</code></td><td><code>now_iso()</code> returns the current UTC time as ISO text</td></tr>
-</tbody>
-</table>
+<section class="cm-section"><h2>컴포넌트</h2>
+<pre class="mermaid">flowchart LR
+  user["HTTP 클라이언트"]:::external
+  subgraph app["app/ 패키지"]
+    main["main (app/main.py)"]
+    routes["routes (app/routes.py)"]
+    models["models (app/models.py)"]
+    storage["storage (app/storage.py)"]
+    utils["utils (app/utils.py)"]
+  end
+  user --&gt;|"HTTP"| main
+  main --&gt;|"include_router"| routes
+  routes --&gt;|"add_todo, all_todos"| storage
+  routes --&gt;|"now_iso"| utils
+  storage --&gt;|"Todo.create"| models
+  models --&gt;|"next_id"| storage
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
+<p><code>app/main.py</code>가 <code>FastAPI</code> 앱을 만들어 <code>app/routes.py</code>의 라우터를 등록하고, 라우트는 <code>app/storage.py</code>와 <code>app/utils.py</code>를 호출하며, <code>app/storage.py</code>와 <code>app/models.py</code>는 서로를 호출합니다.</p>
+<ul>
+<li><code>app/main.py</code>: <code>FastAPI(title="todo-api")</code> 생성과 <code>include_router(router)</code>.</li>
+<li><code>app/routes.py</code>: <code>POST /todos</code>(<code>create_todo</code>)와 <code>GET /todos</code>(<code>list_todos</code>).</li>
+<li><code>app/models.py</code>: <code>Todo</code> 데이터클래스(<code>to_dict</code>, <code>create</code>).</li>
+<li><code>app/storage.py</code>: 모듈 전역 <code>_TODOS</code> 리스트와 <code>next_id</code>, <code>add_todo</code>, <code>all_todos</code>.</li>
+<li><code>app/utils.py</code>: UTC 현재 시각을 ISO 문자열로 돌려주는 <code>now_iso</code>.</li>
+</ul>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>Every file in the repository was read, including the empty <code>app/__init__.py</code>. Nothing was executed, so runtime behavior was not tested.</p>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p>저장소의 소스 파일(<code>app/*.py</code>, 총 65줄)과 <code>pyproject.toml</code>, <code>README.md</code>를 모두 읽었습니다. 테스트, 배포 설정, 실제 실행은 저장소에 없거나 확인하지 않았습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Presentation outline - edge-names</title>
+<title>발표 개요 - edge-names</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -29,7 +29,7 @@
   <div class="cm-main">
     <header class="cm-head">
       <p class="cm-project">edge-names</p>
-      <h1>Presentation outline</h1>
+      <h1>발표 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
         <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
@@ -38,37 +38,69 @@
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p>A 7-slide walkthrough of <code>edge-names</code>, built only from the existing codemap artifacts (none were missing).</p>
-<section class="cm-section"><h2>Slide 1: What it is</h2>
-<p>A tiny Node.js script that prints three upper-cased words. Its README says its purpose is to have file names with spaces and non-ASCII characters.</p>
-<p>Show: <code>design-doc.md</code> → "Overview"</p>
+<p><code>edge-names</code> 코드베이스를 팀에 소개하기 위한 7장짜리 슬라이드 개요이며, 기존 codemap 문서 5개에서만 내용을 가져왔습니다.</p>
+<section class="cm-section cm-slide"><h2>슬라이드 1: 이게 무엇인가</h2>
+<p>고정된 항목 목록을 대문자로 바꿔 출력하는 아주 작은 Node.js 프로그램으로, 파일 이름에 공백과 한글이 들어간 경우를 시험하려는 프로젝트입니다. 외부 패키지는 쓰지 않습니다.</p>
 </section>
-<section class="cm-section"><h2>Slide 2: The big picture</h2>
-<p>One container, a CLI script, run by a developer and printing to the terminal.</p>
-<p>Show: <code>architecture.md</code> → "Containers" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 2: 큰 그림</h2>
+<p>프로세스 하나가 사용자의 실행을 받아 결과를 터미널로 내보냅니다. 서버나 데이터베이스는 없습니다.</p>
+<pre class="mermaid">flowchart LR
+  user["실행하는 사용자"]:::external
+  subgraph proc["단일 Node.js 프로세스"]
+    cli["CLI 스크립트 (JavaScript, src/)"]
+  end
+  out["표준 출력 (터미널)"]:::external
+  user --&gt;|"실행"| cli
+  cli --&gt;|"줄 출력"| out
+  classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
 </section>
-<section class="cm-section"><h2>Slide 3: How it is organized</h2>
-<p>Three files in three groups: entry, data and formatting.</p>
-<p>Show: <code>mindmap.md</code> → "Mindmap" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 3: 어떻게 구성되어 있나</h2>
+<p>실행, 데이터, 문자열 변환 세 갈래로 나뉩니다.</p>
+<pre class="mermaid">mindmap
+  root((edge-names))
+    a1["실행"]
+      a2["src/main.js: 항목을 불러와 출력"]
+    a3["데이터"]
+      a4["src/데이터 로더.js: 고정 목록 제공"]
+        a5["loadItems()"]
+    a6["문자열 변환"]
+      a7["src/my utils.js: 대문자 + 느낌표"]
+        a8["shout()"]</pre>
 </section>
-<section class="cm-section"><h2>Slide 4: How it runs</h2>
-<p>The entry file loads the items once, then formats and prints each one in a loop.</p>
-<p>Show: <code>sequence-flow.md</code> → "Running the script" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 4: 어떻게 실행되나</h2>
+<p><code>src/main.js</code>가 항목을 불러온 뒤 하나씩 변환하고 출력합니다.</p>
+<pre class="mermaid">sequenceDiagram
+  actor U as 사용자
+  participant M as src/main.js
+  participant L as src/데이터 로더.js
+  participant S as src/my utils.js
+  participant O as 표준 출력
+  U-&gt;&gt;M: node 실행
+  M-&gt;&gt;L: loadItems()
+  L--&gt;&gt;M: 배열 복사본 (alpha, beta, gamma)
+  loop 항목마다
+    M-&gt;&gt;S: shout(item)
+    S--&gt;&gt;M: 대문자 + 느낌표
+    M-&gt;&gt;O: console.log(결과)
+  end</pre>
 </section>
-<section class="cm-section"><h2>Slide 5: How the parts depend on each other</h2>
-<p>Only <code>src/main.js</code> imports anything, and there are no circular dependencies.</p>
-<p>Show: <code>dependency-graph.md</code> → "Dependency graph" diagram</p>
+<section class="cm-section cm-slide"><h2>슬라이드 5: 파일끼리의 의존 관계</h2>
+<p><code>src/main.js</code>만 다른 두 파일을 가져오며, 순환 의존은 없습니다.</p>
+<pre class="mermaid">flowchart LR
+  n1["src/main.js"]
+  n2["src/my utils.js"]
+  n3["src/데이터 로더.js"]
+  n1 --&gt; n2
+  n1 --&gt; n3</pre>
 </section>
-<section class="cm-section"><h2>Slide 6: Key design choices</h2>
-<p>The entry file wires everything, so the helper modules stay independent. <span class="cm-unverified">The data module returns a copy of its list; the reason for the copy is inferred.</span></p>
-<p>Show: <code>design-doc.md</code> → "Key design choices"</p>
+<section class="cm-section cm-slide"><h2>슬라이드 6: 핵심 설계 선택</h2>
+<p>역할별로 파일 하나씩 분리하고, 진입 파일은 조립만 맡습니다. 데이터는 모듈 안의 메모리 배열에 두고 복사본을 돌려줍니다. <span class="cm-unverified">(추정) 복사본을 돌려주는 이유는 코드에 적혀 있지 않습니다.</span></p>
 </section>
-<section class="cm-section"><h2>Slide 7: Where to start reading</h2>
-<p>Read <code>README.md</code>, then <code>package.json</code>, then <code>src/main.js</code>, then <code>src/데이터 로더.js</code>.</p>
-<p>Show: <code>design-doc.md</code> → "Reading order (onboarding guide)"</p>
+<section class="cm-section cm-slide"><h2>슬라이드 7: 어디서부터 읽을까</h2>
+<p><code>README.md</code>, <code>package.json</code>, <code>src/main.js</code> 순서로 읽고, 그다음 <code>src/데이터 로더.js</code>와 <code>src/my utils.js</code>를 봅니다.</p>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>Taken from the artifacts' own footers: nothing was skipped; all source files, <code>package.json</code> and <code>README.md</code> were read. The script was not executed, and the project has no tests.</p>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p>원본 문서들의 범위와 같습니다. 소스 파일 3개와 <code>package.json</code>, <code>README.md</code>를 모두 읽었으며, 읽지 않은 범위는 없습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

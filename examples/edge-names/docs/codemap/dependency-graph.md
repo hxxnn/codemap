@@ -7,9 +7,9 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Dependency graph
+# 의존성 그래프
 
-Each arrow points from the file that `require`s to the file it requires; only imports found in the code are drawn.
+각 파일의 `require` 구문을 직접 읽어 만든 그래프이며, 화살표는 가져오는 쪽에서 가져와지는 쪽을 향합니다.
 
 ```mermaid
 flowchart LR
@@ -20,17 +20,17 @@ flowchart LR
   n1 --> n3
 ```
 
-`src/main.js` is the only file with imports; the other two files import nothing.
+`src/main.js`만 다른 파일 두 개를 가져오고, 나머지 두 파일은 아무것도 가져오지 않습니다.
 
-## Circular dependencies
+## 순환 의존
 
-None found. `src/my utils.js` and `src/데이터 로더.js` have no `require` statements, so no cycle is possible.
+순환 의존은 발견되지 않았습니다. 세 파일의 의존 방향은 `src/main.js`에서 나가는 한 방향뿐입니다.
 
-## Most depended-on files
+## 가장 많이 의존되는 파일
 
-- `src/my utils.js` — 1 incoming edge (from `src/main.js`)
-- `src/데이터 로더.js` — 1 incoming edge (from `src/main.js`)
+- `src/my utils.js`: `src/main.js`가 1번 가져옵니다.
+- `src/데이터 로더.js`: `src/main.js`가 1번 가져옵니다.
 
-## Not covered
+## 다루지 않은 범위
 
-Nothing was skipped; all source files were read. No dynamic imports were found.
+소스 파일 3개를 모두 읽었고 외부 패키지 import는 없었습니다. 동적 `require`도 없어서 추적하지 못한 의존은 없습니다.

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Architecture overview - ts-notes-cli</title>
+<title>아키텍처 개요 - notes-cli</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,64 +28,74 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">ts-notes-cli</p>
-      <h1>Architecture overview</h1>
+      <p class="cm-project">notes-cli</p>
+      <h1>아키텍처 개요</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>8</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<p><code>notes-cli</code> is a small TypeScript command-line notes tool (<code>package.json</code> declares the <code>notes</code> binary as build output <code>dist/index.js</code>), shown here at three zoom levels.</p>
-<section class="cm-section"><h2>Level 1: System context</h2>
+<p><code>notes-cli</code>는 터미널에서 메모를 추가하고 목록을 보는 작은 TypeScript 명령줄 도구이며, 아래에서 세 단계의 확대 수준으로 구조를 보여 줍니다.</p>
+<section class="cm-section"><h2>1단계: 시스템 컨텍스트</h2>
 <pre class="mermaid">flowchart LR
-  u["Terminal user"]:::external
-  env["Environment variable USER"]:::external
-  sys["notes-cli (notes add / notes list)"]
-  u --&gt;|"runs commands"| sys
-  env --&gt;|"author name"| sys
+  user["사용자 (터미널)"]:::external
+  cli["notes-cli (src/index.ts)"]
+  env["환경 변수 USER (process.env)"]:::external
+  user --&gt;|"notes add / list"| cli
+  cli --&gt;|"결과 / 오류 출력"| user
+  cli --&gt;|"USER 읽기"| env
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>A person runs <code>notes add</code> or <code>notes list</code> in a terminal, and the tool reads the <code>USER</code> environment variable (<code>src/user-profile.ts</code>) to name the author.</p>
+<p>사용자가 터미널에서 <code>notes add</code>나 <code>notes list</code>를 실행하고, 도구는 작성자 이름을 얻기 위해 환경 변수 <code>USER</code>를 읽습니다(<code>src/user-profile.ts</code>). 데이터베이스나 네트워크 API 호출은 코드에서 찾지 못했습니다.</p>
 </section>
-<section class="cm-section"><h2>Level 2: Containers</h2>
+<section class="cm-section"><h2>2단계: 컨테이너</h2>
 <pre class="mermaid">flowchart LR
-  u["Terminal user"]:::external
-  env["Environment variable USER"]:::external
-  subgraph sys["notes-cli"]
-    cli["CLI process (Node.js + TypeScript, src/)"]
+  user["사용자 (터미널)"]:::external
+  subgraph proc["Node.js 프로세스 (TypeScript, src/)"]
+    entry["CLI 진입점 (src/index.ts)"]
+    mem["메모 저장소: 메모리 배열 (src/notes-store.ts)"]
   end
-  u --&gt;|"argv: add / list"| cli
-  env --&gt;|"process.env.USER"| cli
+  env["환경 변수 USER"]:::external
+  user --&gt;|"명령 인자"| entry
+  entry --&gt;|"추가 / 조회"| mem
+  entry --&gt;|"작성자 조회"| env
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p>There is a single container: one Node.js process started from <code>src/index.ts</code>; notes live in a module-level array inside that process (<code>src/notes-store.ts</code>), so nothing is saved to disk or to a database and each run starts empty.</p>
+<p>배포 단위는 하나의 CLI 프로세스뿐이며, 메모는 이 프로세스 안의 배열(<code>const notes: Note[] = []</code>)에만 저장되어 프로세스가 끝나면 사라집니다. <code>package.json</code>의 <code>bin</code>은 <code>notes</code>를 빌드 산출물 dist/index.js로 연결하고, <code>npm run build</code>는 <code>tsc</code>를 실행합니다.</p>
 </section>
-<section class="cm-section"><h2>Level 3: Components</h2>
+<section class="cm-section"><h2>3단계: 컴포넌트</h2>
 <pre class="mermaid">flowchart LR
-  subgraph entry["Entry"]
-    idx["CLI entry (src/index.ts)"]
+  subgraph entryl["진입 계층"]
+    index["CLI 진입점 (src/index.ts)"]
   end
-  subgraph logic["Logic"]
-    store["Notes store (src/notes-store.ts)"]
-    fmt["Formatter (src/format.ts)"]
-    prof["User profile (src/user-profile.ts)"]
+  subgraph domain["메모 도메인"]
+    store["메모 저장소 (src/notes-store.ts)"]
+    fmt["표시 포맷터 (src/format.ts)"]
+    types["Note 타입 (src/types.ts)"]
   end
-  subgraph shared["Shared"]
-    types["Note type (src/types.ts)"]
+  subgraph envl["환경 계층"]
+    prof["사용자 정보 (src/user-profile.ts)"]
   end
-  env["Environment variable USER"]:::external
-  idx --&gt;|"addNote, listNotes"| store
-  idx --&gt;|"currentUser"| prof
+  env["환경 변수 USER"]:::external
+  index --&gt;|"addNote / listNotes"| store
+  index --&gt;|"currentUser"| prof
   store --&gt;|"formatNote"| fmt
-  store --&gt;|"Note"| types
-  fmt --&gt;|"Note"| types
-  env --&gt;|"read"| prof
+  store -.-&gt;|"Note"| types
+  fmt -.-&gt;|"Note"| types
+  prof --&gt;|"읽기"| env
   classDef external fill:#E3F4F1,stroke:#0E8F83,color:#0B4F49</pre>
-<p><code>src/index.ts</code> parses the command and delegates to the store and the user profile, while the store uses the formatter to turn notes into display lines and all three share the <code>Note</code> interface.</p>
+<p><code>src/index.ts</code>가 명령을 해석해 <code>src/notes-store.ts</code>와 <code>src/user-profile.ts</code>를 호출하고, 저장소는 <code>src/format.ts</code>로 한 줄 문자열을 만들며, 점선은 타입만 가져오는 의존입니다.</p>
+<table><thead><tr><th>컴포넌트</th><th>책임</th></tr></thead><tbody>
+<tr><td><code>src/index.ts</code></td><td><code>process.argv</code>를 읽어 <code>add</code> / <code>list</code> / 사용법 오류로 분기</td></tr>
+<tr><td><code>src/notes-store.ts</code></td><td>메모리 배열에 메모 추가(<code>addNote</code>), 포맷된 줄 목록 반환(<code>listNotes</code>)</td></tr>
+<tr><td><code>src/format.ts</code></td><td><code>#id 본문 (작성자)</code> 형식의 문자열 생성(<code>formatNote</code>)</td></tr>
+<tr><td><code>src/user-profile.ts</code></td><td><code>USER</code> 환경 변수 또는 <code>&quot;anonymous&quot;</code> 반환(<code>currentUser</code>)</td></tr>
+<tr><td><code>src/types.ts</code></td><td><code>Note</code> 인터페이스(<code>id</code>, <code>text</code>, <code>author</code>) 정의</td></tr>
+</tbody></table>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>The small repo was read completely, except <code>tsconfig.json</code>, which was not opened, so compiler settings are not described. Nothing is vendored, and the build output folder dist/ does not exist in the repo.</p>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p>소스 파일 5개(<code>src/</code> 전체)와 <code>README.md</code>, <code>package.json</code>, <code>tsconfig.json</code>을 모두 읽었습니다. 빌드 산출물 dist/와 node_modules/는 저장소에 없어 읽지 않았습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>

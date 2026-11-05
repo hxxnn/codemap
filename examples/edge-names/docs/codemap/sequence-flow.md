@@ -7,36 +7,36 @@ sources: {src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5c
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Sequence flows
+# 시퀀스 흐름
 
-The project has one runtime path, so one scenario is traced; there is no storage, network or error handling to add a second or third.
+프로그램에는 실행 경로가 하나뿐이어서 시나리오를 하나만 골랐습니다. 분기나 오류 처리 코드가 없어 다른 시나리오는 만들지 않았습니다.
 
-## Running the script
+## 프로그램 실행: 항목을 대문자로 출력
 
-The developer runs `node src/main.js`, the only entry point.
+사용자가 `src/main.js`를 실행하면 시작됩니다.
 
 ```mermaid
 sequenceDiagram
+  actor U as 사용자
   participant M as src/main.js
   participant L as src/데이터 로더.js
-  participant U as src/my utils.js
-  participant C as stdout
+  participant S as src/my utils.js
+  participant O as 표준 출력
+  U->>M: node 실행
   M->>L: loadItems()
-  L-->>M: copy of the items array
-  loop for each item
-    M->>U: shout(item)
-    U-->>M: upper-cased text + "!"
-    M->>C: console.log(...)
+  L-->>M: 배열 복사본 (alpha, beta, gamma)
+  loop 항목마다
+    M->>S: shout(item)
+    S-->>M: 대문자 + 느낌표
+    M->>O: console.log(결과)
   end
 ```
 
-The loader returns a copy of its three items, and the entry file formats and prints each one in turn.
+1. 시작 시 `src/main.js`가 `require`로 두 모듈을 불러옵니다 (`src/main.js:shout`, `src/main.js:loadItems`).
+2. `src/main.js`가 `loadItems()`를 호출하고, `src/데이터 로더.js:loadItems`가 내부 배열의 `slice()` 복사본을 돌려줍니다.
+3. `for...of` 반복에서 각 항목마다 `src/my utils.js:shout`를 호출해 `toUpperCase()`에 `"!"`를 붙인 문자열을 받습니다.
+4. 받은 문자열을 `src/main.js`가 `console.log`로 출력합니다. 결과는 `ALPHA!`, `BETA!`, `GAMMA!` 순서입니다.
 
-1. Module load: `src/main.js` requires `shout` and `loadItems` (`src/main.js:require`).
-2. `loadItems()` returns `items.slice()` (`src/데이터 로더.js:loadItems`).
-3. For each item, `shout(item)` returns `text.toUpperCase() + "!"` (`src/my utils.js:shout`).
-4. The result is printed with `console.log` (`src/main.js:console.log`).
+## 다루지 않은 범위
 
-## Not covered
-
-Nothing was skipped; every function on the path was read. Output was derived from the code and the script was not executed.
+소스 파일 3개를 모두 읽었으며, 읽지 않은 범위는 없습니다. 추적하지 못한 호출도 없습니다.

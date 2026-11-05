@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>todo-api Design Document - python-todo-api</title>
+<title>설계 문서와 온보딩 가이드 - todo-api</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
 <link rel="stylesheet" href="assets/codemap.css">
@@ -28,44 +28,46 @@
   </aside>
   <div class="cm-main">
     <header class="cm-head">
-      <p class="cm-project">python-todo-api</p>
-      <h1>todo-api Design Document</h1>
+      <p class="cm-project">todo-api</p>
+      <h1>설계 문서와 온보딩 가이드</h1>
       <dl class="cm-stats" id="cm-stats">
         <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-05</dd></div>
-        <div><dt id="cm-l-sources">Files read</dt><dd>0</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
         <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
       </dl>
       <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
     </header>
 <main id="cm-main">
-<section class="cm-section"><h2>Overview</h2>
-<p><code>todo-api</code> is a small FastAPI service with two endpoints: <code>POST /todos</code> creates a todo and <code>GET /todos</code> lists them. Python code lives in the <code>app/</code> package, and todos are kept in a module-level list in <code>app/storage.py</code>. See <code>architecture.md</code> for the diagrams.</p>
+<p><code>todo-api</code>가 어떻게 만들어졌는지 설명하고, 처음 읽는 사람을 위한 코드 읽기 순서를 안내합니다.</p>
+<section class="cm-section"><h2>개요</h2>
+<p><code>todo-api</code>는 할 일을 만들고 목록으로 조회하는 아주 작은 REST 서비스입니다(<code>README.md</code>). Python과 FastAPI로 작성되었고 <code>uvicorn app.main:app</code>으로 실행합니다. 의존성은 <code>pyproject.toml</code>의 <code>fastapi&gt;=0.110</code>, <code>uvicorn&gt;=0.29</code> 두 가지입니다. 제공하는 기능은 <code>POST /todos</code>와 <code>GET /todos</code> 두 가지입니다.</p>
 </section>
-<section class="cm-section"><h2>Key design choices</h2>
-<ul>
-<li><strong>In-memory storage.</strong> <code>_TODOS</code> in <code>app/storage.py</code> is a plain list, so data is lost when the process stops. There is no database dependency in <code>pyproject.toml</code>.</li>
-<li><strong>Thin layers.</strong> <code>app/routes.py</code> handles HTTP and validation, <code>app/storage.py</code> holds data, <code>app/models.py</code> defines the <code>Todo</code> dataclass, and <code>app/utils.py</code> supplies the timestamp.</li>
-<li><strong>Deliberate import cycle.</strong> <code>app/models.py</code> and <code>app/storage.py</code> import each other; both files say it is deliberate. See <code>dependency-graph.md</code>.</li>
-<li><strong>Ids come from list length.</strong> <code>next_id()</code> returns <code>len(_TODOS) + 1</code>, so ids are sequential as long as nothing is ever removed (no delete exists today).</li>
-<li><span class="cm-unverified"><strong>Why these choices were made</strong> is not documented anywhere in the repository. (design rationale is inferred, not stated in code)</span></li>
-</ul>
+<section class="cm-section"><h2>구조</h2>
+<p>모든 코드는 <code>app/</code> 패키지의 다섯 모듈에 들어 있습니다. 진입점 <code>app/main.py</code>가 앱을 만들고, <code>app/routes.py</code>가 HTTP 요청을 받아, <code>app/storage.py</code>(메모리 저장)와 <code>app/models.py</code>(<code>Todo</code>), <code>app/utils.py</code>(시각 헬퍼)를 호출합니다. 계층별 그림은 <code>architecture.md</code>, import 관계와 순환은 <code>dependency-graph.md</code>, 기능별 요약은 <code>mindmap.md</code>, 실행 순서는 <code>sequence-flow.md</code>에 있습니다.</p>
 </section>
-<section class="cm-section"><h2>Request flow</h2>
-<p>A <code>POST /todos</code> request is validated in <code>app/routes.py</code>, timestamped by <code>app/utils.py</code>, built into a <code>Todo</code> through <code>app/storage.py</code> and <code>app/models.py</code>, stored, and returned as a dict. A <code>GET /todos</code> request returns a copy of the list. Diagrams are in <code>sequence-flow.md</code>.</p>
-</section>
-<section class="cm-section"><h2>Reading order for newcomers</h2>
+<section class="cm-section"><h2>핵심 설계 선택</h2>
 <ol>
-<li><code>README.md</code>: what the project is and how to run it (<code>uvicorn app.main:app</code>).</li>
-<li><code>pyproject.toml</code>: the dependencies (<code>fastapi</code>, <code>uvicorn</code>).</li>
-<li><code>app/main.py</code>: creates the app and mounts the router.</li>
-<li><code>app/routes.py</code>: the two endpoints.</li>
-<li><code>app/storage.py</code>: where the data lives.</li>
-<li><code>app/models.py</code>: the <code>Todo</code> shape and the import cycle with storage.</li>
-<li><code>app/utils.py</code>: the one-line timestamp helper.</li>
+<li><strong>메모리 안의 저장소 모듈</strong>: 데이터를 <code>app/storage.py</code>의 모듈 전역 리스트 <code>_TODOS</code>에 보관합니다. 효과는 서버를 다시 시작하면 데이터가 사라진다는 것입니다. 이렇게 한 이유는 코드에 적혀 있지 않습니다. <span class="cm-unverified">(추정: 예제 규모라서 단순함을 택했을 것)</span></li>
+<li><strong>라우터 분리</strong>: <code>app/routes.py</code>의 <code>APIRouter</code>를 <code>app/main.py</code>에서 <code>include_router</code>로 붙입니다. 앱 생성과 엔드포인트 정의가 분리됩니다.</li>
+<li><strong>의도된 순환 import</strong>: <code>app/models.py</code>와 <code>app/storage.py</code>가 서로를 import합니다. 두 파일의 주석이 "deliberate cycle"이라고 밝히고 있어 의도된 선택이지만, 그 이유는 적혀 있지 않습니다. 효과로는 모델이 <code>storage.next_id()</code>로 id를 받고 저장소가 <code>models.Todo.create</code>로 객체를 만드는 양방향 호출이 생깁니다.</li>
+<li><strong>모델 안의 직렬화</strong>: <code>Todo.to_dict()</code>가 응답용 dict를 만들고, 라우트는 이를 그대로 반환합니다(<code>app/models.py</code>, <code>app/routes.py</code>).</li>
+<li><strong>입력 검증은 라우트에서</strong>: 제목이 공백이면 <code>app/routes.py</code>의 <code>create_todo</code>가 <code>HTTPException(422)</code>를 발생시킵니다.</li>
+<li><strong>id는 리스트 길이로 계산</strong>: <code>app/storage.py</code>의 <code>next_id()</code>는 <code>len(_TODOS) + 1</code>입니다. <span class="cm-unverified">항목을 삭제하는 기능이 생기면 id가 겹칠 수 있습니다(추정).</span></li>
 </ol>
 </section>
-<section class="cm-section"><h2>Not covered</h2>
-<p>All repository files were read; <code>app/__init__.py</code> is empty. No tests exist in the repository, and nothing was executed.</p>
+<section class="cm-section"><h2>읽는 순서</h2>
+<ol>
+<li><code>README.md</code>: 프로젝트 목적과 실행 명령을 확인합니다.</li>
+<li><code>pyproject.toml</code>: 쓰는 외부 라이브러리를 확인합니다.</li>
+<li><code>app/main.py</code>: 앱이 만들어지고 라우터가 붙는 지점입니다.</li>
+<li><code>app/routes.py</code>: 실제 엔드포인트 두 개와 422 오류 처리를 봅니다.</li>
+<li><code>app/storage.py</code>: 데이터가 어디에 어떻게 저장되는지 봅니다.</li>
+<li><code>app/models.py</code>: <code>Todo</code> 필드와 <code>storage</code>로 되돌아오는 순환 호출을 봅니다.</li>
+<li><code>app/utils.py</code>: 마지막으로 시각 헬퍼 <code>now_iso</code>를 확인합니다.</li>
+</ol>
+</section>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<p><code>app/</code>의 모든 소스와 <code>pyproject.toml</code>, <code>README.md</code>를 읽었습니다. 테스트와 배포 설정은 저장소에 없고, 서버를 실제로 실행해 보지는 않았습니다.</p>
 </section>
 </main>
     <footer class="cm-foot">Generated by codemap</footer>
