@@ -1,0 +1,11 @@
+{
+  "name": "codemap",
+  "owner": { "name": "codemap authors" },
+  "plugins": [
+    {
+      "name": "codemap",
+      "source": "./",
+      "description": "Maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc (Mermaid Markdown, optional interactive HTML)."
+    }
+  ]
+}

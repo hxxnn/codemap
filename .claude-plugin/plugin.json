@@ -1,0 +1,7 @@
+{
+  "name": "codemap",
+  "version": "0.1.0",
+  "description": "Maps a codebase into architecture diagrams, dependency graphs, mindmaps, sequence flows and an onboarding doc (Mermaid Markdown, optional interactive HTML).",
+  "author": { "name": "codemap authors" },
+  "license": "MIT"
+}
