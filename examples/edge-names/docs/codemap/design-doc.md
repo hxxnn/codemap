@@ -3,28 +3,26 @@ codemap: 1
 skill: design-doc
 generated_at: 2026-11-05
 commit: null
-sources: {package.json: ae5b4fc82dbaebc1fe8d80c1ac2975a5ef58fcb05a0e74481a1cf90fe72baad0, src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5ca172cd9, src/my utils.js: 305439bc482c12b23f78d0d9a2175edcaf9d6aa2a4fc8faee9e6edc7125fac8c, docs/codemap/architecture.md: 909b01b2407810e88605d208577d203e42830720d57f7aa6fc45b448054a9698, docs/codemap/dependency-graph.md: 291b479a9d4ef0778d78742c57460ba5a1371a5a6a08c8712c28e96a77963e6d, docs/codemap/mindmap.md: dccc14b94f6e60422fd699c49c590d6aae03b93a3f2fc360a99790c721057c63, docs/codemap/sequence-flow.md: 15f76e01be5ce8ae4ea6c736344f7eda793d69921637462d6492cab330aa7978}
+sources: {docs/codemap/architecture.md: 6be7a76b01b05fdfed2e24d082c375e06c288eccb5856363b5734c23ee428531, docs/codemap/dependency-graph.md: 78772b1968602fe63142de9af69c2838f086d83c6025b683d5c34668a1f1e6bf, docs/codemap/mindmap.md: c876a4940ba86e4170e0f0deef3056f7b7f8628b519115cf5c2da14ef37b0329, docs/codemap/sequence-flow.md: ac7bf7cf4f4a171a10f53cd656ddf80d59c7fdae1a6ad1c4a9396e2c709fd227, src/main.js: 9e804869935ddb2b3f3810001cc21e6b56debf2aefa9e2b6a85b5dc5ca172cd9}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
-# Design doc
+# Design doc: edge-names
 
 ## Overview
-`edge-names` (`package.json`, main `src/main.js`) is a tiny CommonJS program. `src/main.js` loads items from `src/데이터 로더.js` and prints each one through `shout()` from `src/my utils.js`.
+`edge-names` is a tiny Node.js (CommonJS) script. `package.json` sets `main` to `src/main.js`, which prints each loaded item in upper case followed by `!`. See `architecture.md` for the diagrams.
 
 ## Key design choices
-- Each module exports one function via `module.exports`.
-- `loadItems()` returns `items.slice()`, so callers get a copy and cannot mutate the module's list.
-- File names contain spaces and non-ASCII characters, and imports use the exact names. The README describes the project as a test of such names.
-- Why the project was built this way is not stated in the code. <!-- codemap:unverified --> (unverified)
+- **Three small modules.** Loading data (`src/데이터 로더.js`), formatting (`src/my utils.js`) and orchestration (`src/main.js`) are separate files.
+- **Defensive copy.** `loadItems` returns `items.slice()`, so callers cannot mutate the module's list.
+- **Unusual file names.** Two files have a space or Hangul in their names, and `require` uses those names verbatim. The README says this is the project's purpose (an edge case for names).
+- **Why it was built this way** (a test fixture for tools handling odd file names) is only suggested by the README. <!-- codemap:unverified --> (inferred)
 
-## Reading order
-1. `package.json`
-2. `src/main.js`
-3. `src/my utils.js`
-4. `src/데이터 로더.js`
-
-See also `architecture.md`, `dependency-graph.md`, `mindmap.md`, `sequence-flow.md`.
+## Reading order for newcomers
+1. `package.json` — find the entry point.
+2. `src/main.js` — the whole control flow in six lines.
+3. `src/데이터 로더.js` — where the data comes from.
+4. `src/my utils.js` — the formatting helper.
 
 ## Not covered
-The repo was read completely. `src/데이터 로더.js` was read but is not listed in `sources` because its non-ASCII file name fails the safe-hashing rule (needs your decision).
+The whole repository was read; the script was not executed.

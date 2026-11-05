@@ -60,7 +60,12 @@ QUOTED_ALIAS = re.compile(r'^\s*(?:participant|actor)\s+\w+\s+as\s+"')
 
 
 def _exists(rel, fixture_dir):
-    rel = rel[2:] if rel.startswith("./") else rel
+    if rel.startswith(("./", "../")):
+        # Relative import specifier: relative to the importing file, which is unknown here.
+        # Accept it when a file with that path suffix exists anywhere in the project.
+        core = re.sub(r"^(?:\.{1,2}/)+", "", rel)
+        core = re.sub(r":[\w.\-]+$", "", core)
+        return any(m.as_posix().endswith(core) for m in Path(fixture_dir).rglob(Path(core).name))
     rel = re.sub(r":[\w.\-]+$", "", rel)
     if rel.split("/", 1)[0] in GENERATED_DIRS or rel in ARTIFACT_NAMES:
         return True

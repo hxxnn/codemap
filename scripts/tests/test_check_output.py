@@ -211,3 +211,11 @@ def test_chromium_path_prefers_env_then_existing_default_else_none(monkeypatch):
     assert co.chromium_path() == "/opt/pw-browsers/chromium"
     monkeypatch.setattr(co.Path, "exists", lambda self: False)
     assert co.chromium_path() is None
+
+
+def test_relative_import_specifiers_match_a_file_anywhere_in_the_project(tmp_path):
+    fx = fixture(tmp_path)
+    ok = write(tmp_path, "a.md", BLOCK + "Imports `./real.py` and `../src/real.py` and `./my notes.md`.\n")
+    assert co.check_file(ok, fx) == []
+    bad = write(tmp_path, "b.md", BLOCK + "Imports `./ghost.py`.\n")
+    assert any("./ghost.py" in p for p in co.check_file(bad, fx))

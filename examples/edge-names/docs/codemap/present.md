@@ -3,29 +3,30 @@ codemap: 1
 skill: present
 generated_at: 2026-11-05
 commit: null
-sources: {docs/codemap/architecture.md: 909b01b2407810e88605d208577d203e42830720d57f7aa6fc45b448054a9698, docs/codemap/dependency-graph.md: 291b479a9d4ef0778d78742c57460ba5a1371a5a6a08c8712c28e96a77963e6d, docs/codemap/mindmap.md: dccc14b94f6e60422fd699c49c590d6aae03b93a3f2fc360a99790c721057c63, docs/codemap/sequence-flow.md: 15f76e01be5ce8ae4ea6c736344f7eda793d69921637462d6492cab330aa7978, docs/codemap/design-doc.md: 7d220d70cd33972a867f3341a0eed953137ccae5c7e6caa6c11c24600f3deeaf}
+sources: {docs/codemap/architecture.md: 6be7a76b01b05fdfed2e24d082c375e06c288eccb5856363b5734c23ee428531, docs/codemap/dependency-graph.md: 78772b1968602fe63142de9af69c2838f086d83c6025b683d5c34668a1f1e6bf, docs/codemap/sequence-flow.md: ac7bf7cf4f4a171a10f53cd656ddf80d59c7fdae1a6ad1c4a9396e2c709fd227, docs/codemap/design-doc.md: 05065e0b12ab9257e067d676993264d1ed7dc6823b67282c79183ba9a6a38dc2}
 ---
 <!-- codemap: generated file — hand edits outside a manual-edit block are replaced by /codemap refresh -->
 
 # Presentation outline: edge-names
 
-## Slide 1: What it is
-A tiny Node.js CommonJS program (see `design-doc.md`).
+## Slide 1 — What it is
+- A tiny Node.js script that prints `ALPHA!`, `BETA!`, `GAMMA!`.
+- Entry point: `src/main.js`, declared in `package.json`.
 
-## Slide 2: Structure
-One entry file, `src/main.js`, and two helpers (see `architecture.md`).
+## Slide 2 — Architecture
+- One process, three files, no external systems (see `architecture.md`).
 
-## Slide 3: Dependencies
-`src/main.js` requires both helpers. There are no cycles and no third-party packages (see `dependency-graph.md`).
+## Slide 3 — Dependencies
+- `src/main.js` requires `src/my utils.js` and `src/데이터 로더.js`; no cycles, no npm packages (see `dependency-graph.md`).
 
-## Slide 4: Runtime flow
-Load the items, upper-case each one, and print it (see `sequence-flow.md`).
+## Slide 4 — Runtime flow
+- Load items, then shout and print each one (see `sequence-flow.md`).
 
-## Slide 5: The edge case
-File names contain spaces and non-ASCII characters, and the imports use them exactly.
+## Slide 5 — Design notes
+- Defensive copy in `loadItems`; file names with a space and Hangul are used on purpose (see `design-doc.md`).
 
-## Slide 6: Takeaways
-The project is small and was read completely. Nothing in it is unverified except the design rationale.
+## Slide 6 — Where to start reading
+- `package.json`, then `src/main.js`, then the two helpers.
 
 ## Not covered
-Built only from the other codemap files. The repo itself was read completely.
+Built only from the existing codemap files; no new code analysis.
