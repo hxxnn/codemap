@@ -31,6 +31,9 @@ sources: {<relative/path>: <sha256 of that file when read>, ...}
 ```
 `sources` lists every file the artifact was derived from. Compute hashes with `sha256sum` (or `shasum -a 256`). `codemap-refresh` relies on this block, so keep it accurate. Artifacts derived from other artifacts (design-doc, present) list those artifact paths in `sources` too.
 
+## Paths
+In prose always write the full repo-relative path in backticks (`src/index.ts`, never a bare `index.ts`). Sibling artifacts may be named by file name (`architecture.md`). Build or install folders that do not exist in the repo (`dist/`, `node_modules/`) are written without backticks and labelled as build output.
+
 ## Unverified content
 Anything you could not confirm in the code is never stated as fact. Mark it with a visible label in the user's language (for example "(inferred)" / "(확인 필요)") **and** add the marker `<!-- codemap:unverified -->` on the same line. Design rationale ("why it was built this way") with no evidence in the code is always unverified.
 

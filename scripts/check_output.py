@@ -16,6 +16,7 @@ SOURCE_EXTS = (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".md", ".json
 UNVERIFIED = "<!-- codemap:unverified -->"
 # Generated/vendored folders legitimately do not exist in a fresh checkout.
 GENERATED_DIRS = {"dist", "build", "node_modules", ".venv", "venv", "target", "__pycache__", "out"}
+ARTIFACT_NAMES = {"architecture.md", "dependency-graph.md", "mindmap.md", "sequence-flow.md", "design-doc.md", "present.md"}
 FENCE = re.compile(r"^```")
 
 
@@ -76,7 +77,7 @@ def check_file(md_path, fixture_dir):
         for ref in path_refs(line):
             rel = ref[2:] if ref.startswith("./") else ref
             rel = re.sub(r":[\w.\-]+$", "", rel)  # `path:function` or `path:12-20`
-            if rel.split("/", 1)[0] in GENERATED_DIRS:
+            if rel in ARTIFACT_NAMES or rel.split("/", 1)[0] in GENERATED_DIRS:
                 continue
             if not (Path(fixture_dir) / rel).exists():
                 problems.append(f"{md_path}: path does not exist: {ref}")
