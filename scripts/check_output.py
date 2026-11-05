@@ -75,6 +75,7 @@ def check_file(md_path, fixture_dir):
             continue
         for ref in path_refs(line):
             rel = ref[2:] if ref.startswith("./") else ref
+            rel = re.sub(r":[\w.\-]+$", "", rel)  # `path:function` or `path:12-20`
             if rel.split("/", 1)[0] in GENERATED_DIRS:
                 continue
             if not (Path(fixture_dir) / rel).exists():

@@ -90,3 +90,12 @@ def test_generated_and_vendored_dirs_may_be_mentioned(tmp_path):
 def test_bare_extensions_are_not_treated_as_paths(tmp_path):
     md = write(tmp_path, "a.md", BLOCK + "Only `.py` and `.ts` files were read.\n")
     assert co.check_file(md, fixture(tmp_path)) == []
+
+
+def test_path_with_symbol_or_line_suffix_checks_only_the_path(tmp_path):
+    fx = fixture(tmp_path)
+    ok = write(tmp_path, "a.md", BLOCK + "Calls `src/real.py:main` and `src/real.py:12-20`.\n")
+    assert co.check_file(ok, fx) == []
+    bad = write(tmp_path, "b.md", BLOCK + "Calls `src/ghost.py:main`.\n")
+    problems = co.check_file(bad, fx)
+    assert any("src/ghost.py" in p for p in problems)
