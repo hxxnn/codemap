@@ -34,7 +34,7 @@ Open your project in Claude Code and run:
 /codemap
 ```
 
-or pick one output (HTML pages are created by default; add `--no-html` for Markdown only):
+With no argument this writes the **core three** (architecture overview, sequence flows, design doc), plus the dependency graph when the project has 30 or more source files or a circular dependency is found. `/codemap all` writes everything, including the structure tree and the presentation outline. Or pick one output (HTML pages are created by default; add `--no-html` for Markdown only):
 
 ```
 /codemap architecture --no-html
@@ -67,11 +67,11 @@ Then commit and push the project's `.claude/` folder. In a cloud session on that
 | Command | Skill | Output (`docs/codemap/`) |
 |---|---|---|
 | `/codemap architecture` | `architecture-overview` | `architecture.md` — system context → containers → components (C4-style zoom) |
-| `/codemap deps` | `dependency-graph` | `dependency-graph.md` — real import graph, circular dependencies flagged |
-| `/codemap mindmap` | `mindmap` | `mindmap.md` — features, files and functions as a collapsible structure tree |
+| `/codemap deps` | `dependency-graph` | `dependency-graph.md` — real import graph, circular dependencies flagged (in the default run only for big projects or when there is a cycle) |
+| `/codemap mindmap` | `mindmap` | `mindmap.md` — features, files and functions as a collapsible structure tree (part of `all`) |
 | `/codemap sequence` | `sequence-flow` | `sequence-flow.md` — 2–3 runtime scenarios traced through the code |
 | `/codemap doc` | `design-doc` | `design-doc.md` — design overview, key choices, "read these files in this order" |
-| `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs |
+| `/codemap present` | `present` | `present.md` — 5–7 slide outline built from the other outputs (part of `all`) |
 | `/codemap refresh` | `codemap-refresh` | updates only the files whose source code changed, keeping your manual edits |
 
 Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless you pass `--no-html`): a contents sidebar, a color legend, zoomable diagrams that scroll instead of shrinking, collapsible sections, search, a light/dark toggle and print-friendly pages on one page (styles and scripts are shared in `html/assets/`, so move the whole `html/` folder). The presentation outline (`present.html`) has a slide mode (arrow keys, `Esc` to leave). Text is set in the Pretendard font loaded from a CDN with a pinned version; offline, text falls back to system fonts and diagrams show their source with a note.

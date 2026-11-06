@@ -13,7 +13,7 @@ Before starting, read (relative to this skill's directory):
 
 ## Input
 - The project summary from `/codemap` (Run the **Preflight** in `../_shared/language-and-output.md` first: it stops when there is nothing to map and builds the project summary if you were invoked without one.).
-- Existing artifacts in `docs/codemap/` (`architecture.md`, `dependency-graph.md`, `mindmap.md`, `sequence-flow.md`). Read the ones that exist and reuse their findings instead of re-deriving them. If some are missing, tell the user which and ask whether to generate them first; if the user declines or cannot answer, work from the code directly and say so in the document.
+- Existing artifacts in `docs/codemap/` (`architecture.md`, `dependency-graph.md`, `mindmap.md`, `sequence-flow.md`). Read the ones that exist and reuse their findings instead of re-deriving them. Only `architecture.md` is worth waiting for: if it is missing, ask whether to generate it first (if the user declines or cannot answer, work from the code directly and say so in the document). The other artifacts are optional: use the ones that exist and never ask about the missing ones.
 
 ## Sections (in this order; titles are written in the output language, Korean by default: 개요, 구조, 핵심 설계 선택, 읽는 순서, 다루지 않은 범위)
 1. **Overview** — what the project does and for whom, in 3–5 sentences, with the main technologies.
