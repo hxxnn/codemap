@@ -85,7 +85,7 @@ python3 codemap/scripts/install_into_project.py /path/to/your/project
 
 ## 예시
 
-이 저장소의 작은 샘플 프로젝트로 만든 결과물입니다. 저장소를 받은 뒤 `index.html`을 브라우저로 열면 예시 18개를 한곳에서 볼 수 있습니다.
+**[온라인 예시 갤러리 바로 보기](https://hxxnn.github.io/codemap/)** — 이 저장소의 작은 샘플 프로젝트로 만든 결과물입니다. 저장소를 받은 뒤 `index.html`을 브라우저로 열면 예시 18개를 한곳에서 볼 수 있습니다.
 
 - [`examples/python-todo-api/docs/codemap/`](examples/python-todo-api/docs/codemap/)
 - [`examples/ts-notes-cli/docs/codemap/`](examples/ts-notes-cli/docs/codemap/)

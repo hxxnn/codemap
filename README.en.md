@@ -85,7 +85,7 @@ Every Markdown file is accompanied by `docs/codemap/html/<name>.html` (unless yo
 
 ## Examples
 
-Generated from the small sample projects in this repository (after cloning, open `index.html` in a browser for a gallery of all 18 pages):
+**[Open the example gallery online](https://hxxnn.github.io/codemap/)** — generated from the small sample projects in this repository (after cloning, open `index.html` in a browser for a gallery of all 18 pages):
 
 - [`examples/python-todo-api/docs/codemap/`](examples/python-todo-api/docs/codemap/)
 - [`examples/ts-notes-cli/docs/codemap/`](examples/ts-notes-cli/docs/codemap/)
