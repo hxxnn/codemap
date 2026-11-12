@@ -166,8 +166,31 @@
   .cm-node:focus-visible .cm-node-box { stroke-width: 3; }
   path.cm-edge { fill: none; stroke: var(--muted); stroke-width: 1.4; opacity: .55; marker-end: url(#cm-arrow); }
   path.cm-edge.cm-agg { stroke-width: 2; opacity: .7; }
+  path.cm-edge, .cm-agg-count { pointer-events: none; }
   .cm-agg-count { fill: var(--ink); font: 650 11px/1 var(--font); paint-order: stroke; stroke: var(--canvas); stroke-width: 4px; }
   path.cm-arrow { fill: var(--muted); }
+  svg.cm-graph-svg .is-dim { opacity: .16; }
+  .cm-node.is-focus .cm-node-box { stroke-width: 3; fill: var(--accent-soft); }
+  .cm-node.is-uses .cm-node-box { stroke: var(--accent); stroke-width: 2.5; fill: var(--accent-soft); }
+  .cm-node.is-usedby .cm-node-box { stroke: var(--c-external); stroke-width: 2.5; fill: var(--c-external-bg); }
+  .cm-group.is-focus .cm-group-box, .cm-group.is-related .cm-group-box { stroke: var(--accent); stroke-width: 2.5; }
+  path.cm-edge.is-hot { opacity: 1; stroke: var(--accent); stroke-width: 2.4; marker-end: url(#cm-arrow-hot); }
+  path.cm-edge.is-hot.is-hot-in { stroke: var(--c-external); marker-end: url(#cm-arrow-in); }
+  path.cm-arrow-in { fill: var(--c-external); }
+  .cm-graph-key { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 8px 16px 10px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .cm-graph-key span { display: inline-flex; align-items: center; gap: 8px; }
+  .cm-graph-key i { width: 22px; height: 0; border-top: 3px solid var(--accent); display: inline-block; }
+  .cm-graph-key i.cm-key-usedby { border-top-color: var(--c-external); }
+  .cm-graph-panel { position: absolute; top: 52px; right: 10px; z-index: 3; width: min(320px, 42%); max-height: calc(100% - 110px); overflow: auto; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: var(--text); background: color-mix(in srgb, var(--canvas) 96%, transparent); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 6px 24px rgba(10, 14, 22, .16); }
+  .cm-graph-panel h3 { margin: 0 0 4px; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+  .cm-graph-panel h4 { margin: 12px 0 4px; font-size: 13px; color: var(--muted); font-weight: 650; }
+  .cm-graph-panel ul { list-style: none; margin: 0; padding: 0; }
+  .cm-graph-panel li { margin: 0; }
+  .cm-gp-role { margin: 0; color: var(--text); }
+  .cm-gp-none { color: var(--muted); }
+  .cm-gp-link { display: block; width: 100%; padding: 3px 6px; font: 12.5px/1.4 var(--mono); text-align: left; color: var(--ink); background: transparent; border: 0; border-radius: 6px; cursor: pointer; overflow-wrap: anywhere; }
+  .cm-gp-link:hover { background: var(--accent-soft); }
+  .cm-gp-close { margin-top: 12px; }
   path.cm-arrow-hot { fill: var(--accent); }
 
   footer.cm-foot { max-width: 62rem; margin: 56px auto 0; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13.5px; }

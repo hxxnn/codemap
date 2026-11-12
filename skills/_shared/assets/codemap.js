@@ -10,7 +10,8 @@
     present: "발표 모드로 보기", prev: "이전", next: "다음", exit: "종료",
     offline: "다이어그램을 그리려면 인터넷 연결이 필요합니다. 아래는 다이어그램 원본입니다.",
     graphEmpty: "서로 연결된 파일이 없어 그래프를 그리지 않았습니다. 아래 목록을 확인하세요.", graphLabel: "파일 관계 그래프",
-    groupFold: "폴더 접기", groupUnfold: "폴더 펼치기", files: function (n) { return n + "개 파일"; }
+    groupFold: "폴더 접기", groupUnfold: "폴더 펼치기", files: function (n) { return n + "개 파일"; },
+    uses: "쓰는 파일", usedBy: "쓰이는 파일", none: "없음", keyUses: "선택한 파일이 쓰는 파일", keyUsedBy: "선택한 파일을 쓰는 파일"
   } : {
     contents: "Contents", filter: "Filter sections", dark: "Dark mode", light: "Light mode", generated: "Generated", sources: "Files read",
     unverified: "Unverified", zoomIn: "Zoom in", zoomOut: "Zoom out", fit: "Fit width", expand: "Expand", close: "Close", legend: "Legend",
@@ -19,7 +20,8 @@
     present: "Present as slides", prev: "Previous", next: "Next", exit: "Exit",
     offline: "An internet connection is needed to draw the diagrams. The diagram source is shown below.",
     graphEmpty: "No file is connected to another, so no graph was drawn. See the list below.", graphLabel: "File relation graph",
-    groupFold: "Fold folder", groupUnfold: "Unfold folder", files: function (n) { return n + (n === 1 ? " file" : " files"); }
+    groupFold: "Fold folder", groupUnfold: "Unfold folder", files: function (n) { return n + (n === 1 ? " file" : " files"); },
+    uses: "Uses", usedBy: "Used by", none: "None", keyUses: "Files the selected file uses", keyUsedBy: "Files that use the selected file"
   };
   function $(id) { return document.getElementById(id); }
   function isDark() {
@@ -306,12 +308,16 @@
     }
     var fig = document.createElement("figure"), tools = document.createElement("div"), stage = document.createElement("div"), panel = document.createElement("aside");
     fig.className = "cm-graph-view"; tools.className = "cm-graph-tools"; stage.className = "cm-graph-stage"; panel.className = "cm-graph-panel";
-    fig.appendChild(tools); fig.appendChild(stage); fig.appendChild(panel);
+    var key = document.createElement("div"); key.className = "cm-graph-key";
+    [["uses", T.keyUses], ["usedby", T.keyUsedBy]].forEach(function (it) {
+      var sp = document.createElement("span"), sw = document.createElement("i"); sw.className = "cm-key-" + it[0]; sp.appendChild(sw); sp.appendChild(document.createTextNode(it[1])); key.appendChild(sp);
+    });
+    fig.appendChild(tools); fig.appendChild(stage); fig.appendChild(key); fig.appendChild(panel);
     ul.parentNode.insertBefore(fig, ul);
 
     var svg = sv("svg", { "class": "cm-graph-svg", role: "group", "aria-label": T.graphLabel }, stage);
     var defs = sv("defs", {}, svg);
-    ["cm-arrow", "cm-arrow-hot"].forEach(function (id) {
+    ["cm-arrow", "cm-arrow-hot", "cm-arrow-in"].forEach(function (id) {
       var m = sv("marker", { id: id, viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, defs);
       sv("path", { d: "M0 0 L10 5 L0 10 z", "class": id }, m);
     });
@@ -321,7 +327,8 @@
     model.nodes.forEach(function (n) { if (!members[n.group]) { members[n.group] = []; keys.push(n.group); } members[n.group].push(n); });
     keys.sort(function (a, b) { return a < b ? -1 : a > b ? 1 : 0; });
     var cols = Math.ceil(Math.sqrt(keys.length));
-    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: {}, groupEls: {}, nodeEls: {}, edgeEls: [], aggEls: [], pos: {}, scale: 1, size: { w: 0, h: 0 } };
+    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: {}, groupEls: {}, nodeEls: {}, edgeEls: [], aggEls: [], pos: {}, scale: 1, size: { w: 0, h: 0 }, panel: panel, pinned: null, hover: null };
+    graphViews.push(view);
     var startFolded = model.nodes.length >= FOLD_AT;
 
     keys.forEach(function (k, gi) {
@@ -359,21 +366,135 @@
     });
 
     svg.addEventListener("click", function (e) {
-      var tg = e.target.closest && e.target.closest(".cm-group-toggle");
-      var key = null;
+      var it = itemAt(view, e.target);
+      if (it && it.type === "node") { setPinned(view, view.pinned === it.id ? null : it.id); return; }
+      var tg = e.target.closest && e.target.closest(".cm-group-toggle"), key = null;
       if (tg) key = tg.parentNode.getAttribute("data-group");
       else if (e.target.classList && e.target.classList.contains("cm-group-box")) { var gk = e.target.parentNode.getAttribute("data-group"); if (view.collapsed[gk]) key = gk; }
-      if (key !== null) { view.collapsed[key] = !view.collapsed[key]; layoutGraph(view); }
+      if (key === null) return;
+      view.collapsed[key] = !view.collapsed[key]; layoutGraph(view); view.hover = null;
+      if (view.pinned && view.collapsed[view.model.byId[view.pinned].group]) setPinned(view, null); else refreshFocus(view);
     });
     svg.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
       var tg = e.target.closest && e.target.closest(".cm-group-toggle");
-      if (tg && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tg.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+      if (tg) { e.preventDefault(); tg.dispatchEvent(new MouseEvent("click", { bubbles: true })); return; }
+      var it = itemAt(view, e.target);
+      if (it && it.type === "node") { e.preventDefault(); setPinned(view, view.pinned === it.id ? null : it.id); }
+    });
+    svg.addEventListener("mouseover", function (e) { setHover(view, itemAt(view, e.target)); });
+    svg.addEventListener("mouseleave", function () { setHover(view, null); });
+    svg.addEventListener("focusin", function (e) { var it = itemAt(view, e.target); if (it && it.type === "node") setHover(view, it); });
+    svg.addEventListener("focusout", function () { setHover(view, null); });
+    panel.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("button");
+      if (!b) return;
+      if (b.classList.contains("cm-gp-close")) { setPinned(view, null); return; }
+      var id = b.getAttribute("data-id"), n = id && view.model.byId[id];
+      if (!n) return;
+      if (view.collapsed[n.group]) { view.collapsed[n.group] = false; layoutGraph(view); }
+      setPinned(view, id);
+      if (view.nodeEls[id].scrollIntoView) view.nodeEls[id].scrollIntoView({ block: "nearest", inline: "nearest" });
     });
     layoutGraph(view);
     var avail = stage.clientWidth - 28;
     if (avail > 0 && view.size.w > avail) setGraphScale(view, Math.max(0.35, avail / view.size.w));
     return view;
   }
+  var graphViews = [];
+  // focus: hovering/focusing a file marks the files it uses (is-uses) and the files that use it (is-usedby); everything else dims.
+  // Only direct (1-step) neighbours are marked. A pinned file keeps the highlight until it is unpinned.
+  function clearFocus(view) {
+    var c = ["is-focus", "is-uses", "is-usedby", "is-dim", "is-hot", "is-hot-in", "is-related"];
+    view.fig.querySelectorAll(".is-focus, .is-uses, .is-usedby, .is-dim, .is-hot, .is-hot-in, .is-related").forEach(function (el) {
+      el.classList.remove.apply(el.classList, c);
+    });
+  }
+  function applyFocus(view, id) {
+    clearFocus(view);
+    var m = view.model, n = m.byId[id];
+    if (!n) return;
+    var uses = {}, usedBy = {}, keep = {}, useGroups = {}, byGroups = {};
+    keep[n.group] = true;
+    n.uses.forEach(function (t) { var g = m.byId[t].group; uses[t] = true; useGroups[g] = true; keep[g] = true; });
+    n.usedBy.forEach(function (t) { var g = m.byId[t].group; usedBy[t] = true; byGroups[g] = true; keep[g] = true; });
+    m.nodes.forEach(function (x) {
+      var cl = view.nodeEls[x.id].classList;
+      if (x.id === id) cl.add("is-focus");
+      else if (uses[x.id] || usedBy[x.id]) { if (uses[x.id]) cl.add("is-uses"); if (usedBy[x.id]) cl.add("is-usedby"); }
+      else cl.add("is-dim");
+    });
+    view.edgeEls.forEach(function (e) {
+      if (e.from === id) e.el.classList.add("is-hot");
+      else if (e.to === id) e.el.classList.add("is-hot", "is-hot-in");
+      else e.el.classList.add("is-dim");
+    });
+    view.keys.forEach(function (k) { if (!keep[k]) view.groupEls[k].g.classList.add("is-dim"); });
+    view.aggEls.forEach(function (e) {
+      var hot = (e.a === n.group && useGroups[e.b]) || (e.b === n.group && byGroups[e.a]);
+      e.el.classList.add(hot ? "is-hot" : "is-dim");
+      if (!hot) e.label.classList.add("is-dim");
+    });
+  }
+  function applyGroupFocus(view, key) {
+    clearFocus(view);
+    var rel = {};
+    view.aggEls.forEach(function (e) {
+      if (e.a === key || e.b === key) { rel[e.a] = true; rel[e.b] = true; e.el.classList.add("is-hot"); }
+      else { e.el.classList.add("is-dim"); e.label.classList.add("is-dim"); }
+    });
+    view.keys.forEach(function (k) {
+      var cl = view.groupEls[k].g.classList;
+      if (k === key) cl.add("is-focus"); else if (rel[k]) cl.add("is-related"); else cl.add("is-dim");
+    });
+  }
+  function refreshFocus(view) {
+    var h = view.pinned ? { type: "node", id: view.pinned } : view.hover;
+    if (!h) clearFocus(view); else if (h.type === "node") applyFocus(view, h.id); else applyGroupFocus(view, h.key);
+  }
+  function itemAt(view, target) {
+    if (!target || !target.closest) return null;
+    var nd = target.closest(".cm-node");
+    if (nd && view.svg.contains(nd)) return { type: "node", id: nd.getAttribute("data-id") };
+    var g = target.closest(".cm-group");
+    if (g && g.classList.contains("collapsed") && !target.closest(".cm-group-toggle")) return { type: "group", key: g.getAttribute("data-group") };
+    return null;
+  }
+  function setHover(view, item) {
+    var a = view.hover;
+    if ((!a && !item) || (a && item && a.type === item.type && a.id === item.id && a.key === item.key)) return;
+    view.hover = item;
+    if (!view.pinned) refreshFocus(view);
+  }
+  function setPinned(view, id) {
+    view.pinned = id;
+    if (id) view.fig.setAttribute("data-pinned", id); else view.fig.removeAttribute("data-pinned");
+    renderPanel(view); refreshFocus(view);
+  }
+  function renderPanel(view) {
+    var p = view.panel;
+    while (p.firstChild) p.removeChild(p.firstChild);
+    if (!view.pinned) return;
+    var n = view.model.byId[view.pinned], h = document.createElement("h3"), code = document.createElement("code");
+    code.textContent = n.path; h.appendChild(code); p.appendChild(h);
+    if (n.role) { var r = document.createElement("p"); r.className = "cm-gp-role"; r.textContent = n.role; p.appendChild(r); }
+    [[T.uses, n.uses], [T.usedBy, n.usedBy]].forEach(function (it) {
+      var h4 = document.createElement("h4"), list = document.createElement("ul");
+      h4.textContent = it[0] + " (" + it[1].length + ")"; p.appendChild(h4);
+      if (!it[1].length) { var none = document.createElement("li"); none.className = "cm-gp-none"; none.textContent = T.none; list.appendChild(none); }
+      it[1].forEach(function (t) {
+        var li = document.createElement("li"), b = document.createElement("button");
+        b.type = "button"; b.className = "cm-gp-link"; b.setAttribute("data-id", t); b.textContent = view.model.byId[t].path;
+        li.appendChild(b); list.appendChild(li);
+      });
+      p.appendChild(list);
+    });
+    var close = document.createElement("button"); close.type = "button"; close.className = "cm-btn cm-gp-close"; close.textContent = T.close; p.appendChild(close);
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    graphViews.forEach(function (v) { if (v.pinned) setPinned(v, null); });
+  });
   function setGraphScale(view, s) {
     view.scale = s;
     view.svg.style.width = Math.round(view.size.w * s) + "px";
