@@ -142,10 +142,15 @@
 
   /* relation graph (relation-map.md): the page script draws an SVG from <ul class="cm-graph">; the list stays as the print/no-script fallback */
   figure.cm-graph-view { position: relative; margin: 18px 0 24px; border: 1px solid var(--rule); border-radius: 14px; background: var(--canvas); overflow: hidden; }
-  .cm-graph-tools { position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; gap: 6px; }
+  .cm-graph-tools { display: flex; justify-content: flex-end; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
   .cm-graph-tools:empty, .cm-graph-panel:empty { display: none; }
   .cm-graph-stage { overflow: auto; max-height: 72vh; padding: 14px; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 20px 20px; }
   svg.cm-graph-svg { display: block; max-width: none; font: 12.5px/1 var(--mono); }
+  .cm-graph-stage { cursor: grab; }
+  .cm-graph-stage.panning { cursor: grabbing; user-select: none; }
+  figure.cm-graph-view.cm-graph-full { position: fixed; inset: 0; z-index: 70; margin: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; }
+  .cm-graph-full .cm-graph-stage { max-height: none; flex: 1 1 auto; }
+  .cm-graph-full .cm-graph-panel { max-height: calc(100% - 140px); }
   figure.cm-graph-view + ul.cm-graph { display: none; }
   .cm-graph-empty { color: var(--muted); }
   svg.cm-graph-svg .cm-off { display: none; }
@@ -181,7 +186,7 @@
   .cm-graph-key span { display: inline-flex; align-items: center; gap: 8px; }
   .cm-graph-key i { width: 22px; height: 0; border-top: 3px solid var(--accent); display: inline-block; }
   .cm-graph-key i.cm-key-usedby { border-top-color: var(--c-external); }
-  .cm-graph-panel { position: absolute; top: 52px; right: 10px; z-index: 3; width: min(320px, 42%); max-height: calc(100% - 110px); overflow: auto; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: var(--text); background: color-mix(in srgb, var(--canvas) 96%, transparent); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 6px 24px rgba(10, 14, 22, .16); }
+  .cm-graph-panel { position: absolute; top: 58px; right: 10px; z-index: 3; width: min(320px, 42%); max-height: calc(100% - 110px); overflow: auto; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: var(--text); background: color-mix(in srgb, var(--canvas) 96%, transparent); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 6px 24px rgba(10, 14, 22, .16); }
   .cm-graph-panel h3 { margin: 0 0 4px; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
   .cm-graph-panel h4 { margin: 12px 0 4px; font-size: 13px; color: var(--muted); font-weight: 650; }
   .cm-graph-panel ul { list-style: none; margin: 0; padding: 0; }

@@ -229,6 +229,81 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
           expect(ms < 100, 'focus: hovering a hub took ' + Math.round(ms) + ' ms (limit 100)');
         }
       }
+
+      // ---- view: zoom, fit, pan, full screen, theme, print, speed ----
+      const stageBox = () => page.locator('svg.cm-graph-svg').evaluate((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height }; });
+      const b0 = await stageBox();
+      const vb = await page.locator('svg.cm-graph-svg').getAttribute('viewBox');
+      const [, , vw, vh] = vb.split(' ').map(Number);
+      expect(Math.abs(b0.h / b0.w - vh / vw) < 0.01, 'view: the svg keeps its aspect ratio (no blank band when it is scaled down)');
+      await page.locator('.cm-graph-zoom-in').click();
+      const b1 = await stageBox();
+      expect(b1.w > b0.w * 1.1, 'view: zoom in widens the graph');
+      await page.locator('.cm-graph-zoom-out').click(); await page.locator('.cm-graph-zoom-out').click();
+      expect((await stageBox()).w < b1.w, 'view: zoom out narrows the graph');
+      await page.locator('.cm-graph-fit').click();
+      expect(Math.abs((await stageBox()).w - b0.w) < 2, 'view: fit restores the initial width');
+      // pan by dragging an empty spot (and the drag must not click anything)
+      for (let i = 0; i < 4; i++) await page.locator('.cm-graph-zoom-in').click();
+      await page.evaluate(() => { const st = document.querySelector('.cm-graph-stage'); st.scrollLeft = 200; st.scrollTop = 100; });
+      const spot = await page.evaluate(() => {
+        const st = document.querySelector('.cm-graph-stage'), r = st.getBoundingClientRect();
+        for (let y = r.top + 8; y < r.bottom - 24; y += 16) for (let x = r.left + 8; x < r.right - 24; x += 16) {
+          const el = document.elementFromPoint(x, y);
+          if (el && st.contains(el) && !el.closest('.cm-node, .cm-group-toggle, .cm-graph-panel, .cm-graph-tools')) return { x, y };
+        }
+        return null;
+      });
+      expect(spot !== null, 'view: the zoomed graph has an empty spot to drag from');
+      if (spot) {
+        const before = await page.evaluate(() => ({ l: document.querySelector('.cm-graph-stage').scrollLeft, t: document.querySelector('.cm-graph-stage').scrollTop }));
+        await page.mouse.move(spot.x, spot.y); await page.mouse.down(); await page.mouse.move(spot.x + 40, spot.y + 30, { steps: 4 }); await page.mouse.up();
+        const after = await page.evaluate(() => ({ l: document.querySelector('.cm-graph-stage').scrollLeft, t: document.querySelector('.cm-graph-stage').scrollTop }));
+        expect(after.l < before.l && after.t < before.t, 'view: dragging an empty spot pans the graph');
+      }
+      await page.locator('.cm-graph-fit').click();
+      // full screen: native API first, fixed overlay as the fallback; Escape leaves it before it unpins
+      const fits = () => page.locator('figure.cm-graph-view').evaluate((e) => { const r = e.getBoundingClientRect(); return Math.abs(r.width - innerWidth) < 2 && Math.abs(r.height - innerHeight) < 2; });
+      await page.locator('.cm-graph-fs').click();
+      expect(await page.locator('figure.cm-graph-view.cm-graph-full').count() === 1, 'full screen: the figure gets cm-graph-full');
+      expect(await fits(), 'full screen: the graph fills the viewport');
+      const someNode = (await page.$$eval('g.cm-node:not(.cm-off)', (n) => n.length)) > 0 ? await page.$$eval('g.cm-node:not(.cm-off)', (n) => n[0].getAttribute('data-id')) : null;
+      if (someNode) {
+        await page.locator('g.cm-node[data-id="' + someNode + '"]').click();
+        await page.keyboard.press('Escape');
+        expect(await page.locator('figure.cm-graph-view.cm-graph-full').count() === 0, 'full screen: the first Escape leaves full screen');
+        expect((await page.locator('figure.cm-graph-view').getAttribute('data-pinned')) === someNode, 'full screen: leaving it keeps the pin');
+        await page.keyboard.press('Escape');
+        expect((await page.locator('figure.cm-graph-view').getAttribute('data-pinned')) === null, 'full screen: the second Escape unpins');
+      }
+      await page.evaluate(() => { Element.prototype.requestFullscreen = () => Promise.reject(new Error('blocked')); });
+      await page.locator('.cm-graph-fs').click();
+      await page.waitForTimeout(150);
+      expect(await page.locator('figure.cm-graph-view.cm-graph-full').count() === 1 && await fits(), 'full screen: still works when the browser blocks the Fullscreen API');
+      await page.locator('.cm-graph-fs').click();
+      expect(await page.locator('figure.cm-graph-view.cm-graph-full').count() === 0, 'full screen: the button leaves it too');
+      // theme: node colours follow the page theme in both directions
+      const lum = (c) => { const m = c.match(/\d+(\.\d+)?/g).map(Number); return (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255; };
+      const colours = () => page.evaluate(() => {
+        const n = document.querySelector('g.cm-node[data-kind="source"]');
+        return { fill: getComputedStyle(n.querySelector('rect')).fill, text: getComputedStyle(n.querySelector('text')).fill };
+      });
+      const c1 = await colours();
+      await page.click('#cm-theme'); await page.waitForTimeout(300);
+      const c2 = await colours();
+      expect(Math.abs(lum(c1.fill) - lum(c2.fill)) > 0.4, 'theme: the node fill changes with the theme');
+      expect(Math.abs(lum(c1.fill) - lum(c1.text)) > 0.4 && Math.abs(lum(c2.fill) - lum(c2.text)) > 0.4, 'theme: node labels stay readable in both themes');
+      // print: the page shows the plain list instead of the figure
+      await page.emulateMedia({ media: 'print' });
+      await page.setViewportSize({ width: 700, height: 900 });
+      expect(!(await page.locator('figure.cm-graph-view').isVisible()) && (await page.locator('ul.cm-graph').isVisible()), 'print: the list replaces the figure');
+      await page.setViewportSize({ width: 1360, height: 900 });
+      await page.emulateMedia({ media: 'screen' });
+      // speed
+      const buildMs = Number(await page.locator('figure.cm-graph-view').getAttribute('data-build-ms'));
+      result.graphBuildMs = buildMs;
+      expect(Number.isFinite(buildMs), 'speed: the figure records data-build-ms');
+      if (info.nodes >= 500) expect(buildMs < 3000, 'speed: first layout of ' + info.nodes + ' files took ' + buildMs + ' ms (limit 3000)');
     }
   } catch (e) { failures.push('graph: check crashed: ' + String(e.message).split('\n').slice(0, 2).join(' ')); }
 

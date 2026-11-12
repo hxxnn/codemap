@@ -11,7 +11,7 @@
     offline: "다이어그램을 그리려면 인터넷 연결이 필요합니다. 아래는 다이어그램 원본입니다.",
     graphEmpty: "서로 연결된 파일이 없어 그래프를 그리지 않았습니다. 아래 목록을 확인하세요.", graphLabel: "파일 관계 그래프",
     groupFold: "폴더 접기", groupUnfold: "폴더 펼치기", files: function (n) { return n + "개 파일"; },
-    uses: "쓰는 파일", usedBy: "쓰이는 파일", none: "없음", keyUses: "선택한 파일이 쓰는 파일", keyUsedBy: "선택한 파일을 쓰는 파일"
+    fullscreen: "전체화면", exitFull: "전체화면 종료", uses: "쓰는 파일", usedBy: "쓰이는 파일", none: "없음", keyUses: "선택한 파일이 쓰는 파일", keyUsedBy: "선택한 파일을 쓰는 파일"
   } : {
     contents: "Contents", filter: "Filter sections", dark: "Dark mode", light: "Light mode", generated: "Generated", sources: "Files read",
     unverified: "Unverified", zoomIn: "Zoom in", zoomOut: "Zoom out", fit: "Fit width", expand: "Expand", close: "Close", legend: "Legend",
@@ -21,7 +21,7 @@
     offline: "An internet connection is needed to draw the diagrams. The diagram source is shown below.",
     graphEmpty: "No file is connected to another, so no graph was drawn. See the list below.", graphLabel: "File relation graph",
     groupFold: "Fold folder", groupUnfold: "Unfold folder", files: function (n) { return n + (n === 1 ? " file" : " files"); },
-    uses: "Uses", usedBy: "Used by", none: "None", keyUses: "Files the selected file uses", keyUsedBy: "Files that use the selected file"
+    fullscreen: "Full screen", exitFull: "Exit full screen", uses: "Uses", usedBy: "Used by", none: "None", keyUses: "Files the selected file uses", keyUsedBy: "Files that use the selected file"
   };
   function $(id) { return document.getElementById(id); }
   function isDark() {
@@ -300,7 +300,7 @@
     return "M" + sx + " " + ay + " C" + (sx + dx) + " " + (ay + off) + " " + (ex - dx) + " " + (by + off) + " " + ex + " " + by;
   }
   function buildGraph(ul) {
-    var model = readGraph(ul), edgeCount = 0;
+    var model = readGraph(ul), edgeCount = 0, t0 = performance.now();
     model.nodes.forEach(function (n) { edgeCount += n.uses.length; });
     if (!model.nodes.length || !edgeCount) {
       var note = document.createElement("p"); note.className = "cm-graph-empty"; note.textContent = T.graphEmpty;
@@ -327,7 +327,7 @@
     model.nodes.forEach(function (n) { if (!members[n.group]) { members[n.group] = []; keys.push(n.group); } members[n.group].push(n); });
     keys.sort(function (a, b) { return a < b ? -1 : a > b ? 1 : 0; });
     var cols = Math.ceil(Math.sqrt(keys.length));
-    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: {}, groupEls: {}, nodeEls: {}, edgeEls: [], aggEls: [], pos: {}, scale: 1, size: { w: 0, h: 0 }, panel: panel, pinned: null, hover: null };
+    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: {}, groupEls: {}, nodeEls: {}, edgeEls: [], aggEls: [], pos: {}, scale: 1, size: { w: 0, h: 0 }, panel: panel, stage: stage, pinned: null, hover: null };
     graphViews.push(view);
     var startFolded = model.nodes.length >= FOLD_AT;
 
@@ -366,6 +366,7 @@
     });
 
     svg.addEventListener("click", function (e) {
+      if (view.justPanned) return;
       var it = itemAt(view, e.target);
       if (it && it.type === "node") { setPinned(view, view.pinned === it.id ? null : it.id); return; }
       var tg = e.target.closest && e.target.closest(".cm-group-toggle"), key = null;
@@ -396,9 +397,32 @@
       setPinned(view, id);
       if (view.nodeEls[id].scrollIntoView) view.nodeEls[id].scrollIntoView({ block: "nearest", inline: "nearest" });
     });
-    layoutGraph(view);
-    var avail = stage.clientWidth - 28;
-    if (avail > 0 && view.size.w > avail) setGraphScale(view, Math.max(0.35, avail / view.size.w));
+    function tool(cls, label, aria, fn) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "cm-btn " + cls; b.textContent = label;
+      b.setAttribute("aria-label", aria); b.title = aria; b.addEventListener("click", fn); tools.appendChild(b); return b;
+    }
+    tool("cm-graph-zoom-out", "−", T.zoomOut, function () { zoomGraph(view, 1 / 1.25); });
+    tool("cm-graph-zoom-in", "+", T.zoomIn, function () { zoomGraph(view, 1.25); });
+    tool("cm-graph-fit", T.fit, T.fit, function () { fitGraph(view); });
+    view.fsBtn = tool("cm-graph-fs", T.fullscreen, T.fullscreen, function () { toggleFullscreen(view); });
+    // drag an empty spot to pan (mouse only; touch scrolls natively). A drag never counts as a click.
+    var drag = null;
+    stage.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button !== 0 || (e.target.closest && e.target.closest(".cm-node, .cm-group-toggle"))) return;
+      drag = { x: e.clientX, y: e.clientY, l: stage.scrollLeft, t: stage.scrollTop, moved: false };
+    });
+    window.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+      drag.moved = true; stage.classList.add("panning"); stage.scrollLeft = drag.l - dx; stage.scrollTop = drag.t - dy;
+    });
+    window.addEventListener("pointerup", function () {
+      if (drag && drag.moved) { view.justPanned = true; setTimeout(function () { view.justPanned = false; }, 0); }
+      drag = null; stage.classList.remove("panning");
+    });
+    layoutGraph(view); fitGraph(view);
+    fig.setAttribute("data-build-ms", String(Math.round(performance.now() - t0)));
     return view;
   }
   var graphViews = [];
@@ -493,12 +517,57 @@
   }
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    var full = graphViews.filter(function (v) { return v.fig.classList.contains("cm-graph-full"); })[0];
+    if (full) { toggleFullscreen(full, false); return; }
     graphViews.forEach(function (v) { if (v.pinned) setPinned(v, null); });
   });
-  function setGraphScale(view, s) {
-    view.scale = s;
-    view.svg.style.width = Math.round(view.size.w * s) + "px";
+  function applyScale(view) {
+    view.svg.style.width = Math.round(view.size.w * view.scale) + "px";
+    view.svg.style.height = Math.round(view.size.h * view.scale) + "px";
   }
+  function setGraphScale(view, s) { view.scale = s; applyScale(view); }
+  function zoomGraph(view, factor) {
+    var st = view.stage, cx = (st.scrollLeft + st.clientWidth / 2) / view.scale, cy = (st.scrollTop + st.clientHeight / 2) / view.scale;
+    var s = Math.max(0.35, Math.min(3, view.scale * factor));
+    setGraphScale(view, s);
+    st.scrollLeft = cx * s - st.clientWidth / 2; st.scrollTop = cy * s - st.clientHeight / 2;
+  }
+  // fit: the width in the page, width and height in full screen
+  function fitGraph(view) {
+    var st = view.stage, full = view.fig.classList.contains("cm-graph-full");
+    var aw = st.clientWidth - 28, ah = st.clientHeight - 28, s = aw > 0 ? aw / view.size.w : 1;
+    if (full && ah > 0) s = Math.min(s, ah / view.size.h);
+    setGraphScale(view, Math.max(0.35, Math.min(full ? 1.6 : 1, s)));
+    st.scrollLeft = 0; st.scrollTop = 0;
+  }
+  // full screen: the browser's Fullscreen API when it allows it, a fixed overlay (class cm-graph-full) in any case
+  function toggleFullscreen(view, on) {
+    var fig = view.fig, now = fig.classList.contains("cm-graph-full");
+    if (on === undefined) on = !now;
+    if (on === now) return;
+    fig.classList.toggle("cm-graph-full", on);
+    document.body.style.overflow = on ? "hidden" : "";
+    var label = on ? T.exitFull : T.fullscreen;
+    view.fsBtn.textContent = label; view.fsBtn.setAttribute("aria-label", label); view.fsBtn.title = label;
+    if (on) {
+      if (fig.requestFullscreen) {
+        var r = fig.requestFullscreen();
+        // view.native: only a native full screen may be ended by the browser's own fullscreenchange (a late event of an earlier exit must not end this one)
+        if (r && r.then) r.then(function () {
+          if (fig.classList.contains("cm-graph-full")) view.native = true;
+          else if (document.fullscreenElement === fig && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+        }, function () {});
+      }
+    } else {
+      view.native = false;
+      if (document.fullscreenElement === fig && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+    }
+    fitGraph(view);
+  }
+  document.addEventListener("fullscreenchange", function () {
+    if (document.fullscreenElement) return;
+    graphViews.forEach(function (v) { if (v.native) { v.native = false; toggleFullscreen(v, false); } });
+  });
   // positions every folder box on a grid and redraws nodes and edges for the current folded state
   function layoutGraph(view) {
     var model = view.model, FS = 12.5;
@@ -516,8 +585,7 @@
     for (i = 0; i < rowH.length; i++) { rowY[i] = y; y += rowH[i] + GAP_Y; }
     view.size = { w: x - GAP_X + MARGIN + 110, h: y - GAP_Y + MARGIN }; // 110: room for same-column edges that bulge to the right
     view.svg.setAttribute("viewBox", "0 0 " + view.size.w + " " + view.size.h);
-    view.svg.setAttribute("height", view.size.h);
-    view.svg.style.width = Math.round(view.size.w * view.scale) + "px";
+    applyScale(view);
 
     view.keys.forEach(function (k) {
       var inf = info[k], el = view.groupEls[k], gx = colX[inf.col], gy = rowY[inf.row], folded = view.collapsed[k];
