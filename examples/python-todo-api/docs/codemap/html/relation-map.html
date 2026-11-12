@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>파일 관계 지도 - todo-api</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
+<link rel="stylesheet" href="assets/codemap.css">
+</head>
+<body>
+<a class="cm-skip" href="#cm-main" id="cm-skip">Skip to content</a>
+<div class="cm-shell">
+  <aside class="cm-side">
+    <details class="cm-nav" open>
+      <summary id="cm-nav-title">Contents</summary>
+      <ul id="cm-toc"></ul>
+    </details>
+    <div class="cm-legend" id="cm-legend" hidden>
+      <h2 id="cm-legend-title">Legend</h2>
+      <ul id="cm-legend-list"></ul>
+    </div>
+    <div class="cm-tools">
+      <input type="search" id="cm-search" aria-label="Filter sections">
+      <button class="cm-btn" id="cm-theme" type="button"></button>
+    </div>
+  </aside>
+  <div class="cm-main">
+    <header class="cm-head">
+      <p class="cm-project">todo-api</p>
+      <h1>파일 관계 지도</h1>
+      <dl class="cm-stats" id="cm-stats">
+        <div><dt id="cm-l-generated">Generated</dt><dd>2026-11-12</dd></div>
+        <div><dt id="cm-l-sources">Files read</dt><dd>7</dd></div>
+        <div><dt id="cm-l-unverified">Unverified</dt><dd id="cm-unverified-count">0</dd></div>
+      </dl>
+      <button class="cm-btn primary" id="cm-present" type="button" hidden></button>
+    </header>
+<main id="cm-main">
+<p><code>app/</code> 폴더의 파이썬 파일 6개가 서로 어떤 파일을 가져다 쓰는지(import)를 코드에서 읽은 그대로 보여 줍니다.</p>
+<section class="cm-section"><h2>관계 그래프</h2>
+<ul class="cm-graph">
+  <li id="g1" data-group="app" data-kind="source">
+    <code>app/__init__.py</code> app 패키지를 표시하는 빈 파일
+    <ul></ul>
+  </li>
+  <li id="g2" data-group="app" data-kind="source">
+    <code>app/main.py</code> FastAPI 앱을 만들고 라우터를 연결함
+    <ul><li data-to="g4"></li></ul>
+  </li>
+  <li id="g3" data-group="app" data-kind="source">
+    <code>app/models.py</code> Todo 데이터 클래스와 생성 함수를 정의함
+    <ul><li data-to="g5"></li></ul>
+  </li>
+  <li id="g4" data-group="app" data-kind="source">
+    <code>app/routes.py</code> 할 일 추가와 목록 조회 API 경로를 처리함
+    <ul><li data-to="g5"></li><li data-to="g6"></li></ul>
+  </li>
+  <li id="g5" data-group="app" data-kind="source">
+    <code>app/storage.py</code> 메모리 목록에 할 일을 저장하고 꺼냄
+    <ul><li data-to="g3"></li></ul>
+  </li>
+  <li id="g6" data-group="app" data-kind="source">
+    <code>app/utils.py</code> 현재 시각을 ISO 문자열로 돌려줌
+    <ul></ul>
+  </li>
+</ul>
+</section>
+<section class="cm-section"><h2>파일 표</h2>
+<table>
+<thead><tr><th>파일</th><th>역할</th><th>쓰는 파일</th><th>쓰이는 파일</th></tr></thead>
+<tbody>
+<tr><td><code>app/__init__.py</code></td><td>app 패키지를 표시하는 빈 파일</td><td>—</td><td>—</td></tr>
+<tr><td><code>app/main.py</code></td><td>FastAPI 앱을 만들고 라우터를 연결함</td><td><code>app/routes.py</code></td><td>—</td></tr>
+<tr><td><code>app/models.py</code></td><td>Todo 데이터 클래스와 생성 함수를 정의함</td><td><code>app/storage.py</code></td><td><code>app/storage.py</code></td></tr>
+<tr><td><code>app/routes.py</code></td><td>할 일 추가와 목록 조회 API 경로를 처리함</td><td><code>app/storage.py</code>, <code>app/utils.py</code></td><td><code>app/main.py</code></td></tr>
+<tr><td><code>app/storage.py</code></td><td>메모리 목록에 할 일을 저장하고 꺼냄</td><td><code>app/models.py</code></td><td><code>app/models.py</code>, <code>app/routes.py</code></td></tr>
+<tr><td><code>app/utils.py</code></td><td>현재 시각을 ISO 문자열로 돌려줌</td><td>—</td><td><code>app/routes.py</code></td></tr>
+</tbody>
+</table>
+</section>
+<section class="cm-section"><h2>많이 쓰이는 파일</h2>
+<ul>
+<li><code>app/storage.py</code> — 2곳에서 씀 (<code>app/models.py</code>, <code>app/routes.py</code>)</li>
+<li><code>app/models.py</code> — 1곳에서 씀 (<code>app/storage.py</code>)</li>
+<li><code>app/routes.py</code> — 1곳에서 씀 (<code>app/main.py</code>)</li>
+<li><code>app/utils.py</code> — 1곳에서 씀 (<code>app/routes.py</code>)</li>
+</ul>
+</section>
+<section class="cm-section"><h2>순환 의존</h2>
+<p>파일 2개로 이루어진 순환 하나가 있습니다: <code>app/models.py</code> 와 <code>app/storage.py</code> 가 서로를 가져옵니다.</p>
+<ul>
+<li>예: <code>app/models.py</code> → <code>app/storage.py</code> → <code>app/models.py</code></li>
+</ul>
+<p>두 파일 모두 코드 주석에 의도한 순환이라고 적혀 있습니다.</p>
+</section>
+<section class="cm-section"><h2>다루지 않은 범위</h2>
+<ul>
+<li><code>app/</code> 아래 파이썬 파일 6개와 <code>pyproject.toml</code> 을 모두 읽었습니다. 소스 폴더는 이게 전부입니다.</li>
+<li>테스트 파일은 저장소에 없어 표에 넣지 않았습니다.</li>
+<li>동적 import, 리플렉션, 런타임 플러그인 로딩은 코드에서 찾지 못했습니다.</li>
+<li><code>from app import storage</code> 는 패키지 <code>app</code> 도 함께 불러오지만, <code>app/__init__.py</code> 가 비어 있어 선은 그리지 않았습니다.</li>
+<li>외부 패키지(<code>fastapi</code>, <code>dataclasses</code>, <code>datetime</code>)는 프로젝트 안의 파일이 아니라서 뺐습니다.</li>
+</ul>
+</section>
+</main>
+    <footer class="cm-foot">Generated by codemap</footer>
+  </div>
+</div>
+<div class="cm-deck" id="cm-deck" hidden>
+  <div class="cm-progress"><span></span></div>
+  <div class="cm-deck-bar">
+    <button class="cm-btn" id="cm-prev" type="button"></button>
+    <span id="cm-count" aria-live="polite"></span>
+    <button class="cm-btn" id="cm-next" type="button"></button>
+    <button class="cm-btn" id="cm-exit" type="button"></button>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script src="assets/codemap.js"></script>
+</body>
+</html>
