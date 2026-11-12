@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import install_into_project as ip  # noqa: E402
 
 REAL_SOURCE = Path(__file__).resolve().parents[2]
-SKILLS = ["architecture-overview", "dependency-graph", "mindmap", "design-doc",
+SKILLS = ["architecture-overview", "dependency-graph", "mindmap", "relation-map", "design-doc",
           "sequence-flow", "present", "codemap-refresh"]
 
 
@@ -109,3 +109,27 @@ def test_missing_target_directory_is_a_usage_error(tmp_path):
     code, lines = ip.install(src, tmp_path / "does-not-exist")
     assert code == 2
     assert any("not a directory" in line for line in lines)
+
+
+def test_relation_map_is_wired_into_the_command_and_the_shared_rules():
+    cmd = (REAL_SOURCE / "commands" / "codemap.md").read_text(encoding="utf-8")
+    hint = next(line for line in cmd.splitlines() if line.startswith("argument-hint:"))
+    assert "relations" in hint
+    assert "architecture, deps, mindmap, relations, sequence, doc, present" in cmd  # `all` = 7 skills
+    assert "`relations`" in cmd and "`relation-map`" in cmd
+    rules = (REAL_SOURCE / "skills" / "_shared" / "language-and-output.md").read_text(encoding="utf-8")
+    assert "| relation-map | `relation-map.md` |" in rules
+    assert "ul class=\"cm-graph\"" in rules
+
+
+def test_relation_map_skill_declares_its_name_and_when_to_use_it():
+    text = (REAL_SOURCE / "skills" / "relation-map" / "SKILL.md").read_text(encoding="utf-8")
+    assert text.startswith("---\nname: relation-map\ndescription: Use when")
+    for needle in ("relation-map.md", "cm-graph", "data-group", "data-kind", "data-to", "--no-html"):
+        assert needle in text, needle
+
+
+def test_refresh_knows_how_to_regenerate_relation_map():
+    text = (REAL_SOURCE / "skills" / "codemap-refresh" / "SKILL.md").read_text(encoding="utf-8")
+    assert "`relation-map`" in text.split("run the skill named in its front matter")[1]
+    assert "mindmap, relation-map, sequence-flow, design-doc, present" in text
