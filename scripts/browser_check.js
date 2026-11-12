@@ -2,11 +2,12 @@
 // Dev tool: open a generated HTML page in a real browser and check its behaviour.
 // Needs Playwright (`npm i -D playwright` or a global install) with a Chromium browser.
 //
-//   node scripts/browser_check.js <page.html> [--deck] [--offline]
+//   node scripts/browser_check.js <page.html> [--deck] [--offline] [--graph]
 //
 // Default checks: diagrams render, no console errors, zoom, section collapse (aria-expanded),
 // theme toggle re-renders diagrams, section filter, print layout. --deck: presentation mode (pages with
-// .cm-slide sections). --offline: block the CDN and expect the diagram fallback.
+// .cm-slide sections). --offline: block the CDN and expect the diagram fallback. --graph: the relation-map
+// graph (pages with ul.cm-graph): drawing, folding, hover/pin focus, full screen.
 // Exit code 1 if any check fails; the last line is a JSON summary.
 const { chromium } = require('playwright');
 const path = require('path');
@@ -15,7 +16,8 @@ const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith('--'));
 const deck = args.includes('--deck');
 const offline = args.includes('--offline');
-if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offline]'); process.exit(2); }
+const graph = args.includes('--graph');
+if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offline] [--graph]'); process.exit(2); }
 
 (async () => {
   const browser = await chromium.launch();
@@ -86,6 +88,62 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
     await page.setViewportSize({ width: 1360, height: 900 });
     await page.emulateMedia({ media: 'screen' });
     expect(await page.evaluate(() => /^\d{4}-\d{2}-\d{2}/.test(document.querySelector('.cm-stats dd').textContent)), 'header shows the generated date');
+  }
+
+  if (graph) {
+    await page.evaluate(() => document.querySelectorAll('.cm-section.collapsed').forEach((sec) => sec.classList.remove('collapsed')));
+    const info = await page.evaluate(() => {
+      const lis = Array.from(document.querySelectorAll('ul.cm-graph > li'));
+      const edges = [];
+      lis.forEach((li) => li.querySelectorAll(':scope > ul > li[data-to]').forEach((e) => edges.push([li.id, e.getAttribute('data-to')])));
+      return { nodes: lis.length, ids: lis.map((li) => li.id), edges, groups: Array.from(new Set(lis.map((li) => li.getAttribute('data-group')))) };
+    });
+    const uniqueEdges = new Set(info.edges.map((e) => e.join('>'))).size;
+    result.graph = { nodes: info.nodes, edges: uniqueEdges };
+    if (uniqueEdges === 0) {
+      expect((await page.locator('.cm-graph-empty').count()) === 1, 'graph: a graph without edges shows the empty-state note');
+      expect((await page.locator('svg.cm-graph-svg').count()) === 0, 'graph: nothing is drawn when there are no edges');
+      expect(await page.locator('ul.cm-graph').isVisible(), 'graph: the plain list stays visible when there is nothing to draw');
+    } else {
+      await page.waitForSelector('svg.cm-graph-svg', { timeout: 10000 }).catch(() => {});
+      expect((await page.locator('svg.cm-graph-svg').count()) === 1, 'graph: one svg for the list');
+      expect((await page.locator('g.cm-node').count()) === info.nodes, 'graph: one g.cm-node per list item');
+      expect(!(await page.locator('ul.cm-graph').isVisible()), 'graph: the plain list is hidden on screen');
+      const edgeCheck = await page.evaluate((ids) => {
+        const known = new Set(ids);
+        const ps = Array.from(document.querySelectorAll('path.cm-edge:not(.cm-agg)'));
+        return { count: ps.length, dangling: ps.filter((q) => !known.has(q.getAttribute('data-from')) || !known.has(q.getAttribute('data-to'))).length };
+      }, info.ids);
+      expect(edgeCheck.count === uniqueEdges, 'graph: one path.cm-edge per edge (' + edgeCheck.count + ' vs ' + uniqueEdges + ')');
+      expect(edgeCheck.dangling === 0, 'graph: every edge joins two known nodes');
+      const groups = await page.$$eval('g.cm-group', (gs) => gs.map((g) => g.getAttribute('data-group')).sort());
+      expect(JSON.stringify(groups) === JSON.stringify(info.groups.slice().sort()), 'graph: groups are keyed by the full folder path');
+      const folded = info.nodes >= 80;
+      const collapsedGroups = await page.locator('g.cm-group.collapsed').count();
+      const visibleNodes = () => page.evaluate(() => Array.from(document.querySelectorAll('g.cm-node')).filter((n) => n.getBoundingClientRect().width > 0).length);
+      if (folded) {
+        expect(collapsedGroups === groups.length, 'graph: 80+ files start with every folder box folded');
+        expect((await page.locator('path.cm-edge.cm-agg').count()) > 0, 'graph: folded boxes are joined by aggregate edges');
+        expect((await visibleNodes()) === 0, 'graph: no file node shows while folded');
+        await page.locator('g.cm-group.collapsed rect.cm-group-box').first().click();
+        expect((await page.locator('g.cm-group.collapsed').count()) === groups.length - 1, 'graph: clicking a folded box expands it');
+        expect((await visibleNodes()) > 0, 'graph: the expanded box shows its files');
+      } else {
+        expect(collapsedGroups === 0, 'graph: fewer than 80 files start expanded');
+        expect((await visibleNodes()) === info.nodes, 'graph: every file node shows');
+        const overlaps = await page.evaluate(() => {
+          const r = Array.from(document.querySelectorAll('g.cm-node')).map((n) => n.getBoundingClientRect());
+          let bad = 0;
+          for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
+            const w = Math.min(r[i].right, r[j].right) - Math.max(r[i].left, r[j].left);
+            const h = Math.min(r[i].bottom, r[j].bottom) - Math.max(r[i].top, r[j].top);
+            if (w > 1 && h > 1) bad++;
+          }
+          return bad;
+        });
+        expect(overlaps === 0, 'graph: ' + overlaps + ' overlapping node pair(s)');
+      }
+    }
   }
 
   if (deck) {

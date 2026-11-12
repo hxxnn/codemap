@@ -1,4 +1,4 @@
-/* codemap html assets v5 */
+/* codemap html assets v6 */
   :root {
     --paper: #f5f6f8; --side: #eef0f5; --canvas: #ffffff; --grid: #d9dde7;
     --ink: #141a26; --text: #39435a; --muted: #5b677f; --rule: #dce0e8;
@@ -140,6 +140,36 @@
   .cm-presenting .cm-slide ul.cm-tree summary, .cm-presenting .cm-slide ul.cm-tree .cm-leaf { padding-top: 2px; padding-bottom: 2px; }
   .cm-presenting .cm-tree-tools { display: none; }
 
+  /* relation graph (relation-map.md): the page script draws an SVG from <ul class="cm-graph">; the list stays as the print/no-script fallback */
+  figure.cm-graph-view { position: relative; margin: 18px 0 24px; border: 1px solid var(--rule); border-radius: 14px; background: var(--canvas); overflow: hidden; }
+  .cm-graph-tools { position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; gap: 6px; }
+  .cm-graph-tools:empty, .cm-graph-panel:empty { display: none; }
+  .cm-graph-stage { overflow: auto; max-height: 72vh; padding: 14px; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 20px 20px; }
+  svg.cm-graph-svg { display: block; max-width: none; font: 12.5px/1 var(--mono); }
+  figure.cm-graph-view + ul.cm-graph { display: none; }
+  .cm-graph-empty { color: var(--muted); }
+  svg.cm-graph-svg .cm-off { display: none; }
+  .cm-group-box { fill: color-mix(in srgb, var(--accent) 5%, var(--canvas)); stroke: var(--rule); stroke-width: 1.5; }
+  .cm-group.collapsed .cm-group-box { cursor: pointer; fill: var(--accent-soft); }
+  .cm-group-title { fill: var(--ink); font: 650 13px/1 var(--mono); }
+  .cm-group-count { fill: var(--muted); font: 11px/1 var(--font); }
+  .cm-group-title, .cm-group-count { pointer-events: none; }
+  .cm-group-toggle { cursor: pointer; }
+  .cm-group-toggle rect { fill: transparent; stroke: transparent; }
+  .cm-group-toggle:hover rect, .cm-group-toggle:focus-visible rect { fill: var(--accent-soft); stroke: var(--accent); }
+  .cm-group-toggle text { fill: var(--muted); font-size: 14px; }
+  .cm-node { cursor: pointer; }
+  .cm-node-box { fill: var(--canvas); stroke: var(--accent); stroke-width: 1.5; }
+  .cm-node[data-kind="test"] .cm-node-box { fill: var(--c-external-bg); stroke: var(--c-external); }
+  .cm-node[data-kind="unverified"] .cm-node-box { fill: var(--c-inferred-bg); stroke: var(--c-inferred); stroke-dasharray: 5 3; }
+  .cm-node-label { fill: var(--ink); }
+  .cm-node:focus-visible .cm-node-box { stroke-width: 3; }
+  path.cm-edge { fill: none; stroke: var(--muted); stroke-width: 1.4; opacity: .55; marker-end: url(#cm-arrow); }
+  path.cm-edge.cm-agg { stroke-width: 2; opacity: .7; }
+  .cm-agg-count { fill: var(--ink); font: 650 11px/1 var(--font); paint-order: stroke; stroke: var(--canvas); stroke-width: 4px; }
+  path.cm-arrow { fill: var(--muted); }
+  path.cm-arrow-hot { fill: var(--accent); }
+
   footer.cm-foot { max-width: 62rem; margin: 56px auto 0; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13.5px; }
 
   @media (max-width: 900px) {
@@ -155,6 +185,8 @@
   @media print {
     body { background: #fff; color: #222; font-size: 11pt; }
     .cm-toolbar, .cm-collapse, .cm-skip, .cm-deck { display: none !important; }
+    figure.cm-graph-view { display: none !important; }
+    figure.cm-graph-view + ul.cm-graph { display: block !important; }
     .cm-shell { display: flex; flex-direction: column; }
     .cm-main { padding: 0; order: 1; }
     /* the legend stays: it explains the diagram colors */
