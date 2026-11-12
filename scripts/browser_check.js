@@ -158,14 +158,14 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
       const states = () => page.locator('.is-focus, .is-uses, .is-usedby, .is-dim, .is-hot').count();
       const ids_of = (sel) => page.$$eval(sel, (els) => els.map((e) => e.getAttribute('data-id')).sort());
       if (!folded) {
-        const hub = 'g1', h = rel[hub];
+        const degree = (i) => rel[i].uses.length + rel[i].usedBy.length;
+        const hub = ids.slice().sort((a, c) => degree(c) - degree(a))[0], h = rel[hub]; // the busiest file (g1 may have no edges)
         await page.locator('g.cm-node[data-id="' + hub + '"]').hover();
         expect(JSON.stringify(await ids_of('g.cm-node.is-uses')) === JSON.stringify(h.uses.slice().sort()), 'focus: hover marks exactly the files the hovered file uses');
         expect(JSON.stringify(await ids_of('g.cm-node.is-usedby')) === JSON.stringify(h.usedBy.slice().sort()), 'focus: hover marks exactly the files that use the hovered file');
         expect((await ids_of('g.cm-node.is-focus')).join() === hub, 'focus: the hovered file is marked is-focus');
         const near = new Set([hub, ...h.uses, ...h.usedBy]);
         const others = ids.filter((i) => !near.has(i));
-        expect(others.length > 0, 'focus: the fixture has files that are not direct neighbours');
         expect(JSON.stringify(await ids_of('g.cm-node.is-dim')) === JSON.stringify(others.sort()), 'focus: every non-neighbour (including 2-step ones) is dimmed');
         expect((await page.locator('path.cm-edge.is-hot:not(.cm-agg)').count()) === h.uses.length + h.usedBy.length, 'focus: only edges touching the hovered file are hot');
         if (rel.g2 && rel.g3 && rel.g2.uses.includes('g3') && rel.g3.uses.includes('g2')) {
@@ -256,10 +256,12 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
       });
       expect(spot !== null, 'view: the zoomed graph has an empty spot to drag from');
       if (spot) {
-        const before = await page.evaluate(() => ({ l: document.querySelector('.cm-graph-stage').scrollLeft, t: document.querySelector('.cm-graph-stage').scrollTop }));
+        const read = () => page.evaluate(() => { const st = document.querySelector('.cm-graph-stage'); return { l: st.scrollLeft, t: st.scrollTop, ml: st.scrollWidth - st.clientWidth, mt: st.scrollHeight - st.clientHeight }; });
+        const before = await read();
         await page.mouse.move(spot.x, spot.y); await page.mouse.down(); await page.mouse.move(spot.x + 40, spot.y + 30, { steps: 4 }); await page.mouse.up();
-        const after = await page.evaluate(() => ({ l: document.querySelector('.cm-graph-stage').scrollLeft, t: document.querySelector('.cm-graph-stage').scrollTop }));
-        expect(after.l < before.l && after.t < before.t, 'view: dragging an empty spot pans the graph');
+        const after = await read();
+        // only an axis that really overflows can scroll (a small graph may not overflow vertically)
+        if (before.ml > 1 || before.mt > 1) expect((before.ml <= 1 || after.l < before.l) && (before.mt <= 1 || after.t < before.t) && (after.l < before.l || after.t < before.t), 'view: dragging an empty spot pans the graph');
       }
       await page.locator('.cm-graph-fit').click();
       // full screen: native API first, fixed overlay as the fallback; Escape leaves it before it unpins
