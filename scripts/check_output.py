@@ -11,16 +11,18 @@ import re
 import subprocess
 import sys
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 
 REQUIRED_KEYS = ("codemap", "skill", "generated_at", "sources")
-NO_DIAGRAM_SKILLS = {"design-doc", "present", "mindmap"}  # mindmap is a tree list, not a diagram
+NO_DIAGRAM_SKILLS = {"design-doc", "present", "mindmap", "relation-map"}  # mindmap is a tree list, not a diagram
 SOURCE_EXTS = (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".md", ".json", ".toml")
 UNVERIFIED = "<!-- codemap:unverified -->"
 # Generated/vendored folders legitimately do not exist in a fresh checkout.
 GENERATED_DIRS = {"dist", "build", "node_modules", ".venv", "venv", "target", "__pycache__", "out"}
-ARTIFACT_NAMES = {"architecture.md", "dependency-graph.md", "mindmap.md", "sequence-flow.md", "design-doc.md", "present.md"}
+ARTIFACT_NAMES = {"architecture.md", "dependency-graph.md", "mindmap.md", "sequence-flow.md", "design-doc.md", "present.md", "relation-map.md"}
 FENCE = re.compile(r"^```")
+GRAPH_KINDS = {"source", "test", "unverified"}
 
 
 def parse_front_matter(text):
@@ -164,6 +166,110 @@ def check_html(html_path):
     return problems
 
 
+class _GraphParser(HTMLParser):
+    """Collects the nodes of <ul class="cm-graph"> (the relation-map data list)."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.nodes = []
+        self._in_graph = False
+        self._depth = 0
+        self._cur = None
+        self._in_code = False
+        self._buf = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "ul":
+            if not self._in_graph and "cm-graph" in (a.get("class") or "").split():
+                self._in_graph, self._depth = True, 1
+            elif self._in_graph:
+                self._depth += 1
+        elif self._in_graph and tag == "li":
+            if self._depth == 1:
+                self._cur = {"id": a.get("id", ""), "group": a.get("data-group", ""), "kind": a.get("data-kind", ""),
+                             "path": None, "uses": []}
+                self.nodes.append(self._cur)
+            elif self._depth == 2 and self._cur is not None and "data-to" in a:
+                self._cur["uses"].append(a["data-to"])
+        elif self._in_graph and tag == "code" and self._cur is not None and self._cur["path"] is None:
+            self._in_code, self._buf = True, []
+
+    def handle_endtag(self, tag):
+        if tag == "ul" and self._in_graph:
+            self._depth -= 1
+            if self._depth == 0:
+                self._in_graph, self._cur = False, None
+        elif tag == "code" and self._in_code:
+            self._in_code = False
+            self._cur["path"] = "".join(self._buf).strip()
+
+    def handle_data(self, data):
+        if self._in_code:
+            self._buf.append(data)
+
+
+def parse_graph_html(text):
+    """Return one dict per graph node: id, group, kind, path (first <code>), uses (the data-to ids)."""
+    parser = _GraphParser()
+    parser.feed(text)
+    for node in parser.nodes:
+        node["path"] = node["path"] or ""
+    return parser.nodes
+
+
+def parse_relation_table(md_text):
+    """Map path -> {"uses": [...], "used_by": [...]} from the file table (columns by position)."""
+    rows = {}
+    for line in md_text.splitlines():
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        first = re.fullmatch(r"`([^`]+)`", cells[0])
+        if first:
+            rows[first.group(1)] = {"uses": re.findall(r"`([^`]+)`", cells[2]), "used_by": re.findall(r"`([^`]+)`", cells[3])}
+    return rows
+
+
+def check_relation_graph(html_path, md_path, fixture_dir):
+    """Validate the relation-map graph data and cross-check it against the Markdown file table."""
+    nodes = parse_graph_html(Path(html_path).read_text(encoding="utf-8"))
+    problems, ids = [], {}
+    for n in nodes:
+        if n["id"] in ids:
+            problems.append(f"{html_path}: duplicate id {n['id']}")
+        ids[n["id"]] = n
+        if not n["group"]:
+            problems.append(f"{html_path}: node {n['id']} lacks data-group")
+        if n["kind"] not in GRAPH_KINDS:
+            problems.append(f"{html_path}: node {n['id']} has invalid data-kind '{n['kind']}'")
+        if not n["path"]:
+            problems.append(f"{html_path}: node {n['id']} has no <code> path")
+        elif not _exists(n["path"], fixture_dir):
+            problems.append(f"{html_path}: node path does not exist: {n['path']}")
+    edges = set()
+    for n in nodes:
+        for target in n["uses"]:
+            if target == n["id"]:
+                problems.append(f"{html_path}: self edge on {n['id']}")
+            elif target not in ids:
+                problems.append(f"{html_path}: dangling edge {n['id']} -> {target}")
+            else:
+                edges.add((n["path"], ids[target]["path"]))
+    table = parse_relation_table(Path(md_path).read_text(encoding="utf-8"))
+    table_edges = {(p, t) for p, row in table.items() for t in row["uses"]}
+    used_by_edges = {(u, p) for p, row in table.items() for u in row["used_by"]}
+    for a, b in sorted(edges - table_edges):
+        problems.append(f"{html_path}: mismatch, graph has {a} -> {b} but the table does not")
+    for a, b in sorted(table_edges - edges):
+        problems.append(f"{html_path}: mismatch, table has {a} -> {b} but the graph does not")
+    if used_by_edges != table_edges:
+        problems.append(f"{md_path}: the used-by column does not invert the uses column")
+    return problems
+
+
 def chromium_path():
     """Browser for --render: $CODEMAP_CHROMIUM, else the sandbox default if present, else None (let puppeteer decide)."""
     env = os.environ.get("CODEMAP_CHROMIUM")
@@ -209,6 +315,13 @@ def main(argv):
                     problems.append(f"{md}: mermaid block {i} failed to render: {err}")
     for html in sorted((output_dir / "html").glob("*.html")):
         problems += check_html(html)
+    graph = output_dir / "html" / "relation-map.html"
+    if graph.is_file():
+        graph_md = output_dir / "relation-map.md"
+        if graph_md.is_file():
+            problems += check_relation_graph(graph, graph_md, fixture_dir)
+        else:
+            problems.append(f"{graph}: relation-map.md is missing")
     for p in problems:
         print(p)
     return 1 if problems else 0

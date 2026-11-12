@@ -263,3 +263,97 @@ def test_slashed_code_phrases_are_not_paths_but_real_looking_paths_still_are(tmp
     assert any("nowhere/" in p for p in co.check_file(ghost_folder, fx))
     ghost_file = write(tmp_path, "d.md", BLOCK + "See `lib/util.py`.\n")
     assert any("lib/util.py" in p for p in co.check_file(ghost_file, fx))
+
+
+# ---- relation-map -----------------------------------------------------------
+
+def graph_html(nodes):
+    items = []
+    for nid, group, kind, path, to in nodes:
+        kids = "".join(f'<li data-to="{t}"></li>' for t in to)
+        items.append(f'<li id="{nid}" data-group="{group}" data-kind="{kind}"><code>{path}</code> 역할<ul>{kids}</ul></li>')
+    return '<ul class="cm-graph">' + "".join(items) + "</ul>"
+
+
+def rel_md(rows):
+    def cell(paths):
+        return ", ".join(f"`{p}`" for p in paths) or "—"
+    head = "| 파일 | 역할 | 쓰는 파일 | 쓰이는 파일 |\n|---|---|---|---|\n"
+    return head + "".join(f"| `{p}` | 역할 | {cell(u)} | {cell(b)} |\n" for p, u, b in rows)
+
+
+def rel_setup(tmp_path, nodes, rows, files=("src/a.py", "src/b.py")):
+    fx = fixture(tmp_path)
+    for f in files:
+        p = fx / f
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x\n", encoding="utf-8")
+    html = tmp_path / "relation-map.html"
+    html.write_text(f"<main>{graph_html(nodes)}</main>", encoding="utf-8")
+    md = write(tmp_path, "relation-map.md", rel_md(rows), skill="relation-map")
+    return html, md, fx
+
+
+GOOD_NODES = [("g1", "src", "source", "src/a.py", ["g2"]), ("g2", "src", "source", "src/b.py", [])]
+GOOD_ROWS = [("src/a.py", ["src/b.py"], []), ("src/b.py", [], ["src/a.py"])]
+
+
+def test_relation_graph_valid_passes(tmp_path):
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, GOOD_ROWS)
+    assert co.check_relation_graph(html, md, fx) == []
+
+
+def test_relation_graph_dangling_edge_is_reported(tmp_path):
+    nodes = [("g1", "src", "source", "src/a.py", ["g9"]), GOOD_NODES[1]]
+    html, md, fx = rel_setup(tmp_path, nodes, GOOD_ROWS)
+    assert any("dangling" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_duplicate_id_is_reported(tmp_path):
+    nodes = [GOOD_NODES[0], ("g1", "src", "source", "src/b.py", [])]
+    html, md, fx = rel_setup(tmp_path, nodes, GOOD_ROWS)
+    assert any("duplicate id" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_self_edge_is_reported(tmp_path):
+    nodes = [("g1", "src", "source", "src/a.py", ["g1"]), GOOD_NODES[1]]
+    html, md, fx = rel_setup(tmp_path, nodes, GOOD_ROWS)
+    assert any("self" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_ghost_node_path_is_reported(tmp_path):
+    nodes = [GOOD_NODES[0], ("g2", "src", "source", "src/ghost.py", [])]
+    html, md, fx = rel_setup(tmp_path, nodes, GOOD_ROWS)
+    assert any("does not exist" in p and "src/ghost.py" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_bad_kind_or_missing_group_is_reported(tmp_path):
+    html, md, fx = rel_setup(tmp_path, [("g1", "src", "weird", "src/a.py", []), GOOD_NODES[1]], GOOD_ROWS)
+    assert any("data-kind" in p for p in co.check_relation_graph(html, md, fx))
+    html, md, fx = rel_setup(tmp_path, [("g1", "", "source", "src/a.py", []), GOOD_NODES[1]], GOOD_ROWS)
+    assert any("data-group" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_must_match_markdown_table(tmp_path):
+    rows = [("src/a.py", [], []), ("src/b.py", [], [])]  # table lacks the a->b edge the graph has
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, rows)
+    assert any("mismatch" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_table_used_by_must_invert_uses(tmp_path):
+    rows = [("src/a.py", ["src/b.py"], []), ("src/b.py", [], [])]  # b should list a as a user
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, rows)
+    assert any("used-by" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_paths_with_spaces_and_korean_work(tmp_path):
+    nodes = [("g1", "src", "source", "src/내 파일 1.py", ["g2"]), GOOD_NODES[1]]
+    rows = [("src/내 파일 1.py", ["src/b.py"], []), ("src/b.py", [], ["src/내 파일 1.py"])]
+    html, md, fx = rel_setup(tmp_path, nodes, rows, files=("src/내 파일 1.py", "src/b.py"))
+    assert co.check_relation_graph(html, md, fx) == []
+    assert co.parse_graph_html(html.read_text(encoding="utf-8"))[0]["path"] == "src/내 파일 1.py"
+
+
+def test_relation_map_markdown_needs_no_diagram(tmp_path):
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, GOOD_ROWS)
+    assert co.check_file(md, fx) == []
