@@ -34,12 +34,13 @@ Claude Code에서:
 /codemap
 ```
 
-인자 없이 실행하면 **핵심 3종**(아키텍처 개요, 실행 흐름, 설계 문서)을 만듭니다. 소스 파일이 30개 이상이거나 순환 의존이 발견되면 의존성 그래프도 함께 만듭니다. 전부 만들려면 `/codemap all`을 쓰세요(구조 트리와 발표 개요까지 포함). 하나만 고를 수도 있습니다. HTML 페이지는 기본으로 함께 만들어지고, 마크다운만 원하면 `--no-html`을 붙입니다.
+인자 없이 실행하면 **핵심 3종**(아키텍처 개요, 실행 흐름, 설계 문서)을 만듭니다. 소스 파일이 30개 이상이거나 순환 의존이 발견되면 의존성 그래프도 함께 만듭니다. 전부 만들려면 `/codemap all`을 쓰세요(구조 트리, 파일 관계 지도, 발표 개요까지 포함). 하나만 고를 수도 있습니다. HTML 페이지는 기본으로 함께 만들어지고, 마크다운만 원하면 `--no-html`을 붙입니다.
 
 ```
 /codemap architecture --no-html
 /codemap deps
 /codemap mindmap
+/codemap relations
 /codemap sequence
 /codemap doc
 /codemap present
@@ -69,12 +70,13 @@ python3 codemap/scripts/install_into_project.py /path/to/your/project
 | `/codemap architecture` | `architecture-overview` | `architecture.md` — 시스템 → 컨테이너 → 컴포넌트 순으로 확대하는 C4 방식 |
 | `/codemap deps` | `dependency-graph` | `dependency-graph.md` — 실제 import 기반 그래프, 순환 의존 표시 (기본 실행에는 파일이 많거나 순환이 있을 때만 포함) |
 | `/codemap mindmap` | `mindmap` | `mindmap.md` — 기능·파일·함수를 접고 펼 수 있는 구조 트리로 (`all`에 포함) |
+| `/codemap relations` | `relation-map` | `relation-map.md` — 파일끼리 import로 이어진 관계 표. HTML에서는 전체화면 그래프가 되고, 파일에 마우스를 올리면 그 파일이 쓰는 파일과 그 파일을 쓰는 파일이 강조됩니다 (`all`에 포함) |
 | `/codemap sequence` | `sequence-flow` | `sequence-flow.md` — 코드를 따라가며 그린 실행 흐름 2~3개 |
 | `/codemap doc` | `design-doc` | `design-doc.md` — 설계 개요, 핵심 선택, "이 순서로 읽으세요" 가이드 |
 | `/codemap present` | `present` | `present.md` — 다른 결과물로 만든 5~7장 발표 개요 (`all`에 포함) |
 | `/codemap refresh` | `codemap-refresh` | 코드가 바뀐 파일만 갱신하고, 직접 수정한 부분은 보존 |
 
-마크다운 파일마다 `docs/codemap/html/<이름>.html`이 함께 만들어집니다(`--no-html`을 붙이면 만들지 않습니다). 목차 사이드바, 색 범례, 줄어들지 않고 스크롤되는 확대·축소 다이어그램, 접을 수 있는 섹션, 검색, 라이트/다크 전환, 인쇄용 레이아웃이 한 페이지에 들어 있습니다(스타일과 스크립트는 `html/assets/` 폴더를 공유하므로 `html/` 폴더째로 옮기세요). 발표 개요(`present.html`)에는 슬라이드 모드(방향키로 이동, `Esc`로 종료)가 있습니다. 글꼴은 버전을 고정해 CDN에서 불러오는 Pretendard이고, 오프라인에서는 시스템 글꼴로 대체되며 다이어그램은 원본과 안내 문구로 보입니다.
+마크다운 파일마다 `docs/codemap/html/<이름>.html`이 함께 만들어집니다(`--no-html`을 붙이면 만들지 않습니다). 목차 사이드바, 색 범례, 줄어들지 않고 스크롤되는 확대·축소 다이어그램, 접을 수 있는 섹션, 검색, 라이트/다크 전환, 인쇄용 레이아웃이 한 페이지에 들어 있습니다(스타일과 스크립트는 `html/assets/` 폴더를 공유하므로 `html/` 폴더째로 옮기세요). 파일 관계 지도(`relation-map.html`)는 폴더별 상자와 화살표로 그려지는 인터랙티브 그래프입니다(마우스를 올리거나 클릭해서 직접 연결된 파일만 강조, 전체화면, 확대·이동, 파일이 80개 이상이면 폴더 상자를 접은 채 시작). 발표 개요(`present.html`)에는 슬라이드 모드(방향키로 이동, `Esc`로 종료)가 있습니다. 글꼴은 버전을 고정해 CDN에서 불러오는 Pretendard이고, 오프라인에서는 시스템 글꼴로 대체되며 다이어그램은 원본과 안내 문구로 보입니다.
 
 ## 신뢰성
 
@@ -85,7 +87,7 @@ python3 codemap/scripts/install_into_project.py /path/to/your/project
 
 ## 예시
 
-**[온라인 예시 갤러리 바로 보기](https://hxxnn.github.io/codemap/)** — 이 저장소의 작은 샘플 프로젝트로 만든 결과물입니다. 저장소를 받은 뒤 `index.html`을 브라우저로 열면 예시 18개를 한곳에서 볼 수 있습니다.
+**[온라인 예시 갤러리 바로 보기](https://hxxnn.github.io/codemap/)** — 이 저장소의 작은 샘플 프로젝트로 만든 결과물입니다. 저장소를 받은 뒤 `index.html`을 브라우저로 열면 예시 21개를 한곳에서 볼 수 있습니다.
 
 - [`examples/python-todo-api/docs/codemap/`](examples/python-todo-api/docs/codemap/)
 - [`examples/ts-notes-cli/docs/codemap/`](examples/ts-notes-cli/docs/codemap/)
