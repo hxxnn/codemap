@@ -357,3 +357,66 @@ def test_relation_graph_paths_with_spaces_and_korean_work(tmp_path):
 def test_relation_map_markdown_needs_no_diagram(tmp_path):
     html, md, fx = rel_setup(tmp_path, GOOD_NODES, GOOD_ROWS)
     assert co.check_file(md, fx) == []
+
+
+# ---- review fixes: the checker compares the set of files, not only edges -----
+
+def test_relation_graph_node_missing_from_table_is_reported(tmp_path):
+    nodes = GOOD_NODES + [("g3", "src", "source", "src/c.py", [])]
+    html, md, fx = rel_setup(tmp_path, nodes, GOOD_ROWS, files=("src/a.py", "src/b.py", "src/c.py"))
+    assert any("missing from the table" in p and "src/c.py" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_table_row_missing_from_graph_is_reported(tmp_path):
+    rows = GOOD_ROWS + [("src/c.py", [], [])]
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, rows, files=("src/a.py", "src/b.py", "src/c.py"))
+    assert any("missing from the graph" in p and "src/c.py" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_without_a_list_is_reported(tmp_path):
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, GOOD_ROWS)
+    html.write_text("<main><p>no list here</p></main>", encoding="utf-8")
+    assert any("no cm-graph list" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_ids_must_exist_and_paths_must_be_unique(tmp_path):
+    html, md, fx = rel_setup(tmp_path, [("", "src", "source", "src/a.py", []), GOOD_NODES[1]], GOOD_ROWS)
+    assert any("has no id" in p for p in co.check_relation_graph(html, md, fx))
+    html, md, fx = rel_setup(tmp_path, [GOOD_NODES[0], ("g2", "src", "source", "src/a.py", [])], GOOD_ROWS)
+    assert any("duplicate path" in p for p in co.check_relation_graph(html, md, fx))
+
+
+def test_relation_graph_group_must_be_the_folder_of_the_path(tmp_path):
+    html, md, fx = rel_setup(tmp_path, [("g1", "other", "source", "src/a.py", ["g2"]), GOOD_NODES[1]], GOOD_ROWS)
+    assert any("data-group" in p and "folder" in p for p in co.check_relation_graph(html, md, fx))
+    root = [("g1", ".", "source", "top.py", [])]
+    html, md, fx = rel_setup(tmp_path, root, [("top.py", [], [])], files=("top.py",))
+    assert co.check_relation_graph(html, md, fx) == []  # a root file belongs to group "."
+
+
+def test_relation_graph_paths_must_be_repo_relative(tmp_path):
+    for bad in ("/etc/passwd", "../outside.py", "src/../a.py"):
+        html, md, fx = rel_setup(tmp_path, [("g1", "src", "source", bad, [])], [(bad, [], [])])
+        assert any("repo-relative" in p for p in co.check_relation_graph(html, md, fx)), bad
+
+
+def test_relation_table_reads_only_the_first_table(tmp_path):
+    html, md, fx = rel_setup(tmp_path, GOOD_NODES, GOOD_ROWS)
+    extra = "\n<!-- codemap:manual-start -->\n| a | b | c | d |\n|---|---|---|---|\n| `src/a.py` | n | `src/ghost.py` | — |\n<!-- codemap:manual-end -->\n"
+    md.write_text(md.read_text(encoding="utf-8") + extra, encoding="utf-8")
+    assert co.check_relation_graph(html, md, fx) == []
+
+
+def test_html_with_external_resources_is_reported_but_plain_links_are_not(tmp_path):
+    base = '<html><head><script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script><script src="assets/codemap.js"></script></head><body>{}</body></html>'
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "codemap.js").write_text("x")
+    for bad in ('<img src="https://tracker.example/p.png">', '<iframe src="https://evil.example"></iframe>',
+                '<embed src="//evil.example/x">', '<object data="https://evil.example/x"></object>',
+                '<div style="background:url(https://evil.example/x.png)"></div>'):
+        page = tmp_path / "p.html"
+        page.write_text(base.format(bad), encoding="utf-8")
+        assert any("external" in p for p in co.check_html(page)), bad
+    page = tmp_path / "ok.html"
+    page.write_text(base.format('<a href="https://example.com/docs">docs</a><img src="assets/codemap.js">'), encoding="utf-8")
+    assert co.check_html(page) == []

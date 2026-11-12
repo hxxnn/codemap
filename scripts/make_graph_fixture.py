@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dev tool: generate a synthetic project plus its relation-map artifacts, for tests and performance checks.
 
-Usage: make_graph_fixture.py --nodes N --groups G --out DIR
+Usage: make_graph_fixture.py --nodes N --groups G --out DIR [--hostile]
 
 Writes under DIR: empty source files, docs/codemap/relation-map.md and
 docs/codemap/html/relation-map.html (+ html/assets/). The result passes
@@ -21,7 +21,11 @@ from rebuild_example_html import ASSETS, TEMPLATE  # noqa: E402
 DATE = "2026-11-12"
 
 
-def group_name(g, groups):
+def group_name(g, groups, hostile=False):
+    if hostile and groups >= 4 and g == 2:
+        return "constructor"  # folder names that collide with Object.prototype members
+    if hostile and groups >= 4 and g == 3:
+        return "__proto__"
     if groups >= 2 and g == 0:
         return "a/utils"
     if groups >= 2 and g == 1:
@@ -29,8 +33,8 @@ def group_name(g, groups):
     return f"pkg{g}"
 
 
-def graph(nodes, groups):
-    paths = [f"{group_name(i % groups, groups)}/mod{i}.py" for i in range(nodes)]
+def graph(nodes, groups, hostile=False):
+    paths = [f"{group_name(i % groups, groups, hostile)}/mod{i}.py" for i in range(nodes)]
     uses = []
     for i in range(nodes):
         targets = {(i * 7 + 1) % nodes, (i * 13 + 5) % nodes}
@@ -49,9 +53,9 @@ def graph(nodes, groups):
     return paths, uses, kinds
 
 
-def build(nodes, groups, out):
+def build(nodes, groups, out, hostile=False):
     out = Path(out)
-    paths, uses, kinds = graph(nodes, groups)
+    paths, uses, kinds = graph(nodes, groups, hostile)
     used_by = [[] for _ in range(nodes)]
     for i, targets in enumerate(uses):
         for t in targets:
@@ -115,10 +119,11 @@ def main(argv):
     parser.add_argument("--nodes", type=int, required=True)
     parser.add_argument("--groups", type=int, required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--hostile", action="store_true", help="name two folders constructor and __proto__")
     args = parser.parse_args(argv)
     if args.nodes < 1 or args.groups < 1:
         parser.error("--nodes and --groups must be at least 1")
-    build(args.nodes, args.groups, args.out)
+    build(args.nodes, args.groups, args.out, hostile=args.hostile)
     print(f"wrote {args.nodes} files in {args.groups} groups under {args.out}")
     return 0
 

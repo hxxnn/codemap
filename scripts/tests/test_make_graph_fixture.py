@@ -36,3 +36,10 @@ def test_single_file_fixture_has_no_edges(tmp_path):
     nodes = co.parse_graph_html(page(tmp_path))
     assert len(nodes) == 1 and nodes[0]["uses"] == []
     assert co.main([str(tmp_path), str(tmp_path / "docs/codemap")]) == 0
+
+
+def test_hostile_fixture_uses_folder_names_that_collide_with_object_members(tmp_path):
+    mg.build(12, 4, tmp_path, hostile=True)
+    groups = {n["group"] for n in co.parse_graph_html(page(tmp_path))}
+    assert {"constructor", "__proto__"} <= groups
+    assert co.main([str(tmp_path), str(tmp_path / "docs/codemap")]) == 0

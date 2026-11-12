@@ -7,6 +7,7 @@ Exit code 1 if any problem is found.
 import hashlib
 import json
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -163,6 +164,19 @@ def check_html(html_path):
         problems.append(f"{html_path}: inline event handler found")
     if re.search(r"javascript:", stripped, flags=re.IGNORECASE):
         problems.append(f"{html_path}: javascript: URL found")
+    # no external resources (plain <a href> links are navigation, not resources, and stay allowed)
+    external = [
+        r"<(?:img|source|video|audio|track|input)\b[^>]*\bsrc\s*=\s*[\"']?(?:https?:)?//",
+        r"<object\b[^>]*\bdata\s*=\s*[\"']?(?:https?:)?//",
+        r"url\(\s*[\"']?(?:https?:)?//",
+    ]
+    for pattern in external:
+        m = re.search(pattern, stripped, flags=re.IGNORECASE)
+        if m:
+            problems.append(f"{html_path}: external resource: {m.group(0)[:60]}")
+    m = re.search(r"<(?:iframe|embed|frame)\b", stripped, flags=re.IGNORECASE)
+    if m:
+        problems.append(f"{html_path}: external resource: {m.group(0)} is not allowed")
     return problems
 
 
@@ -218,17 +232,23 @@ def parse_graph_html(text):
     return parser.nodes
 
 
+_CELL_SPLIT = re.compile(r"\|(?=(?:[^`]*`[^`]*`)*[^`]*$)")  # a pipe outside backticks
+
+
 def parse_relation_table(md_text):
-    """Map path -> {"uses": [...], "used_by": [...]} from the file table (columns by position)."""
-    rows = {}
+    """Map path -> {"uses": [...], "used_by": [...]} from the FIRST file table (columns by position)."""
+    rows, started = {}, False
     for line in md_text.splitlines():
         if not line.lstrip().startswith("|"):
+            if started:
+                break  # the file table is over; later tables (for example in a manual-edit block) are not ours
             continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        cells = [c.strip() for c in _CELL_SPLIT.split(line.strip().strip("|"))]
         if len(cells) < 4:
             continue
         first = re.fullmatch(r"`([^`]+)`", cells[0])
         if first:
+            started = True
             rows[first.group(1)] = {"uses": re.findall(r"`([^`]+)`", cells[2]), "used_by": re.findall(r"`([^`]+)`", cells[3])}
     return rows
 
@@ -236,19 +256,33 @@ def parse_relation_table(md_text):
 def check_relation_graph(html_path, md_path, fixture_dir):
     """Validate the relation-map graph data and cross-check it against the Markdown file table."""
     nodes = parse_graph_html(Path(html_path).read_text(encoding="utf-8"))
-    problems, ids = [], {}
-    for n in nodes:
-        if n["id"] in ids:
+    problems, ids, seen_paths = [], {}, set()
+    if not nodes:
+        problems.append(f"{html_path}: no cm-graph list found (or it is empty)")
+    for i, n in enumerate(nodes, 1):
+        if not n["id"]:
+            problems.append(f"{html_path}: node #{i} has no id")
+        elif n["id"] in ids:
             problems.append(f"{html_path}: duplicate id {n['id']}")
         ids[n["id"]] = n
         if not n["group"]:
             problems.append(f"{html_path}: node {n['id']} lacks data-group")
         if n["kind"] not in GRAPH_KINDS:
             problems.append(f"{html_path}: node {n['id']} has invalid data-kind '{n['kind']}'")
-        if not n["path"]:
+        path = n["path"]
+        if not path:
             problems.append(f"{html_path}: node {n['id']} has no <code> path")
-        elif not _exists(n["path"], fixture_dir):
-            problems.append(f"{html_path}: node path does not exist: {n['path']}")
+            continue
+        if path in seen_paths:
+            problems.append(f"{html_path}: duplicate path {path}")
+        seen_paths.add(path)
+        if path.startswith("/") or ".." in path.split("/"):
+            problems.append(f"{html_path}: node path is not repo-relative: {path}")
+            continue
+        if n["group"] and n["group"] != (posixpath.dirname(path) or "."):
+            problems.append(f"{html_path}: data-group '{n['group']}' is not the folder of {path} (expected '{posixpath.dirname(path) or '.'}')")
+        if not _exists(path, fixture_dir):
+            problems.append(f"{html_path}: node path does not exist: {path}")
     edges = set()
     for n in nodes:
         for target in n["uses"]:
@@ -259,6 +293,10 @@ def check_relation_graph(html_path, md_path, fixture_dir):
             else:
                 edges.add((n["path"], ids[target]["path"]))
     table = parse_relation_table(Path(md_path).read_text(encoding="utf-8"))
+    for path in sorted(seen_paths - set(table)):
+        problems.append(f"{html_path}: {path} is in the graph but missing from the table")
+    for path in sorted(set(table) - seen_paths):
+        problems.append(f"{html_path}: {path} is in the table but missing from the graph")
     table_edges = {(p, t) for p, row in table.items() for t in row["uses"]}
     used_by_edges = {(u, p) for p, row in table.items() for u in row["used_by"]}
     for a, b in sorted(edges - table_edges):

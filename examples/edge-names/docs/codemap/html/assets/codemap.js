@@ -11,7 +11,7 @@
     offline: "다이어그램을 그리려면 인터넷 연결이 필요합니다. 아래는 다이어그램 원본입니다.",
     graphEmpty: "서로 연결된 파일이 없어 그래프를 그리지 않았습니다. 아래 목록을 확인하세요.", graphLabel: "파일 관계 그래프",
     groupFold: "폴더 접기", groupUnfold: "폴더 펼치기", files: function (n) { return n + "개 파일"; },
-    fullscreen: "전체화면", exitFull: "전체화면 종료", uses: "쓰는 파일", usedBy: "쓰이는 파일", none: "없음", keyUses: "선택한 파일이 쓰는 파일", keyUsedBy: "선택한 파일을 쓰는 파일"
+    fullscreen: "전체화면", exitFull: "전체화면 종료", panelLabel: "선택한 파일", keyTest: "테스트 파일", keyUnverified: "추정 파일 (끝까지 읽지 못함)", uses: "쓰는 파일", usedBy: "쓰이는 파일", none: "없음", keyUses: "선택한 파일이 쓰는 파일", keyUsedBy: "선택한 파일을 쓰는 파일"
   } : {
     contents: "Contents", filter: "Filter sections", dark: "Dark mode", light: "Light mode", generated: "Generated", sources: "Files read",
     unverified: "Unverified", zoomIn: "Zoom in", zoomOut: "Zoom out", fit: "Fit width", expand: "Expand", close: "Close", legend: "Legend",
@@ -21,7 +21,7 @@
     offline: "An internet connection is needed to draw the diagrams. The diagram source is shown below.",
     graphEmpty: "No file is connected to another, so no graph was drawn. See the list below.", graphLabel: "File relation graph",
     groupFold: "Fold folder", groupUnfold: "Unfold folder", files: function (n) { return n + (n === 1 ? " file" : " files"); },
-    fullscreen: "Full screen", exitFull: "Exit full screen", uses: "Uses", usedBy: "Used by", none: "None", keyUses: "Files the selected file uses", keyUsedBy: "Files that use the selected file"
+    fullscreen: "Full screen", exitFull: "Exit full screen", panelLabel: "Selected file", keyTest: "Test file", keyUnverified: "Inferred file (not fully read)", uses: "Uses", usedBy: "Used by", none: "None", keyUses: "Files the selected file uses", keyUsedBy: "Files that use the selected file"
   };
   function $(id) { return document.getElementById(id); }
   function isDark() {
@@ -259,7 +259,8 @@
   // relation graph: the plain list <ul class="cm-graph"> written by the relation-map skill becomes an SVG graph.
   // Layers (back to front): folder boxes, edges, file nodes. Only one graph per page is supported.
   var NS = "http://www.w3.org/2000/svg", FOLD_AT = 80;
-  var ROW = 30, NODE_H = 24, PAD = 12, HEAD = 34, GAP_X = 96, GAP_Y = 56, MARGIN = 20;
+  var ROW = 30, NODE_H = 24, PAD = 12, HEAD = 34, GAP_X = 96, GAP_Y = 56, MARGIN = 20, MARGIN_Y = 40;
+  function dict() { return Object.create(null); } // keys come from the repository (a folder may be called constructor or __proto__)
   function sv(tag, attrs, parent) {
     var el = document.createElementNS(NS, tag);
     for (var k in attrs) el.setAttribute(k, attrs[k]);
@@ -269,7 +270,7 @@
   function textW(s, size) { var w = 0; for (var i = 0; i < s.length; i++) w += s.charCodeAt(i) > 255 ? size * 1.05 : size * 0.6; return w; }
   function shorten(s, max) { return s.length <= max ? s : s.slice(0, Math.ceil(max / 2) - 1) + "…" + s.slice(s.length - Math.floor(max / 2)); }
   function readGraph(ul) {
-    var nodes = [], byId = {};
+    var nodes = [], byId = dict();
     Array.prototype.forEach.call(ul.children, function (li) {
       if (li.tagName !== "LI") return;
       var code = li.querySelector("code"), role = "";
@@ -286,18 +287,36 @@
     nodes.forEach(function (n) { n.uses.forEach(function (t) { byId[t].usedBy.push(n.id); }); });
     return { nodes: nodes, byId: byId };
   }
-  // cubic curve from anchor box a to anchor box b; off separates two opposite edges between the same pair
-  function curve(a, b, off) {
-    var ay = a.y + a.h / 2, by = b.y + b.h / 2, sx, ex;
-    if (a.col === b.col) {
+  // Edges run only through the gaps between folder boxes (vertical stretches) and the lanes between rows (long horizontal
+  // stretches), so an edge never passes behind a file it does not belong to. a and b are anchor boxes {x,y,w,h,col,row,gl,gr};
+  // off separates two opposite edges between the same pair.
+  function roundedPath(pts, r) {
+    var d = "M" + pts[0][0] + " " + pts[0][1];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var p = pts[i], a = pts[i - 1], b = pts[i + 1];
+      var k = Math.min(r, (Math.abs(p[0] - a[0]) + Math.abs(p[1] - a[1])) / 2, (Math.abs(b[0] - p[0]) + Math.abs(b[1] - p[1])) / 2);
+      if (k <= 0) { d += " L" + p[0] + " " + p[1]; continue; }
+      d += " L" + (p[0] - Math.sign(p[0] - a[0]) * k) + " " + (p[1] - Math.sign(p[1] - a[1]) * k) +
+           " Q" + p[0] + " " + p[1] + " " + (p[0] + Math.sign(b[0] - p[0]) * k) + " " + (p[1] + Math.sign(b[1] - p[1]) * k);
+    }
+    var l = pts[pts.length - 1];
+    return d + " L" + l[0] + " " + l[1];
+  }
+  function route(a, b, off, lanes) {
+    var ay = a.y + a.h / 2, by = b.y + b.h / 2, o = off / 2, sx, ex;
+    if (a.col === b.col) { // same column: bulge out to the right, inside the gap
       sx = a.x + a.w; ex = b.x + b.w;
-      var bulge = 34 + Math.min(70, Math.abs(by - ay) * 0.15);
-      return "M" + sx + " " + ay + " C" + (sx + bulge) + " " + (ay + off) + " " + (ex + bulge) + " " + (by + off) + " " + ex + " " + by;
+      var bulge = 34 + Math.min(30, Math.abs(by - ay) * 0.05), mid = (ay + by) / 2;
+      return { d: roundedPath([[sx, ay], [sx + bulge + o, ay], [sx + bulge + o, by], [ex, by]], 12), lx: sx + bulge + o, ly: mid };
     }
     var right = b.col > a.col;
     sx = right ? a.x + a.w : a.x; ex = right ? b.x : b.x + b.w;
-    var dx = Math.max(40, Math.abs(ex - sx) / 2) * (right ? 1 : -1);
-    return "M" + sx + " " + ay + " C" + (sx + dx) + " " + (ay + off) + " " + (ex - dx) + " " + (by + off) + " " + ex + " " + by;
+    var g1 = (right ? a.gr : a.gl) + o;
+    if (Math.abs(b.col - a.col) === 1) { // neighbouring columns: one vertical stretch in the gap between them
+      return { d: roundedPath([[sx, ay], [g1, ay], [g1, by], [ex, by]], 12), lx: g1, ly: (ay + by) / 2 };
+    }
+    var g2 = (right ? b.gl : b.gr) + o, gy = (b.row < a.row ? lanes.above[a.row] : lanes.below[a.row]) + o; // far apart: along the lane between rows
+    return { d: roundedPath([[sx, ay], [g1, ay], [g1, gy], [g2, gy], [g2, by], [ex, by]], 12), lx: (g1 + g2) / 2, ly: gy };
   }
   function buildGraph(ul) {
     var model = readGraph(ul), edgeCount = 0, t0 = performance.now();
@@ -312,9 +331,17 @@
     [["uses", T.keyUses], ["usedby", T.keyUsedBy]].forEach(function (it) {
       var sp = document.createElement("span"), sw = document.createElement("i"); sw.className = "cm-key-" + it[0]; sp.appendChild(sw); sp.appendChild(document.createTextNode(it[1])); key.appendChild(sp);
     });
+    var present = dict();
+    model.nodes.forEach(function (n) { present[n.kind] = true; });
+    [["test", T.keyTest], ["unverified", T.keyUnverified]].forEach(function (it) {
+      if (!present[it[0]]) return;
+      var sp = document.createElement("span"), sw = document.createElement("i"); sw.className = "cm-key-kind cm-key-" + it[0]; sp.appendChild(sw); sp.appendChild(document.createTextNode(it[1])); key.appendChild(sp);
+    });
     fig.appendChild(tools); fig.appendChild(stage); fig.appendChild(key); fig.appendChild(panel);
     ul.parentNode.insertBefore(fig, ul);
 
+    stage.tabIndex = 0; stage.setAttribute("role", "region"); stage.setAttribute("aria-label", T.graphLabel);
+    panel.setAttribute("role", "region"); panel.setAttribute("aria-live", "polite"); panel.setAttribute("aria-label", T.panelLabel);
     var svg = sv("svg", { "class": "cm-graph-svg", role: "group", "aria-label": T.graphLabel }, stage);
     var defs = sv("defs", {}, svg);
     ["cm-arrow", "cm-arrow-hot", "cm-arrow-in"].forEach(function (id) {
@@ -323,11 +350,11 @@
     });
     var boxLayer = sv("g", { "class": "cm-layer-boxes" }, svg), edgeLayer = sv("g", { "class": "cm-layer-edges" }, svg), nodeLayer = sv("g", { "class": "cm-layer-nodes" }, svg);
 
-    var keys = [], members = {};
+    var keys = [], members = dict();
     model.nodes.forEach(function (n) { if (!members[n.group]) { members[n.group] = []; keys.push(n.group); } members[n.group].push(n); });
     keys.sort(function (a, b) { return a < b ? -1 : a > b ? 1 : 0; });
     var cols = Math.ceil(Math.sqrt(keys.length));
-    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: {}, groupEls: {}, nodeEls: {}, edgeEls: [], aggEls: [], pos: {}, scale: 1, size: { w: 0, h: 0 }, panel: panel, stage: stage, pinned: null, hover: null };
+    var view = { fig: fig, svg: svg, model: model, keys: keys, members: members, collapsed: dict(), groupEls: dict(), nodeEls: dict(), edgeEls: [], aggEls: [], pos: dict(), lanes: { below: [], above: [] }, scale: 1, size: { w: 0, h: 0 }, panel: panel, stage: stage, pinned: null, hover: null };
     graphViews.push(view);
     var startFolded = model.nodes.length >= FOLD_AT;
 
@@ -342,7 +369,7 @@
       view.groupEls[k] = { g: g, box: box, title: g.childNodes[1], count: g.childNodes[2], toggle: tg, col: gi % cols, row: Math.floor(gi / cols) };
     });
     model.nodes.forEach(function (n) {
-      var g = sv("g", { "class": "cm-node", "data-id": n.id, "data-kind": n.kind, "data-group": n.group, tabindex: "0", role: "button", "aria-label": n.path }, nodeLayer);
+      var g = sv("g", { "class": "cm-node", "data-id": n.id, "data-kind": n.kind, "data-group": n.group, tabindex: "0", role: "button", "aria-pressed": "false", "aria-label": n.path }, nodeLayer);
       sv("rect", { "class": "cm-node-box", rx: "6" }, g);
       sv("text", { "class": "cm-node-label" }, g).textContent = shorten(n.path.split("/").pop(), 34);
       sv("title", {}, g).textContent = n.path + (n.role ? " — " + n.role : "");
@@ -353,7 +380,7 @@
         view.edgeEls.push({ from: n.id, to: t, el: sv("path", { "class": "cm-edge", "data-from": n.id, "data-to": t }, edgeLayer) });
       });
     });
-    var pairs = {};
+    var pairs = dict();
     model.nodes.forEach(function (n) { n.uses.forEach(function (t) {
       var a = n.group, b = model.byId[t].group;
       if (a !== b) { var key = a + "\n" + b; pairs[key] = (pairs[key] || 0) + 1; }
@@ -395,6 +422,7 @@
       if (!n) return;
       if (view.collapsed[n.group]) { view.collapsed[n.group] = false; layoutGraph(view); }
       setPinned(view, id);
+      view.nodeEls[id].focus({ preventScroll: true });
       if (view.nodeEls[id].scrollIntoView) view.nodeEls[id].scrollIntoView({ block: "nearest", inline: "nearest" });
     });
     function tool(cls, label, aria, fn) {
@@ -438,7 +466,7 @@
     clearFocus(view);
     var m = view.model, n = m.byId[id];
     if (!n) return;
-    var uses = {}, usedBy = {}, keep = {}, useGroups = {}, byGroups = {};
+    var uses = dict(), usedBy = dict(), keep = dict(), useGroups = dict(), byGroups = dict();
     keep[n.group] = true;
     n.uses.forEach(function (t) { var g = m.byId[t].group; uses[t] = true; useGroups[g] = true; keep[g] = true; });
     n.usedBy.forEach(function (t) { var g = m.byId[t].group; usedBy[t] = true; byGroups[g] = true; keep[g] = true; });
@@ -462,7 +490,7 @@
   }
   function applyGroupFocus(view, key) {
     clearFocus(view);
-    var rel = {};
+    var rel = dict();
     view.aggEls.forEach(function (e) {
       if (e.a === key || e.b === key) { rel[e.a] = true; rel[e.b] = true; e.el.classList.add("is-hot"); }
       else { e.el.classList.add("is-dim"); e.label.classList.add("is-dim"); }
@@ -491,9 +519,15 @@
     if (!view.pinned) refreshFocus(view);
   }
   function setPinned(view, id) {
+    var prev = view.pinned;
     view.pinned = id;
+    if (prev && view.nodeEls[prev]) view.nodeEls[prev].setAttribute("aria-pressed", "false");
+    if (id && view.nodeEls[id]) view.nodeEls[id].setAttribute("aria-pressed", "true");
     if (id) view.fig.setAttribute("data-pinned", id); else view.fig.removeAttribute("data-pinned");
     renderPanel(view); refreshFocus(view);
+    // keyboard users keep their place: focus follows the pin, and returns to the node when the panel goes away
+    var ae = document.activeElement, target = id || prev, n = target && view.model.byId[target];
+    if (n && !view.collapsed[n.group] && (ae === document.body || !ae || view.panel.contains(ae))) view.nodeEls[target].focus({ preventScroll: true });
   }
   function renderPanel(view) {
     var p = view.panel;
@@ -537,7 +571,8 @@
     var st = view.stage, full = view.fig.classList.contains("cm-graph-full");
     var aw = st.clientWidth - 28, ah = st.clientHeight - 28, s = aw > 0 ? aw / view.size.w : 1;
     if (full && ah > 0) s = Math.min(s, ah / view.size.h);
-    setGraphScale(view, Math.max(0.35, Math.min(full ? 1.6 : 1, s)));
+    var floor = window.innerWidth < 700 ? 0.7 : 0.35; // on a phone a file must stay tappable and readable: scroll instead of shrinking
+    setGraphScale(view, Math.max(floor, Math.min(full ? 1.6 : 1, s)));
     st.scrollLeft = 0; st.scrollTop = 0;
   }
   // full screen: the browser's Fullscreen API when it allows it, a fixed overlay (class cm-graph-full) in any case
@@ -571,7 +606,7 @@
   // positions every folder box on a grid and redraws nodes and edges for the current folded state
   function layoutGraph(view) {
     var model = view.model, FS = 12.5;
-    var info = {}, colW = [], rowH = [];
+    var info = dict(), colW = [], rowH = [];
     view.keys.forEach(function (k) {
       var ms = view.members[k], el = view.groupEls[k], inner = 0;
       ms.forEach(function (n) { inner = Math.max(inner, textW(shorten(n.path.split("/").pop(), 34), FS) + 24); });
@@ -580,16 +615,18 @@
       info[k] = { w: w, h: h, col: el.col, row: el.row };
       colW[el.col] = Math.max(colW[el.col] || 0, w); rowH[el.row] = Math.max(rowH[el.row] || 0, h);
     });
-    var colX = [], rowY = [], x = MARGIN, y = MARGIN, i;
+    var colX = [], rowY = [], x = MARGIN, y = MARGIN_Y, i;
     for (i = 0; i < colW.length; i++) { colX[i] = x; x += colW[i] + GAP_X; }
     for (i = 0; i < rowH.length; i++) { rowY[i] = y; y += rowH[i] + GAP_Y; }
-    view.size = { w: x - GAP_X + MARGIN + 110, h: y - GAP_Y + MARGIN }; // 110: room for same-column edges that bulge to the right
+    view.size = { w: x - GAP_X + MARGIN + 110, h: y - GAP_Y + MARGIN_Y }; // 110: room for same-column edges that bulge to the right
+    view.lanes = { below: [], above: [] };
+    for (i = 0; i < rowH.length; i++) { view.lanes.below[i] = rowY[i] + rowH[i] + GAP_Y / 2; view.lanes.above[i] = rowY[i] - GAP_Y / 2; }
     view.svg.setAttribute("viewBox", "0 0 " + view.size.w + " " + view.size.h);
     applyScale(view);
 
     view.keys.forEach(function (k) {
       var inf = info[k], el = view.groupEls[k], gx = colX[inf.col], gy = rowY[inf.row], folded = view.collapsed[k];
-      inf.x = gx; inf.y = gy;
+      inf.x = gx; inf.y = gy; inf.gl = colX[inf.col] - GAP_X / 2; inf.gr = colX[inf.col] + colW[inf.col] + GAP_X / 2;
       el.g.classList.toggle("collapsed", folded);
       el.box.setAttribute("x", gx); el.box.setAttribute("y", gy); el.box.setAttribute("width", inf.w); el.box.setAttribute("height", inf.h);
       el.title.setAttribute("x", gx + 38); el.title.setAttribute("y", gy + 15);
@@ -600,7 +637,7 @@
       el.toggle.lastChild.textContent = folded ? "▸" : "▾";
       view.members[k].forEach(function (n, idx) {
         var nx = gx + PAD, ny = gy + HEAD + idx * ROW, nw = inf.w - 2 * PAD, ng = view.nodeEls[n.id];
-        view.pos[n.id] = { x: nx, y: ny, w: nw, h: NODE_H, col: inf.col };
+        view.pos[n.id] = { x: nx, y: ny, w: nw, h: NODE_H, col: inf.col, row: inf.row, gl: inf.gl, gr: inf.gr };
         ng.classList.toggle("cm-off", folded);
         var r = ng.firstChild; r.setAttribute("x", nx); r.setAttribute("y", ny); r.setAttribute("width", nw); r.setAttribute("height", NODE_H);
         var t = ng.childNodes[1]; t.setAttribute("x", nx + 10); t.setAttribute("y", ny + 16.5);
@@ -610,20 +647,30 @@
       var a = model.byId[e.from], b = model.byId[e.to], reverse = b.uses.indexOf(a.id) !== -1;
       var hide = view.collapsed[a.group] || view.collapsed[b.group];
       e.el.classList.toggle("cm-off", !!hide);
-      if (!hide) e.el.setAttribute("d", curve(view.pos[a.id], view.pos[b.id], reverse ? (a.id < b.id ? 14 : -14) : 0));
+      if (!hide) e.el.setAttribute("d", route(view.pos[a.id], view.pos[b.id], reverse ? (a.id < b.id ? 14 : -14) : 0, view.lanes).d);
     });
     view.aggEls.forEach(function (e) {
       var show = view.collapsed[e.a] || view.collapsed[e.b];
       e.el.classList.toggle("cm-off", !show); e.label.classList.toggle("cm-off", !show);
       if (!show) return;
       var A = info[e.a], B = info[e.b], off = e.reverse ? (e.a < e.b ? 14 : -14) : 0;
-      e.el.setAttribute("d", curve(A, B, off));
-      var mx = A.col === B.col ? Math.max(A.x + A.w, B.x + B.w) + 40 : (A.x + A.w / 2 + B.x + B.w / 2) / 2;
-      e.label.setAttribute("x", mx); e.label.setAttribute("y", (A.y + A.h / 2 + B.y + B.h / 2) / 2 - 4 + off);
+      var rt = route(A, B, off, view.lanes);
+      e.el.setAttribute("d", rt.d);
+      e.label.setAttribute("x", rt.lx); e.label.setAttribute("y", rt.ly - 4);
       e.label.setAttribute("text-anchor", "middle"); e.label.textContent = String(e.count);
     });
   }
-  function buildGraphs() { document.querySelectorAll("ul.cm-graph").forEach(buildGraph); }
+  function buildGraphs() {
+    document.querySelectorAll("ul.cm-graph").forEach(function (ul) {
+      try { buildGraph(ul); }
+      catch (err) { // never leave an empty frame: remove the half-built figure so the plain list shows again
+        var prev = ul.previousElementSibling;
+        if (prev && prev.classList.contains("cm-graph-view")) prev.parentNode.removeChild(prev);
+        graphViews = graphViews.filter(function (v) { return v.fig !== prev; });
+        if (window.console && console.warn) console.warn("codemap: the relation graph was skipped", err);
+      }
+    });
+  }
 
   $("cm-theme").addEventListener("click", function () {
     root.setAttribute("data-theme", isDark() ? "light" : "dark"); themeLabel(); renderDiagrams();

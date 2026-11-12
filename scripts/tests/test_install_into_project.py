@@ -133,3 +133,10 @@ def test_refresh_knows_how_to_regenerate_relation_map():
     text = (REAL_SOURCE / "skills" / "codemap-refresh" / "SKILL.md").read_text(encoding="utf-8")
     assert "`relation-map`" in text.split("run the skill named in its front matter")[1]
     assert "mindmap, relation-map, sequence-flow, design-doc, present" in text
+
+
+def test_relation_map_skill_marks_unverified_files_per_the_shared_contract():
+    text = (REAL_SOURCE / "skills" / "relation-map" / "SKILL.md").read_text(encoding="utf-8")
+    assert "<!-- codemap:unverified -->" in text and "cm-unverified" in text
+    # edges *to* an unread file come from the files that import it; its own imports are simply not drawn
+    assert "imports are not drawn" in text

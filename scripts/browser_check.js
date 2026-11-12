@@ -306,6 +306,96 @@ if (!file) { console.error('usage: browser_check.js <page.html> [--deck] [--offl
       result.graphBuildMs = buildMs;
       expect(Number.isFinite(buildMs), 'speed: the figure records data-build-ms');
       if (info.nodes >= 500) expect(buildMs < 3000, 'speed: first layout of ' + info.nodes + ' files took ' + buildMs + ' ms (limit 3000)');
+
+      // ---- review fixes ----
+      // edges must not run through a file (or folder box) they do not belong to: the resting picture may not show relations that do not exist
+      const crossings = await page.evaluate(() => {
+        const rects = (sel) => Array.from(document.querySelectorAll(sel)).filter((g) => g.getBoundingClientRect().width > 0).map((g) => {
+          const r = g.querySelector('rect'); return { id: g.getAttribute('data-id') || g.getAttribute('data-group'), x: +r.getAttribute('x'), y: +r.getAttribute('y'), w: +r.getAttribute('width'), h: +r.getAttribute('height') };
+        });
+        const nodes = rects('g.cm-node'), boxes = rects('g.cm-group');
+        let bad = 0, sample = null;
+        const walk = (p, own, others) => {
+          const L = p.getTotalLength();
+          for (let i = 1; i < 60; i++) {
+            const pt = p.getPointAtLength(L * i / 60);
+            for (const n of others) {
+              if (own.includes(n.id)) continue;
+              if (pt.x > n.x + 1 && pt.x < n.x + n.w - 1 && pt.y > n.y + 1 && pt.y < n.y + n.h - 1) { bad++; if (!sample) sample = own.join('>') + ' through ' + n.id; return; }
+            }
+          }
+        };
+        document.querySelectorAll('path.cm-edge:not(.cm-agg):not(.cm-off)').forEach((p) => walk(p, [p.getAttribute('data-from'), p.getAttribute('data-to')], nodes));
+        document.querySelectorAll('path.cm-agg:not(.cm-off)').forEach((p) => walk(p, [p.getAttribute('data-from-group'), p.getAttribute('data-to-group')], boxes));
+        return { bad, sample };
+      });
+      expect(crossings.bad === 0, 'edges: ' + crossings.bad + ' edge(s) run through a file or folder box they do not belong to (' + crossings.sample + ')');
+
+      // the pinned panel sits beside the stage (below it on a narrow screen), never over it
+      const pinTarget = await page.evaluate(() => { const n = Array.from(document.querySelectorAll('g.cm-node')).find((g) => g.getBoundingClientRect().width > 0); return n ? n.getAttribute('data-id') : null; });
+      if (pinTarget) {
+        const overlap = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+        const rectOf = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
+        await page.locator('g.cm-node[data-id="' + pinTarget + '"]').click();
+        expect(!overlap(await rectOf('.cm-graph-panel'), await rectOf('.cm-graph-stage')), 'panel: on a wide screen the panel does not cover the graph');
+        await page.setViewportSize({ width: 390, height: 800 });
+        await page.waitForTimeout(150);
+        const narrowPanel = await rectOf('.cm-graph-panel'), narrowStage = await rectOf('.cm-graph-stage');
+        expect(!overlap(narrowPanel, narrowStage) && narrowPanel.top >= narrowStage.bottom - 1, 'panel: on a narrow screen the panel sits below the graph');
+        await page.locator('.cm-graph-fit').click();
+        const fitRatio = await page.locator('svg.cm-graph-svg').evaluate((e) => e.getBoundingClientRect().width / e.viewBox.baseVal.width);
+        expect(fitRatio >= 0.69, 'view: a phone-width fit stays at or above 70% (' + fitRatio.toFixed(2) + ')');
+        await page.setViewportSize({ width: 1360, height: 900 });
+        await page.keyboard.press('Escape');
+        // keyboard focus is not lost: unpinning returns it to the node, and a panel link moves it to the new node
+        await page.locator('g.cm-node[data-id="' + pinTarget + '"]').click();
+        const link = page.locator('.cm-graph-panel button.cm-gp-link').first();
+        if (await link.count()) {
+          const next = await link.getAttribute('data-id');
+          await link.click();
+          expect((await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-id'))) === next, 'focus: a panel link moves focus to the newly pinned node');
+          expect((await page.locator('g.cm-node[data-id="' + next + '"]').getAttribute('aria-pressed')) === 'true', 'a11y: the pinned node has aria-pressed=true');
+        }
+        await page.keyboard.press('Escape');
+        expect((await page.evaluate(() => document.activeElement && document.activeElement.classList.contains('cm-node'))), 'focus: Escape leaves focus on a node, not on the page body');
+        await page.evaluate(() => document.activeElement && document.activeElement.blur());
+        await away();
+      }
+      expect((await page.locator('.cm-graph-stage').getAttribute('tabindex')) === '0' && (await page.locator('.cm-graph-stage').getAttribute('role')) === 'region', 'a11y: the scrollable stage is keyboard reachable and labelled');
+      expect((await page.locator('.cm-graph-panel').getAttribute('aria-live')) === 'polite', 'a11y: the panel announces changes');
+      // the key explains every node style that is on the page
+      const kinds = await page.$$eval('g.cm-node', (n) => Array.from(new Set(n.map((x) => x.getAttribute('data-kind')))));
+      const keyItems = await page.locator('.cm-graph-key span').count();
+      expect(keyItems === 2 + kinds.filter((k) => k !== 'source').length, 'key: one entry per highlight colour plus one per non-default kind (' + keyItems + ' for kinds ' + kinds.join(',') + ')');
+      // no-script / print fallback: the plain list must not show empty bullets for the edge markers
+      await page.emulateMedia({ media: 'print' });
+      const nestedShown = await page.evaluate(() => Array.from(document.querySelectorAll('ul.cm-graph ul')).filter((u) => getComputedStyle(u).display !== 'none').length);
+      expect(nestedShown === 0, 'print: the nested edge lists of the fallback list are hidden (' + nestedShown + ' shown)');
+      await page.emulateMedia({ media: 'screen' });
+      // dimming must stay cheap with every folder expanded: handler plus two animation frames
+      if (info.nodes >= 500) {
+        for (;;) { const c = page.locator('g.cm-group.collapsed rect.cm-group-box').first(); if (!(await c.count())) break; await c.click(); }
+        const frameMs = await page.evaluate(() => new Promise((resolve) => {
+          const el = document.querySelector('g.cm-node[data-id="g1"]');
+          const t0 = performance.now(); el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
+        }));
+        result.hubFrameMs = Math.round(frameMs);
+        expect(frameMs < 500, 'speed: with every folder expanded a hub hover took ' + Math.round(frameMs) + ' ms to reach the screen (limit 500, headless software rendering)');
+      }
+      // a folded graph can still be pinned once a folder is open
+      if (folded) {
+        await page.evaluate(() => document.querySelector('.cm-graph-panel') && 0);
+        const open = page.locator('g.cm-group.collapsed rect.cm-group-box').first();
+        if (await open.count()) await open.click();
+        const visible = await page.evaluate(() => { const n = Array.from(document.querySelectorAll('g.cm-node')).find((g) => g.getBoundingClientRect().width > 0); return n ? n.getAttribute('data-id') : null; });
+        expect(visible !== null, 'folded: an opened folder shows files');
+        if (visible) {
+          await page.locator('g.cm-node[data-id="' + visible + '"]').click();
+          expect((await page.locator('.cm-graph-panel').innerText()).includes(rel[visible].path), 'folded: pinning a file in an opened folder fills the panel');
+          await page.keyboard.press('Escape');
+        }
+      }
     }
   } catch (e) { failures.push('graph: check crashed: ' + String(e.message).split('\n').slice(0, 2).join(' ')); }
 

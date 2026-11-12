@@ -22,7 +22,7 @@ Run the **Preflight** in `../_shared/language-and-output.md` first: it stops whe
 3. **Dynamic imports, reflection and runtime plugin loading** cannot be traced statically: draw no edge. Mention them in the prose under the table, marked as inferred in the output language (Korean: "(추정)") and with `<!-- codemap:unverified -->` on the same line.
 4. **Give every file** an id `g1`, `g2`, … (in path order), a one-line role in the output language (about 12 words, taken from what you read), and a kind:
    - `test` — a test file (for example under `tests/`, `test_*.py`, `*.test.ts`, `*_test.go`)
-   - `unverified` — a file whose connections you could only infer because you did not read it fully (also marked `(추정)` in its role)
+   - `unverified` — a file you listed but did not read fully. The edges **to** it still come from the import statements you read in other files; its own imports are not drawn. Mark its table row with the visible label in the output language (Korean: "(추정)") in the role cell **and** `<!-- codemap:unverified -->` on the same line, and wrap its role in `<span class="cm-unverified">` in the HTML so the page counts it
    - `source` — everything else
 5. **Group by folder.** A file's group is its folder's full repo-relative path (`app/api`, never just `api`; a file at the repository root uses `.`). Two folders with the same last name stay two groups.
 6. **Edges point from the file that imports to the file that is imported.** Record each edge once, never a file importing itself. Two files importing each other is allowed and stays two edges.
