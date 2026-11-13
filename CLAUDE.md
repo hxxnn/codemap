@@ -1,6 +1,6 @@
 # codemap 개발 안내 (새 세션이 가장 먼저 읽는 파일)
 
-마지막 정리: 2026-11-12. 아래 "현재 상태"와 "다음 후보"는 시간이 지나면 낡으니, 의심되면 `git log`와 코드를 먼저 확인한다. 사용자와는 한국어로 소통한다.
+마지막 정리: 2026-11-13. 아래 "현재 상태"와 "다음 후보"는 시간이 지나면 낡으니, 의심되면 `git log`와 코드를 먼저 확인한다. 사용자와는 한국어로 소통한다.
 
 ## 이 프로젝트는 무엇인가
 `codemap`은 Claude Code **플러그인**이다. Claude가 코드베이스를 직접 읽고(정적 분석 스크립트 없음) 대상 프로젝트의 `docs/codemap/`에 마크다운과 HTML을 만든다. 목적: 만든 구조를 다른 사람에게 이해시키고 설명하는 것. 저장소는 공개이고 `main`이 배포 브랜치다.
@@ -42,10 +42,10 @@
 - 임시 파일은 스크래치패드에 둔다. `rm -rf`는 `"${VAR:?}"` 형태로(변수가 비면 중단), `sleep` 연쇄 대신 백그라운드 `until` 루프로 기다린다.
 - 사용자는 애매한 것은 먼저 묻고 답을 기다리길 원하고, 한국어를 선호한다. 결과를 보고할 때는 검증한 것과 못 한 것을 구분해서 말한다.
 
-## 현재 상태 (2026-11-12)
-- `main`의 최신은 "예시 갤러리 링크" 커밋(`70c8682`). 그 뒤 작업은 브랜치 `claude/tender-mayer-3bsfwd`에 있고 **아직 `main`에 병합되지 않았다**(PR 없음). 이 브랜치에서 `relation-map` 스킬(설계 `docs/superpowers/specs/2026-11-12-relation-map-design.md`, 계획 `docs/superpowers/plans/2026-11-12-relation-map.md`)이 추가됐다: 검사기, 합성 프로젝트 생성기, 공유 JS/CSS 그래프(자산 v6), 스킬/명령, 예시 3개(실제 `claude -p` 실행으로 생성), 문서. 단위 시험 61개와 예시 검사·브라우저 검사·`claude plugin validate`는 통과했다(최종 리뷰어 지적도 반영). **CI는 PR을 만들기 전까지 이 브랜치에서 돌려 보지 않았다**.
-- 예전 상태: `main`은 CI 통과, Pages 열림, 예시 18개 페이지 정상이었다(이제 예시 21개 페이지).
+## 현재 상태 (2026-11-13)
+- `main`의 최신은 PR 1번 병합 커밋(`d5d1f67`)이다. 이 PR로 `relation-map` 스킬(설계 `docs/superpowers/specs/2026-11-12-relation-map-design.md`, 계획 `docs/superpowers/plans/2026-11-12-relation-map.md`)이 들어갔다: 검사기, 합성 프로젝트 생성기, 공유 JS/CSS 그래프(자산 v6), 스킬/명령, 예시 3개(실제 `claude -p` 실행으로 생성), 문서. 병합 전에 단위 시험 61개, 예시 검사, 브라우저 검사, `claude plugin validate`, PR의 CI(`test` 잡)가 통과했고 최종 리뷰어 지적도 반영했다. **병합 뒤의 `main` CI와 Pages 재배포는 확인하지 않았다.** 예시 갤러리는 이제 21개 페이지(관계 지도 3개 추가)다.
 - 중첩 `claude -p` 실행 메모: `--plugin-dir`로 불러온 명령은 `/codemap:codemap <인자>`로 호출한다(`/codemap`만 쓰면 못 찾는다). 중첩 실행에서는 `cp`가 거부되어 모델이 자산을 Read+Write로 복사했다(내용은 원본과 동일함을 확인).
+- 마켓플레이스로 설치한 상태에서 `/codemap relations`가 접두사 없이 되는지는 **미확인**(`--plugin-dir`로는 `/codemap:codemap relations`만 확인).
 - 사용자 맥에서 GitHub로 설치까지 확인됨(`claude plugin list`의 `Version`이 커밋 해시). 데스크톱 앱 Code 탭(Local)에서 `/codemap`이 보이는지는 **미확인**.
 - 마켓플레이스 등록 주의: 같은 저장소라도 `hxxnn/codemap`과 `https://github.com/hxxnn/codemap.git`은 다른 출처로 취급되어 `marketplace add`가 충돌할 수 있다(사용자 설정에서 한 번 겪음).
 
